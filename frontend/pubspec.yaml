@@ -32,6 +32,8 @@ dependencies:
     sdk: flutter
   http: ^1.1.0
   shared_preferences: ^2.1.1  
+  flutter_secure_storage: ^8.0.0   # para guardar token de forma segura
+
 
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.

@@ -2,70 +2,63 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Validator;
-use App\Models\User;
+use Illuminate\Validation\ValidationException;
 
 class AuthController extends Controller
 {
-    // Registro
     public function register(Request $request)
     {
-        $validator = Validator::make($request->all(), [
+        $request->validate([
             'name' => 'required|string|max:255',
-            'email' => 'required|email|unique:users,email',
-            'password' => 'required|string|min:6',
+            'email' => 'required|email|unique:users',
+            'password' => 'required|string|min:6|confirmed' // usar password_confirmation
         ]);
-
-        if ($validator->fails()) {
-            return response()->json(['message' => $validator->errors()->first()], 422);
-        }
 
         $user = User::create([
             'name' => $request->name,
-            'email' => $request->email,
+            'email'=> $request->email,
             'password' => Hash::make($request->password),
         ]);
 
-        $token = $user->createToken('flutter_app')->plainTextToken;
+        $token = $user->createToken('api-token')->plainTextToken;
 
         return response()->json([
             'user' => $user,
             'token' => $token,
-        ], 200); // Forzar código 200
+        ], 201);
     }
 
-    // Login
     public function login(Request $request)
     {
-        $validator = Validator::make($request->all(), [
+        $request->validate([
             'email' => 'required|email',
-            'password' => 'required|string',
+            'password' => 'required'
         ]);
-
-        if ($validator->fails()) {
-            return response()->json(['message' => $validator->errors()->first()], 422);
-        }
 
         $user = User::where('email', $request->email)->first();
 
         if (!$user || !Hash::check($request->password, $user->password)) {
-            return response()->json(['message' => 'Credenciales incorrectas'], 401);
+            throw ValidationException::withMessages([
+                'email' => ['Las credenciales son incorrectas.'],
+            ]);
         }
 
-        $token = $user->createToken('flutter_app')->plainTextToken;
+        $token = $user->createToken('api-token')->plainTextToken;
 
         return response()->json([
             'user' => $user,
             'token' => $token,
-        ], 200); // Forzar código 200
+        ], 200);
     }
 
-    // Logout
     public function logout(Request $request)
     {
+        // Borra el token actual
         $request->user()->currentAccessToken()->delete();
-        return response()->json(['message' => 'Sesión cerrada'], 200);
+
+        return response()->json(['message' => 'Logged out'], 200);
     }
 }

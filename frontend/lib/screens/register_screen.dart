@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
 import '../services/api_service.dart';
+import 'home_screen.dart';
 import 'login_screen.dart';
 
 class RegisterScreen extends StatefulWidget {
+  const RegisterScreen({super.key});
+
   @override
-  _RegisterScreenState createState() => _RegisterScreenState();
+  State<RegisterScreen> createState() => _RegisterScreenState();
 }
 
 class _RegisterScreenState extends State<RegisterScreen> {
@@ -15,48 +18,63 @@ class _RegisterScreenState extends State<RegisterScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('Registro')),
+      appBar: AppBar(title: const Text('Registro')),
       body: Padding(
-        padding: EdgeInsets.all(16),
+        padding: const EdgeInsets.all(16),
         child: Form(
           key: _formKey,
           child: Column(children: [
             TextFormField(
-              decoration: InputDecoration(labelText: 'Nombre'),
+              decoration: const InputDecoration(labelText: 'Nombre'),
               onChanged: (val) => name = val,
-              validator: (val) => val!.isEmpty ? 'Obligatorio' : null,
+              validator: (val) => val == null || val.isEmpty ? 'Obligatorio' : null,
             ),
             TextFormField(
-              decoration: InputDecoration(labelText: 'Email'),
+              decoration: const InputDecoration(labelText: 'Email'),
+              keyboardType: TextInputType.emailAddress,
               onChanged: (val) => email = val,
-              validator: (val) => val!.isEmpty ? 'Obligatorio' : null,
+              validator: (val) {
+                if (val == null || val.isEmpty) return 'Obligatorio';
+                if (!val.contains('@')) return 'Email inválido';
+                return null;
+              },
             ),
             TextFormField(
-              decoration: InputDecoration(labelText: 'Contraseña'),
+              decoration: const InputDecoration(labelText: 'Contraseña'),
               obscureText: true,
               onChanged: (val) => password = val,
-              validator: (val) => val!.isEmpty ? 'Obligatorio' : null,
+              validator: (val) => val == null || val.isEmpty ? 'Obligatorio' : null,
             ),
-            SizedBox(height: 20),
+            const SizedBox(height: 20),
             ElevatedButton(
-              child: Text('Registrar'),
+              child: const Text('Registrar'),
               onPressed: () async {
                 if (_formKey.currentState!.validate()) {
                   ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('Registrando...')));
+                      const SnackBar(content: Text('Registrando...')));
                   final res = await api.register(name, email, password);
 
-                  if (res['token'] != null) {
+                  if (res?['token'] != null) {
                     Navigator.pushReplacement(
-                        context,
-                        MaterialPageRoute(
-                            builder: (_) => LoginScreen()));
+                      context,
+                      MaterialPageRoute(builder: (_) => HomeScreen()),
+                    );
                   } else {
                     ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text(res['message'] ?? 'Error')));
+                      SnackBar(content: Text(res?['message'] ?? 'Error')),
+                    );
                   }
                 }
               },
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => LoginScreen()),
+                );
+              },
+              child: const Text('Ya tienes cuenta? Ingresar'),
             ),
           ]),
         ),

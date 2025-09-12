@@ -1,9 +1,13 @@
 import 'package:flutter/material.dart';
 import '../services/api_service.dart';
+import 'register_screen.dart';
+import 'home_screen.dart';
 
 class LoginScreen extends StatefulWidget {
+  const LoginScreen({super.key});
+
   @override
-  _LoginScreenState createState() => _LoginScreenState();
+  State<LoginScreen> createState() => _LoginScreenState();
 }
 
 class _LoginScreenState extends State<LoginScreen> {
@@ -14,38 +18,62 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('Login')),
+      appBar: AppBar(title: const Text('Login')),
       body: Padding(
-        padding: EdgeInsets.all(16),
+        padding: const EdgeInsets.all(16),
         child: Form(
           key: _formKey,
-          child: Column(children: [
-            TextFormField(
-              decoration: InputDecoration(labelText: 'Email'),
-              onChanged: (val) => email = val,
-              validator: (val) => val!.isEmpty ? 'Obligatorio' : null,
-            ),
-            TextFormField(
-              decoration: InputDecoration(labelText: 'Contraseña'),
-              obscureText: true,
-              onChanged: (val) => password = val,
-              validator: (val) => val!.isEmpty ? 'Obligatorio' : null,
-            ),
-            SizedBox(height: 20),
-            ElevatedButton(
-              child: Text('Login'),
-              onPressed: () async {
-                if (_formKey.currentState!.validate()) {
-                  final res = await api.login(email, password);
-                  if (res['token'] != null) {
-                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Login correcto')));
-                  } else {
-                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(res['message'] ?? 'Error')));
+          child: Column(
+            children: [
+              TextFormField(
+                decoration: const InputDecoration(labelText: 'Email'),
+                keyboardType: TextInputType.emailAddress,
+                onChanged: (val) => email = val,
+                validator: (val) {
+                  if (val == null || val.isEmpty) return 'Obligatorio';
+                  if (!val.contains('@')) return 'Email inválido';
+                  return null;
+                },
+              ),
+              TextFormField(
+                decoration: const InputDecoration(labelText: 'Contraseña'),
+                obscureText: true,
+                onChanged: (val) => password = val,
+                validator: (val) => val == null || val.isEmpty ? 'Obligatorio' : null,
+              ),
+              const SizedBox(height: 20),
+              ElevatedButton(
+                onPressed: () async {
+                  if (_formKey.currentState!.validate()) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Ingresando...')));
+                    final res = await api.login(email, password);
+
+                    if (res?['token'] != null) {
+                      Navigator.pushReplacement(
+                        context,
+                        MaterialPageRoute(builder: (_) => HomeScreen()),
+                      );
+                    } else {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text(res?['message'] ?? 'Error')),
+                      );
+                    }
                   }
-                }
-              },
-            ),
-          ]),
+                },
+                child: const Text('Ingresar'),
+              ),
+              TextButton(
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => RegisterScreen()),
+                  );
+                },
+                child: const Text('No tienes cuenta? Registrate'),
+              ),
+            ],
+          ),
         ),
       ),
     );

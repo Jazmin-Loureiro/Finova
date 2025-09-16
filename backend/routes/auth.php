@@ -1,5 +1,5 @@
 <?php
-
+/*
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\Auth\EmailVerificationNotificationController;
 use App\Http\Controllers\Auth\NewPasswordController;
@@ -24,6 +24,7 @@ Route::post('/reset-password', [NewPasswordController::class, 'store'])
                 ->middleware('guest')
                 ->name('password.store');
 
+
 Route::get('/verify-email/{id}/{hash}', VerifyEmailController::class)
                 ->middleware(['auth', 'signed', 'throttle:6,1'])
                 ->name('verification.verify');
@@ -31,7 +32,9 @@ Route::get('/verify-email/{id}/{hash}', VerifyEmailController::class)
 Route::post('/email/verification-notification', [EmailVerificationNotificationController::class, 'store'])
                 ->middleware(['auth', 'throttle:6,1'])
                 ->name('verification.send');
+                
 
 Route::post('/logout', [AuthenticatedSessionController::class, 'destroy'])
                 ->middleware('auth')
                 ->name('logout');
+ */

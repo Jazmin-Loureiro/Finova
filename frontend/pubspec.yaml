@@ -33,6 +33,9 @@ dependencies:
   http: ^1.1.0
   shared_preferences: ^2.1.1  
   flutter_secure_storage: ^8.0.0   # para guardar token de forma segura
+  image_picker: ^0.8.7+7  # para seleccionar imagenes de la galeria o camara
+  path: ^1.8.3   # <-- agregá esto
+  
 
 
   # The following adds the Cupertino Icons font to your application.

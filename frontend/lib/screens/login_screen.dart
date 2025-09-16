@@ -48,13 +48,17 @@ class _LoginScreenState extends State<LoginScreen> {
                     ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(content: Text('Ingresando...')));
                     final res = await api.login(email, password);
-
+                    
+                    if (!mounted) return; // Verifica que el widget todavía esté montado
+                    
                     if (res?['token'] != null) {
                       Navigator.pushReplacement(
+                        // ignore: use_build_context_synchronously
                         context,
                         MaterialPageRoute(builder: (_) => HomeScreen()),
                       );
                     } else {
+                      // ignore: use_build_context_synchronously
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(content: Text(res?['message'] ?? 'Error')),
                       );

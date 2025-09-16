@@ -1,17 +1,17 @@
-import 'package:flutter/material.dart';
 import '../services/api_service.dart';
+import 'package:flutter/material.dart';
 import 'login_screen.dart';
 
-class HomeScreen extends StatefulWidget { // Pantalla principal después de iniciar sesión
-  const HomeScreen({super.key}); 
+class HomeScreen extends StatefulWidget {
+  const HomeScreen({super.key});
 
   @override
-  State<HomeScreen> createState() => _HomeScreenState(); 
+  State<HomeScreen> createState() => _HomeScreenState();
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  final ApiService api = ApiService(); // Instancia del servicio API 
-  late Future<Map<String, dynamic>?> userFuture; // Futuro para obtener los datos del usuario 
+  final ApiService api = ApiService();
+  late Future<Map<String, dynamic>?> userFuture;
 
   @override
   void initState() {
@@ -21,9 +21,10 @@ class _HomeScreenState extends State<HomeScreen> {
 
   void logout() async {
     await api.logout();
+    if (!mounted) return;
     Navigator.pushReplacement(
       context,
-      MaterialPageRoute(builder: (_) => LoginScreen()),
+      MaterialPageRoute(builder: (_) => const LoginScreen()),
     );
   }
 
@@ -51,20 +52,44 @@ class _HomeScreenState extends State<HomeScreen> {
             return const Center(child: Text('No se pudo cargar el usuario'));
           } else {
             final user = snapshot.data!;
+            final icon = user['icon'] as String?;
+
+      final String? iconUrl = (icon != null && icon.isNotEmpty)
+        ? '$baseUrl/storage/$icon'
+        : null;
+      final name = user['name'] ?? 'Usuario';
+      final email = user['email'] ?? '';
+
             return Padding(
               padding: const EdgeInsets.all(16),
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+                crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  Text('Bienvenido, ${user['name']}!',
-                      style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
+                  CircleAvatar(
+                    radius: 50,
+                    backgroundImage: (iconUrl != null)
+                        ? NetworkImage(iconUrl)
+                        : const AssetImage('assets/default_user.png')
+                            as ImageProvider,
+                  ),
                   const SizedBox(height: 16),
-                  Text('Email: ${user['email']}', style: const TextStyle(fontSize: 18)),
+                  Text(
+                    name,
+                    style: const TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    email,
+                    style: const TextStyle(fontSize: 18, color: Colors.grey),
+                  ),
                   const SizedBox(height: 32),
-                  ElevatedButton.icon(
-                    onPressed: logout,
-                    icon: const Icon(Icons.logout),
-                    label: const Text('Cerrar sesión'),
+                  const Text(
+                    'Aquí va el contenido principal de la app.',
+                    style: TextStyle(fontSize: 16),
+                    textAlign: TextAlign.center,
                   ),
                 ],
               ),

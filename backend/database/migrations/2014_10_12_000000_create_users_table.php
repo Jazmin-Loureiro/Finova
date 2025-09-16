@@ -19,6 +19,9 @@ return new class extends Migration
             $table->string('email')->unique();
             $table->timestamp('email_verified_at')->nullable();
             $table->string('password');
+            $table->string('icon')->nullable(); // nuevo campo
+            $table->string('moneda_base');      // nuevo campo
+            $table->decimal('saldo', 12, 2)->default(0); // nuevo campo
             $table->rememberToken();
             $table->timestamps();
         });

@@ -29,6 +29,33 @@ class User extends Authenticatable implements MustVerifyEmail // añadido MustVe
     ];
 
     /**
+     * Relaciones
+     */
+    public function categories()
+    {
+        return $this->hasMany(Category::class);
+    }
+
+    public function registers()
+    {
+        return $this->hasMany(Register::class);
+    }
+
+    public function moneyMakers()
+    {
+        return $this->hasMany(MoneyMaker::class);
+    }
+    public function goals()
+    {
+        return $this->hasMany(Goal::class);
+    }
+
+    public function challenges() {
+        return $this->belongsToMany(Challenge::class, 'UserChallenge', 'user_id', 'challenge_id')
+                    ->withPivot('balance', 'state');
+    }
+
+    /**
      * The attributes that should be hidden for serialization.
      *
      * @var array<int, string>

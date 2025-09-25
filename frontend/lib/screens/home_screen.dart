@@ -1,6 +1,8 @@
 import '../services/api_service.dart';
 import 'package:flutter/material.dart';
 import 'login_screen.dart';
+import '../widgets/casa_widget.dart';
+import '../widgets/navigation_bar.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -31,8 +33,13 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      extendBody: true,
+      extendBodyBehindAppBar: true, 
+      backgroundColor: Colors.transparent,
       appBar: AppBar(
         title: const Text('Home'),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
         actions: [
           IconButton(
             icon: const Icon(Icons.logout),
@@ -53,49 +60,82 @@ class _HomeScreenState extends State<HomeScreen> {
           } else {
             final user = snapshot.data!;
             final icon = user['icon'] as String?;
+            final String? iconUrl = (icon != null && icon.isNotEmpty)
+                ? '$baseUrl/storage/$icon'
+                : null;
+            final name = user['name'] ?? 'Usuario';
+            final email = user['email'] ?? '';
 
-      final String? iconUrl = (icon != null && icon.isNotEmpty)
-        ? '$baseUrl/storage/$icon'
-        : null;
-      final name = user['name'] ?? 'Usuario';
-      final email = user['email'] ?? '';
+            return Stack(
+              children: [
+                // Fondo (CasaWidget)
+                const CasaWidget(),
 
-            return Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  CircleAvatar(
-                    radius: 50,
-                    backgroundImage: (iconUrl != null)
-                        ? NetworkImage(iconUrl)
-                        : const AssetImage('assets/default_user.png')
-                            as ImageProvider,
-                  ),
-                  const SizedBox(height: 16),
-                  Text(
-                    name,
-                    style: const TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
+                // Contenido
+                SafeArea(
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.all(16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        const SizedBox(height: 16),
+                        CircleAvatar(
+                          radius: 50,
+                          backgroundImage: (iconUrl != null)
+                              ? NetworkImage(iconUrl)
+                              : const AssetImage('assets/default_user.png')
+                                  as ImageProvider,
+                        ),
+                        const SizedBox(height: 16),
+                        Text(
+                          name,
+                          style: const TextStyle(
+                            fontSize: 24,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          email,
+                          style: const TextStyle(
+                            fontSize: 18, color: Colors.grey),
+                        ),
+                        const SizedBox(height: 32),
+                        const Text(
+                          'Aquí va el contenido principal de la app.',
+                          style: TextStyle(fontSize: 16),
+                          textAlign: TextAlign.center,
+                        ),
+                        const SizedBox(height: 16),
+                      ],
                     ),
                   ),
-                  const SizedBox(height: 8),
-                  Text(
-                    email,
-                    style: const TextStyle(fontSize: 18, color: Colors.grey),
-                  ),
-                  const SizedBox(height: 32),
-                  const Text(
-                    'Aquí va el contenido principal de la app.',
-                    style: TextStyle(fontSize: 16),
-                    textAlign: TextAlign.center,
-                  ),
-                ],
-              ),
+                ),
+              ],
             );
           }
         },
+      ),
+
+      // 👇 Menú inferior fijo
+      bottomNavigationBar: BottomAppBar(
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceAround,
+          children: [
+            IconButton(
+              onPressed: () {}, // después le das acción
+              icon: const Icon(Icons.home),
+            ),
+            IconButton(
+              onPressed: () {},
+              icon: const Icon(Icons.bar_chart),
+            ),
+            IconButton(
+              onPressed: () {},
+              icon: const Icon(Icons.person),
+            ),
+          ],
+        ),
       ),
     );
   }

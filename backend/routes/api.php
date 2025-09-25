@@ -2,6 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\HouseController;
 
 // Rutas públicas
 // Registro y login
@@ -24,4 +25,8 @@ Route::middleware('auth:sanctum')->group(function () {
     // Reenviar email de verificación que todavia no se usa
     Route::post('/email/resend', [AuthController::class, 'resendVerification'])
         ->name('verification.send');
+
+    // Obtener estado de la casa
+    Route::get('/house-status', [HouseController::class, 'getHouseStatus']);
+
 });

@@ -33,7 +33,7 @@ class Register extends Model
 
     public function categories()
     {
-        return $this->hasMany(Category::class);
+        return $this->belongsTo(Category::class); // Una categoría puede tener muchos registros
     }
 
     public function moneyMakers()

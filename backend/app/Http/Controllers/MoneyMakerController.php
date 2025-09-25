@@ -12,9 +12,11 @@ class MoneyMakerController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function index()
-    {
-        //
+    public function index(Request $request) {
+        $moneyMakers = MoneyMaker::where('user_id', $request->user()->id)->get();
+        return response()->json([
+            'moneyMakers' => $moneyMakers
+        ], 200);
     }
 
     /**
@@ -23,9 +25,26 @@ class MoneyMakerController extends Controller
      * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\Response
      */
-    public function store(Request $request)
-    {
-        //
+    public function store(Request $request) {
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'type' => 'required|string|max:255',
+            'balance' => 'required|numeric|min:0',
+            'typeMoney' => 'required|string',
+            'color' => 'required|string',
+        ]);
+        //$moneyMaker = new moneyMaker();
+        $moneyMaker = $request->user()->moneyMakers()->create([
+            'name' => $request->name,
+            'type' => $request->type,
+            'balance' => $request->balance,
+            'typeMoney' => $request->typeMoney,
+            'color' => $request->color,
+        ]);
+
+        return response()->json([
+            'message' => 'Fuente de pago creada con éxito',
+            'data' => $moneyMaker], 201);
     }
 
     /**

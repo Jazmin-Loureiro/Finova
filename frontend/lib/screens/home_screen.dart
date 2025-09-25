@@ -1,6 +1,8 @@
-import '../services/api_service.dart';
 import 'package:flutter/material.dart';
+import '../services/api_service.dart';
 import 'login_screen.dart';
+import 'transaction_form_screen.dart';
+import 'money_maker_list_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -28,16 +30,55 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  void openOptions (BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      builder: (context) {
+        return Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              title: const Text('Ingreso'),
+              onTap: () {
+                Navigator.pop(context);
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) =>
+                        TransactionFormScreen(type: 'income'),
+                  ),
+                );
+              },
+            ),
+            ListTile(
+              title: const Text('Gasto'),
+              onTap: () {
+                Navigator.pop(context);
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) =>
+                        TransactionFormScreen(type: 'expense'),
+                  ),
+                );
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      extendBody: true,
       appBar: AppBar(
         title: const Text('Home'),
         actions: [
           IconButton(
             icon: const Icon(Icons.logout),
             onPressed: logout,
-            tooltip: 'Cerrar sesión',
           ),
         ],
       ),
@@ -53,12 +94,11 @@ class _HomeScreenState extends State<HomeScreen> {
           } else {
             final user = snapshot.data!;
             final icon = user['icon'] as String?;
-
-      final String? iconUrl = (icon != null && icon.isNotEmpty)
-        ? '$baseUrl/storage/$icon'
-        : null;
-      final name = user['name'] ?? 'Usuario';
-      final email = user['email'] ?? '';
+            final String? iconUrl = (icon != null && icon.isNotEmpty)
+                ? '$baseUrl/storage/$icon'
+                : null;
+            final name = user['name'] ?? 'Usuario';
+            final email = user['email'] ?? '';
 
             return Padding(
               padding: const EdgeInsets.all(16),
@@ -96,6 +136,46 @@ class _HomeScreenState extends State<HomeScreen> {
             );
           }
         },
+      ),
+      bottomNavigationBar: BottomAppBar(
+        shape: const CircularNotchedRectangle(),
+        notchMargin: 8.0,
+        color: Colors.white,
+        elevation: 10,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 20),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              IconButton(
+                icon: const Icon(Icons.flag, color: Colors.deepPurpleAccent),
+                onPressed: () {
+                  // Navegar a Metas
+                },
+              ),
+              IconButton(
+                icon: const Icon(Icons.account_balance_wallet,
+                    color: Colors.deepPurpleAccent),
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                        builder: (context) => MoneyMakerListScreen()),
+                  );
+                },
+              ),
+            ],
+          ),
+        ),
+      ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          openOptions(context);
+        },
+        backgroundColor: Colors.deepPurple,
+        elevation: 4,
+        child: const Icon(Icons.add, size: 32, color: Colors.white),
       ),
     );
   }

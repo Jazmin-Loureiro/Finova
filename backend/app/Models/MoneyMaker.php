@@ -15,6 +15,7 @@ class MoneyMaker extends Model
         'type',
         'balance',
         'typeMoney',
+        'color',
     ];
 
     /**

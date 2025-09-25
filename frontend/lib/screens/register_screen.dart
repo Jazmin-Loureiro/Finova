@@ -17,11 +17,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final _formKey = GlobalKey<FormState>();
 
   String name = '', email = '', password = '';
-  String monedaBase = 'USD';
-  String saldoStr = '';
+  String currencyBase = 'USD';
+  String balanceStr = '';
   File? icon;
 
-  final List<String> monedas = ['USD', 'ARG', 'EUR'];
+  final List<String> currencyBases = ['USD', 'ARG', 'EUR'];
   final ImagePicker _picker = ImagePicker();
 
   // Función para seleccionar imagen
@@ -97,12 +97,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 const SizedBox(height: 16),
 
                 DropdownButtonFormField<String>(
-                  value: monedaBase,
-                  items: monedas
+                  initialValue: currencyBase,
+                  items: currencyBases
                       .map((m) => DropdownMenuItem(value: m, child: Text(m)))
                       .toList(),
                   onChanged: (val) {
-                    if (val != null) monedaBase = val;
+                    if (val != null) currencyBase = val;
                   },
                   decoration: const InputDecoration(labelText: 'Moneda Base'),
                   validator: (val) =>
@@ -113,7 +113,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   decoration: const InputDecoration(
                       labelText: 'Saldo Inicial (opcional)'),
                   keyboardType: TextInputType.number,
-                  onChanged: (val) => saldoStr = val,
+                  onChanged: (val) => balanceStr = val,
                 ),
 
                 const SizedBox(height: 20),
@@ -122,33 +122,29 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   child: const Text('Registrar'),
                   onPressed: () async {
                     if (_formKey.currentState!.validate()) {
+                      
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(content: Text('Registrando...')),
                       );
 
-                      final double saldo = double.tryParse(saldoStr) ?? 0;
+                      final double balance = double.tryParse(balanceStr) ?? 0;
 
-                      final res = await api.register(
+                      await api.register(
                       name,
                       email,
                       password,
-                      monedaBase: monedaBase,
-                      saldo: saldo,
-                      icon: icon, // <-- cambiar iconFile por icon
+                      currencyBase: currencyBase,
+                      balance: balance,
+                      icon: icon, 
                     );
 
-
                       if (!mounted) return;
-
-                      // Mostramos mensaje de verificación de email
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(
                           content: Text(
                               'Registro exitoso. Por favor, verifique su email antes de iniciar sesión.'),
                         ),
                       );
-
-                      // Redirigimos al LoginScreen
                       Navigator.pushReplacement(
                         context,
                         MaterialPageRoute(

@@ -34,7 +34,10 @@ dependencies:
   shared_preferences: ^2.1.1  
   flutter_secure_storage: ^8.0.0   # para guardar token de forma segura
   image_picker: ^0.8.7+7  # para seleccionar imagenes de la galeria o camara
-  path: ^1.8.3   # <-- agregá esto
+  path: ^1.8.3   # para manejar rutas de archivos
+  file_picker: ^8.0.0 # para seleccionar archivos de cualquier tipo
+  flutter_colorpicker: ^1.0.3 # para seleccionar colores
+  fl_chart: ^0.69.0 # para graficos
   flutter_svg: ^2.1.1  # para manejar imagenes SVG
   
 

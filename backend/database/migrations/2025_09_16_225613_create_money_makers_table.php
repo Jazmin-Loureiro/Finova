@@ -20,6 +20,8 @@ return new class extends Migration
             $table->string('type');
             $table->decimal('balance', 12, 2)->default(0);
             $table->string('typeMoney');
+            $table->string('color')->nullable(); // Nueva columna para el color
+
             $table->timestamps();
         });
     }

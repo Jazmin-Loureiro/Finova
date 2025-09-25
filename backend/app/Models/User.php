@@ -24,8 +24,8 @@ class User extends Authenticatable implements MustVerifyEmail // añadido MustVe
         'email',
         'password',
         'icon',
-        'moneda_base',
-        'saldo',
+        'currencyBase',
+        'balance',
     ];
 
     /**

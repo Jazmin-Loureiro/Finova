@@ -10,20 +10,33 @@ class HouseController extends Controller
     public function getHouseStatus()
     {
         $user = Auth::user();
+        $house = $user->house; // relación 1 a 1
 
-        // --- TEST ---
-        $balance = 00; // cambiar para probar diferentes estados
+        //$balance = $user->balance; SE USARIA ASI SI EL BALANCE DE USUARIO SE ACTUALIZARA EN LA BASE DE DATOS CADA VEZ QUE SE REGISTRA UN NUEVO INGRESO O GASTO Y BAJA
 
-        // --- REAL ---
-        /*
-        $ingresos = $user->transactions()->where('tipo', 'ingreso')->sum('monto');
-        $gastos = $user->transactions()->where('tipo', 'gasto')->sum('monto');
-        $balance = $ingresos - $gastos;
-        */
+        //$ingresos = $user->registers()->where('type', 'income')->sum('balance');
+        //$gastos   = $user->registers()->where('type', 'expense')->sum('balance');
+        //$balance  = $ingresos - $gastos;
+
+        $balance = (float) $user->moneyMakers()->sum('balance');
+
+        //$balance = (float) ($user->moneyMakers()->sum('balance') ?? 0);
+        //siempre se devuelva numérico aunque el resultado sea null EN
+        //CASO DE QUE AL REGISTRARSE SE PERMITA DEJAR VACIO ESE PARAMETRO
+
+
+
+        // Reglas de desbloqueo
+        if ($balance >= 1000 && !$house->unlocked_second_floor) {
+            $house->update(['unlocked_second_floor' => true]);
+        }
+        if ($balance >= 3000 && !$house->unlocked_garage) {
+            $house->update(['unlocked_garage' => true]);
+        }
 
         $desbloqueado = [
-            'segundo_piso' => true,
-            'garage'       => true,
+            'segundo_piso' => $house->unlocked_second_floor,
+            'garage'       => $house->unlocked_garage,
         ];
 
         return response()->json([
@@ -165,53 +178,44 @@ class HouseController extends Controller
             $capas[] = 'suelos/pasto-seco/hierbas-secas1.svg';
             $capas[] = 'suelos/pasto-seco/hierbas-secas2.svg';
             $capas[] = 'suelos/pasto-seco/hierbas-secas3.svg';
-        }
-        elseif ($balance < 300) {
+        } elseif ($balance < 300) {
             $capas[] = 'suelos/pasto-seco/pasto-seco.png';
             $capas[] = 'suelos/pasto-seco/hierbas-secas1.svg';
-        }
-        elseif ($balance < 600) {
+        } elseif ($balance < 600) {
             $capas[] = 'suelos/pasto-seco/pasto-seco.png';
             $capas[] = 'suelos/pasto-seco/hierbas-secas1.svg';
             $capas[] = 'suelos/pasto-seco/hierbas-secas2.svg';
-        }
-        elseif ($balance < 1000) {
+        } elseif ($balance < 1000) {
             $capas[] = 'suelos/pasto-seco/pasto-seco.png';
             $capas[] = 'suelos/pasto-seco/hierbas-secas1.svg';
             $capas[] = 'suelos/pasto-seco/hierbas-secas2.svg';
             $capas[] = 'suelos/pasto-seco/hierbas-secas3.svg';
-        }
-        elseif ($balance < 1500) {
+        } elseif ($balance < 1500) {
             $capas[] = 'suelos/pasto-florecido/pasto-florecido.png';
             $capas[] = 'suelos/pasto-florecido/arbusto1.svg';
-        }
-        elseif ($balance < 2000) {
+        } elseif ($balance < 2000) {
             $capas[] = 'suelos/pasto-florecido/pasto-florecido.png';
             $capas[] = 'suelos/pasto-florecido/arbusto1.svg';
             $capas[] = 'suelos/pasto-florecido/arbusto2.svg';
-        }
-        elseif ($balance < 2500) {
+        } elseif ($balance < 2500) {
             $capas[] = 'suelos/pasto-florecido/pasto-florecido.png';
             $capas[] = 'suelos/pasto-florecido/arbusto1.svg';
             $capas[] = 'suelos/pasto-florecido/arbusto2.svg';
             $capas[] = 'suelos/pasto-florecido/arbusto3.svg';
-        }
-        elseif ($balance < 3000) {
+        } elseif ($balance < 3000) {
             $capas[] = 'suelos/pasto-florecido/pasto-florecido.png';
             $capas[] = 'suelos/pasto-florecido/arbusto1.svg';
             $capas[] = 'suelos/pasto-florecido/arbusto2.svg';
             $capas[] = 'suelos/pasto-florecido/arbusto3.svg';
             $capas[] = 'suelos/pasto-florecido/arbusto4.svg';
-        }
-        elseif ($balance < 4000) {
+        } elseif ($balance < 4000) {
             $capas[] = 'suelos/pasto-florecido/pasto-florecido.png';
             $capas[] = 'suelos/pasto-florecido/arbusto1.svg';
             $capas[] = 'suelos/pasto-florecido/arbusto2.svg';
             $capas[] = 'suelos/pasto-florecido/arbusto3.svg';
             $capas[] = 'suelos/pasto-florecido/arbusto4.svg';
             $capas[] = 'suelos/pasto-florecido/flores1.svg';
-        }
-        elseif ($balance < 5000) {
+        } elseif ($balance < 5000) {
             $capas[] = 'suelos/pasto-florecido/pasto-florecido.png';
             $capas[] = 'suelos/pasto-florecido/arbusto1.svg';
             $capas[] = 'suelos/pasto-florecido/arbusto2.svg';
@@ -219,8 +223,7 @@ class HouseController extends Controller
             $capas[] = 'suelos/pasto-florecido/arbusto4.svg';
             $capas[] = 'suelos/pasto-florecido/flores1.svg';
             $capas[] = 'suelos/pasto-florecido/flores2.svg';
-        }
-        else {
+        } else {
             $capas[] = 'suelos/pasto-florecido/pasto-florecido.png';
             $capas[] = 'suelos/pasto-florecido/arbusto1.svg';
             $capas[] = 'suelos/pasto-florecido/arbusto2.svg';

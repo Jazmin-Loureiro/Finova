@@ -39,7 +39,7 @@ dependencies:
   flutter_colorpicker: ^1.0.3 # para seleccionar colores
   fl_chart: ^0.69.0 # para graficos
   flutter_svg: ^2.1.1  # para manejar imagenes SVG
-  
+  lottie: ^3.1.2 # para animaciones
 
 
   # The following adds the Cupertino Icons font to your application.
@@ -79,6 +79,8 @@ flutter:
     - assets/suelos/
     - assets/suelos/pasto-florecido/
     - assets/suelos/pasto-seco/
+    - assets/lottie/home_loading1.json
+    - assets/lottie/home_loading2.json
   
 
   # An image asset can refer to one or more resolution-specific "variants", see

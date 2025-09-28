@@ -53,10 +53,12 @@ class _LoginScreenState extends State<LoginScreen> {
                     
                     if (res?['token'] != null) {
                       Navigator.pushReplacement(
-                        // ignore: use_build_context_synchronously
-                        context,
-                        MaterialPageRoute(builder: (_) => HomeScreen()),
-                      );
+  context,
+  MaterialPageRoute(
+    builder: (_) => const HomeScreen(showSuccessDialog: true),
+  ),
+);
+
                     } else {
                       // ignore: use_build_context_synchronously
                       ScaffoldMessenger.of(context).showSnackBar(

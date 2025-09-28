@@ -50,6 +50,11 @@ class User extends Authenticatable implements MustVerifyEmail // añadido MustVe
         return $this->hasMany(Goal::class);
     }
 
+    public function house()
+    {
+        return $this->hasOne(House::class);
+    }
+
     public function challenges() {
         return $this->belongsToMany(Challenge::class, 'UserChallenge', 'user_id', 'challenge_id')
                     ->withPivot('balance', 'state');

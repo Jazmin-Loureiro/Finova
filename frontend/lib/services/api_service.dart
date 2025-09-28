@@ -5,8 +5,9 @@ import 'package:http/http.dart' as http;
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 import '../models/money_maker.dart';
+
 // URLs base
-const String baseUrl = "http://192.168.0.162:8000";
+const String baseUrl = "http://192.168.1.113:8000";
 //const String baseUrl = "http://192.168.0.162:8000"; guardo el mio je
 const String apiUrl = "$baseUrl/api";
 
@@ -50,7 +51,7 @@ class ApiService {
         ));
       }
 
-      final streamedResponse = await request.send(); // Enviar la solicitud a la API
+      final streamedResponse = await request.send();
       final res = await http.Response.fromStream(streamedResponse);
 
       if (res.statusCode == 200 || res.statusCode == 201) {
@@ -94,7 +95,19 @@ class ApiService {
       headers: jsonHeaders(token),
     );
 
-    if (res.statusCode == 200) return jsonDecode(res.body);
+    if (res.statusCode == 200) {
+      final Map<String, dynamic> user = jsonDecode(res.body);
+
+      // 👇 agrego la URL completa del icono
+      final icon = user['icon'] as String?;
+      final fullIconUrl =
+          (icon != null && icon.isNotEmpty) ? '$baseUrl/storage/$icon' : null;
+
+      return {
+        ...user,
+        'full_icon_url': fullIconUrl,
+      };
+    }
     return null;
   }
 
@@ -111,7 +124,91 @@ class ApiService {
     await storage.delete(key: 'token');
   }
 
-    // Obtener estado de la casa
+  ///////////////////////////////////////////////////////////////// Actualizar usuario
+  Future<Map<String, dynamic>?> updateUser({
+  String? name,
+  String? email,
+  String? password,
+  String? passwordConfirmation,
+  String? currencyBase,
+  double? balance,
+  File? icon,
+}) async {
+  final token = await storage.read(key: 'token');
+  if (token == null) return null;
+
+  try {
+    final uri = Uri.parse('$apiUrl/user');
+    var request = http.MultipartRequest('POST', uri) // 👈 cambio a POST
+      ..headers['Authorization'] = 'Bearer $token'
+      ..fields['_method'] = 'PUT'; // 👈 hack para Laravel
+
+    if (name != null) request.fields['name'] = name;
+    if (email != null) request.fields['email'] = email;
+    if (password != null) {
+      request.fields['password'] = password;
+      request.fields['password_confirmation'] =
+          passwordConfirmation ?? password;
+    }
+    if (currencyBase != null) request.fields['currencyBase'] = currencyBase;
+    if (balance != null) request.fields['balance'] = balance.toString();
+
+    if (icon != null) {
+      request.files.add(await http.MultipartFile.fromPath(
+        'icon',
+        icon.path,
+        filename: basename(icon.path),
+      ));
+    }
+
+    final streamedResponse = await request.send();
+    final res = await http.Response.fromStream(streamedResponse);
+
+    if (res.statusCode == 200) {
+      final Map<String, dynamic> user = jsonDecode(res.body)['user'];
+
+      final icon = user['icon'] as String?;
+      final fullIconUrl =
+          (icon != null && icon.isNotEmpty) ? '$baseUrl/storage/$icon' : null;
+
+      return {
+        ...jsonDecode(res.body),
+        'user': {
+          ...user,
+          'full_icon_url': fullIconUrl,
+        },
+      };
+    } else {
+      try {
+        return jsonDecode(res.body);
+      } catch (_) {
+        return {'error': 'Error al actualizar usuario'};
+      }
+    }
+  } catch (e) {
+    return {'error': 'No se pudo conectar con el servidor'};
+  }
+}
+
+
+  ///////////////////////////////////////////////////////////////// Eliminar usuario
+  Future<bool> deleteUser() async {
+    final token = await storage.read(key: 'token');
+    if (token == null) return false;
+
+    final res = await http.delete(
+      Uri.parse('$apiUrl/user'),
+      headers: jsonHeaders(token),
+    );
+
+    if (res.statusCode == 200) {
+      await storage.delete(key: 'token');
+      return true;
+    }
+    return false;
+  }
+
+  ///////////////////////////////////////// Obtener estado de la casa
   Future<Map<String, dynamic>> getHouseStatus() async {
     final token = await storage.read(key: 'token');
     if (token == null) throw Exception('Usuario no logueado');

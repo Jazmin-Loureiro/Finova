@@ -33,6 +33,13 @@ class AuthController extends Controller {
             'currencyBase' => $request->currencyBase,
             'balance' => $request->balance ?? 0,
         ]);
+
+        // Crear la casa del usuario
+        $user->house()->create([
+            'unlocked_second_floor' => false,
+            'unlocked_garage' => false,
+        ]);
+
         event(new Registered($user));
         $user->moneyMakers()->create([
             'name' => 'Efectivo',

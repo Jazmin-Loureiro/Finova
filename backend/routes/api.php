@@ -6,6 +6,8 @@ use App\Http\Controllers\HouseController;
 use App\Http\Controllers\MoneyMakerController; // Importar el controlador
 use App\Http\Controllers\CategoryController; // Importar el controlador
 use App\Http\Controllers\RegisterController;
+use App\Http\Controllers\UserController;
+
 // Rutas públicas
 // Registro y login
 Route::post('/register', [AuthController::class, 'register']);
@@ -22,6 +24,10 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/user', [AuthController::class, 'user']);
     // Logout
     Route::post('/logout', [AuthController::class, 'logout']);
+    // Actualizar usuario
+    Route::put('/user', [UserController::class, 'update']);
+    // Eliminar usuario
+    Route::delete('/user', [UserController::class, 'destroy']);
 /////////////////////////////////////////////////////////////////////////////////
     //Registrar Ingreso o Gasto
     Route::post('/transactions', [RegisterController::class, 'store']);

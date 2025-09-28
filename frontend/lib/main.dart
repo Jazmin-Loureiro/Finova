@@ -5,7 +5,7 @@ import 'services/api_service.dart';
 
 // Punto de entrada de la aplicación
 void main() {
-  runApp(const MyApp()); // Lanza la app y muestra MyApp
+  runApp(const MyApp());
 }
 
 // Widget raíz de la aplicación
@@ -15,13 +15,45 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Finova: Gestiona Tus finanzas', // Título de la app (para Android task manager, etc.)
-      theme: ThemeData(
-        primarySwatch: Colors.purple, // Tema principal con color púrpura
-      ),
-      debugShowCheckedModeBanner: false, // Quita la etiqueta "Debug" de la esquina
-      home: const SplashScreen(), // Pantalla inicial al abrir la app
-    );
+  title: 'Finova',
+
+  // 🎨 Tema claro
+  theme: ThemeData(
+  colorScheme: const ColorScheme.light(
+    primary: Colors.deepPurple,
+    onPrimary: Colors.white,
+    secondary: Color(0xFF9575CD),
+    onSecondary: Colors.white,
+    surface: Colors.white,      // superficies claras
+    onSurface: Colors.black,
+  ),
+  scaffoldBackgroundColor: const Color.fromARGB(255, 232, 229, 229), // fondo general CREMITA
+  useMaterial3: true,
+),
+
+darkTheme: ThemeData(
+  colorScheme: const ColorScheme.dark(
+    primary: Colors.deepPurple, // violeta claro
+    onPrimary: Colors.black,
+    secondary: Color(0xFF9575CD),
+    onSecondary: Colors.white,
+    surface: Color(0xFF121212), // 👈 NEGRO para barras/cards
+    onSurface: Colors.white,
+  ),
+  scaffoldBackgroundColor: Color.fromARGB(255, 48, 48, 48), // 👈 fondo más CLARO, GRIS CLARO
+  useMaterial3: true,
+),
+
+
+
+  // 👇 Usa el tema según el sistema
+  themeMode: ThemeMode.system,
+
+  debugShowCheckedModeBanner: false,
+  home: const SplashScreen(),
+);
+
+
   }
 }
 
@@ -30,43 +62,37 @@ class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
 
   @override
-  State<SplashScreen> createState() => _SplashScreenState(); // Crea el estado asociado a esta pantalla 
+  State<SplashScreen> createState() => _SplashScreenState();
 }
 
-// Estado de SplashScreen (maneja la lógica)
 class _SplashScreenState extends State<SplashScreen> {
-  final ApiService api = ApiService(); // Instancia del servicio de API para manejar autenticación y usuario 
+  final ApiService api = ApiService();
 
   @override
-  void initState() { // Método que se llama al crear el estado 
-    super.initState(); // Llama al initState del padre 
-    _checkLogin(); // Se ejecuta apenas se crea la pantalla
+  void initState() {
+    super.initState();
+    _checkLogin();
   }
 
-  // Verifica si el usuario está logueado o no
   void _checkLogin() async {
-    final user = await api.getUser(); // Llama al backend o storage para obtener el usuario
-     // Verifica que el widget todavía esté montado
-  if (!mounted) return;
-  
+    final user = await api.getUser();
+    if (!mounted) return;
+
     if (user != null) {
-      // Si hay usuario, navega al Home
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (_) => HomeScreen()),
+        MaterialPageRoute(builder: (_) => const HomeScreen()),
       );
     } else {
-      // Si no hay usuario, navega al Login
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (_) => LoginScreen()),
+        MaterialPageRoute(builder: (_) => const LoginScreen()),
       );
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    // Mientras se verifica el login, muestra un loader en el centro
     return const Scaffold(
       body: Center(child: CircularProgressIndicator()),
     );

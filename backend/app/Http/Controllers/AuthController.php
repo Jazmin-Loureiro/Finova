@@ -38,7 +38,7 @@ class AuthController extends Controller {
             'name' => 'Efectivo',
             'type' => 'Efectivo',
             'balance' => $request->balance ?? 0,
-            'typeMoney' => 'ARS',
+            'typeMoney' => $request->currencyBase, // Moneda base del usuario
             'color' => '#4CAF50',
             ]);
         // Crear categorías por defecto usando el servicio

@@ -26,7 +26,7 @@ class _LoginScreenState extends State<LoginScreen> {
           child: Column(
             children: [
               TextFormField(
-                decoration: const InputDecoration(labelText: 'Email'),
+                decoration: const InputDecoration(labelText: 'Email',border: OutlineInputBorder()),
                 keyboardType: TextInputType.emailAddress,
                 onChanged: (val) => email = val,
                 validator: (val) {
@@ -35,13 +35,14 @@ class _LoginScreenState extends State<LoginScreen> {
                   return null;
                 },
               ),
+              const SizedBox(height: 16),
               TextFormField(
-                decoration: const InputDecoration(labelText: 'Contraseña'),
+                decoration: const InputDecoration(labelText: 'Contraseña', border: OutlineInputBorder()),
                 obscureText: true,
                 onChanged: (val) => password = val,
                 validator: (val) => val == null || val.isEmpty ? 'Obligatorio' : null,
               ),
-              const SizedBox(height: 20),
+              const SizedBox(height: 16),
               ElevatedButton(
                 onPressed: () async {
                   if (_formKey.currentState!.validate()) {

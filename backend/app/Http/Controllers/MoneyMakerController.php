@@ -3,20 +3,53 @@
 namespace App\Http\Controllers;
 
 use App\Models\moneyMaker;
+use App\Models\Currency;
 use Illuminate\Http\Request;
+use App\Services\CurrencyService;
 
 class MoneyMakerController extends Controller
 {
     /**
      * Display a listing of the resource.
-     *
+     * Lista todas las fuentes de dinero del usuario con el balance convertido a su moneda base
      * @return \Illuminate\Http\Response
      */
     public function index(Request $request) {
-        $moneyMakers = MoneyMaker::where('user_id', $request->user()->id)->get();
-        return response()->json([
-            'moneyMakers' => $moneyMakers
-        ], 200);
+        $user = $request->user();
+        $toCurrency = $user->currencyBase; // moneda base del usuario
+        $moneyMakers = $user->moneyMakers; // obtengo todas las fuentes de dinero del usuario
+        $totalInBase = 0; // saldo total en moneda base
+        $result = $moneyMakers->map(function ($m) use ($toCurrency, &$totalInBase) { // paso $totalInBase por referencia
+            $fromCurrency = $m->typeMoney; // moneda del MoneyMaker
+            $rate = $fromCurrency === $toCurrency
+                ? 1.0
+                : CurrencyService::getRate($fromCurrency, $toCurrency); // obtengo la tasa
+
+            $balanceConverted = $m->balance * $rate; // convierto el balance a la moneda base
+            $totalInBase += $balanceConverted; // acumulo al total en moneda base 
+
+             $currency = Currency::where('code', $fromCurrency)->first(); // busco el símbolo de la moneda del MoneyMaker
+
+            return [ // retorno los datos del MoneyMaker junto con el balance convertido
+                'id' => $m->id,
+                'name' => $m->name,
+                'type' => $m->type,
+                'balance' => $m->balance,
+                'typeMoney' => $fromCurrency,
+                'balanceConverted' => round($balanceConverted, 2),
+                'currencySymbol' => $currency ? $currency->symbol : '',
+                'color' => $m->color,
+            ];
+        });
+        // Busco el símbolo de la moneda base
+         $currency = Currency::where('code', $toCurrency)->first();
+
+        return response()->json([ // retorno el listado junto con el total en moneda base
+            'total_in_base' => round($totalInBase, 2),
+            'currency_base' => $toCurrency,
+            'currency_symbol' => $currency ? $currency->symbol : '',
+            'moneyMakers' => $result,
+        ]);
     }
 
     /**
@@ -25,6 +58,7 @@ class MoneyMakerController extends Controller
      * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\Response
      */
+    
     public function store(Request $request) {
         $request->validate([
             'name' => 'required|string|max:255',
@@ -33,19 +67,44 @@ class MoneyMakerController extends Controller
             'typeMoney' => 'required|string',
             'color' => 'required|string',
         ]);
-        //$moneyMaker = new moneyMaker();
-        $moneyMaker = $request->user()->moneyMakers()->create([
+
+        $user = $request->user();
+        $fromCurrency = $request->typeMoney;      // moneda del MoneyMaker
+        $toCurrency   = $user->currencyBase;     // moneda base del usuario
+        // Calcular tasa
+        if ($fromCurrency === $toCurrency) {
+            $rate = 1.0;
+        } else {
+            $rate = CurrencyService::getRate($fromCurrency, $toCurrency);
+        }
+        $convertedBalance = $request->balance * $rate;
+        // Crear MoneyMaker en la DB (siempre en su moneda original)
+        $moneyMaker = $user->moneyMakers()->create([
             'name' => $request->name,
             'type' => $request->type,
-            'balance' => $request->balance,
-            'typeMoney' => $request->typeMoney,
+            'balance' => $request->balance,   // monto original
+            'typeMoney' => $fromCurrency,     // moneda original
             'color' => $request->color,
         ]);
+        $user->balance=(float) $user->balance + (float)$convertedBalance; // actualizar saldo del usuario
+        $user->save();
 
         return response()->json([
             'message' => 'Fuente de pago creada con éxito',
-            'data' => $moneyMaker], 201);
+            'moneyMaker' => [
+                'id' => $moneyMaker->id,
+                'name' => $moneyMaker->name,
+                'type' => $moneyMaker->type,
+                'balance' => $moneyMaker->balance,
+                'typeMoney' => $moneyMaker->typeMoney,
+                'balance_converted' => $convertedBalance, // saldo convertido a moneda base 
+                'currencyBase' => $toCurrency, // moneda base del usuario
+                'color' => $moneyMaker->color,
+            ],
+            'user_balance' => $user->balance,
+        ], 201);
     }
+
 
     /**
      * Display the specified resource.

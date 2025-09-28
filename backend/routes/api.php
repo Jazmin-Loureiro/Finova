@@ -5,10 +5,17 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\MoneyMakerController; // Importar el controlador
 use App\Http\Controllers\CategoryController; // Importar el controlador
 use App\Http\Controllers\RegisterController;
+
+use App\Http\Controllers\CurrencyController;
+
+
 // Rutas públicas
 // Registro y login
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
+// Obtener todas las monedas
+Route::get('/currencies', [CurrencyController::class, 'index']);
+
 
 // Verificación de email
     Route::get('/email/verify/{id}/{hash}', [AuthController::class, 'verifyEmail'])
@@ -16,9 +23,15 @@ Route::post('/login', [AuthController::class, 'login']);
 
 // Rutas protegidas (requieren token)
 Route::middleware('auth:sanctum')->group(function () {
-    
     // Datos del usuario
     Route::get('/user', [AuthController::class, 'user']);
+
+    // Moneda base del usuario
+    Route::get('/userCurrency', function () {
+    return response()->json([
+        'userBaseCurrency' => auth()->user()->currencyBase ,
+    ]);
+});
     // Logout
     Route::post('/logout', [AuthController::class, 'logout']);
 /////////////////////////////////////////////////////////////////////////////////
@@ -34,8 +47,6 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/categories', [CategoryController::class, 'store']);
     // Obtener todas las categorias
     Route::get('/categories', [CategoryController::class, 'index']);
-///////////////////////////////////////////////////////////////////////////////
-
 
 ////////////////////////////////////////////////////////////////////////////////
     // Reenviar email de verificación que todavia no se usa

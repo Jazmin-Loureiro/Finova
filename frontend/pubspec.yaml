@@ -38,7 +38,7 @@ dependencies:
   file_picker: ^8.0.0 # para seleccionar archivos de cualquier tipo
   flutter_colorpicker: ^1.0.3 # para seleccionar colores
   fl_chart: ^0.69.0 # para graficos
-  
+  intl: ^0.18.1 # para formateo de fechas y numeros
 
 
   # The following adds the Cupertino Icons font to your application.

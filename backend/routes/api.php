@@ -2,6 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\HouseController;
 use App\Http\Controllers\MoneyMakerController; // Importar el controlador
 use App\Http\Controllers\CategoryController; // Importar el controlador
 use App\Http\Controllers\RegisterController;
@@ -52,4 +53,8 @@ Route::middleware('auth:sanctum')->group(function () {
     // Reenviar email de verificación que todavia no se usa
     Route::post('/email/resend', [AuthController::class, 'resendVerification'])
         ->name('verification.send');
+
+    // Obtener estado de la casa
+    Route::get('/house-status', [HouseController::class, 'getHouseStatus']);
+
 });

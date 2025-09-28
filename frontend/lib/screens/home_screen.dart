@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import '../services/api_service.dart';
 import 'login_screen.dart';
+import '../widgets/casa_widget.dart';
+import '../widgets/navigation_bar.dart';
 import 'transaction_form_screen.dart';
 import 'money_maker_list_screen.dart';
 
@@ -73,8 +75,12 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       extendBody: true,
+      extendBodyBehindAppBar: true, 
+      backgroundColor: Colors.transparent,
       appBar: AppBar(
         title: const Text('Home'),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
         actions: [
           IconButton(
             icon: const Icon(Icons.logout),
@@ -100,39 +106,52 @@ class _HomeScreenState extends State<HomeScreen> {
             final name = user['name'] ?? 'Usuario';
             final email = user['email'] ?? '';
 
-            return Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  CircleAvatar(
-                    radius: 50,
-                    backgroundImage: (iconUrl != null)
-                        ? NetworkImage(iconUrl)
-                        : const AssetImage('assets/default_user.png')
-                            as ImageProvider,
-                  ),
-                  const SizedBox(height: 16),
-                  Text(
-                    name,
-                    style: const TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
+            return Stack(
+              children: [
+                // Fondo (CasaWidget)
+                const CasaWidget(),
+
+                // Contenido
+                SafeArea(
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.all(16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        const SizedBox(height: 16),
+                        CircleAvatar(
+                          radius: 50,
+                          backgroundImage: (iconUrl != null)
+                              ? NetworkImage(iconUrl)
+                              : const AssetImage('assets/default_user.png')
+                                  as ImageProvider,
+                        ),
+                        const SizedBox(height: 16),
+                        Text(
+                          name,
+                          style: const TextStyle(
+                            fontSize: 24,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          email,
+                          style: const TextStyle(
+                            fontSize: 18, color: Colors.grey),
+                        ),
+                        const SizedBox(height: 32),
+                        const Text(
+                          'Aquí va el contenido principal de la app.',
+                          style: TextStyle(fontSize: 16),
+                          textAlign: TextAlign.center,
+                        ),
+                        const SizedBox(height: 16),
+                      ],
                     ),
                   ),
-                  const SizedBox(height: 8),
-                  Text(
-                    email,
-                    style: const TextStyle(fontSize: 18, color: Colors.grey),
-                  ),
-                  const SizedBox(height: 32),
-                  const Text(
-                    'Aquí va el contenido principal de la app.',
-                    style: TextStyle(fontSize: 16),
-                    textAlign: TextAlign.center,
-                  ),
-                ],
-              ),
+                ),
+              ],
             );
           }
         },

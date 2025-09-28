@@ -111,6 +111,24 @@ class ApiService {
     await storage.delete(key: 'token');
   }
 
+    // Obtener estado de la casa
+  Future<Map<String, dynamic>> getHouseStatus() async {
+    final token = await storage.read(key: 'token');
+    if (token == null) throw Exception('Usuario no logueado');
+
+    final res = await http.get(
+      Uri.parse('$apiUrl/house-status'),
+      headers: jsonHeaders(token),
+    );
+
+    if (res.statusCode == 200) {
+      return jsonDecode(res.body);
+    } else {
+      throw Exception('Error al cargar la casa: ${res.statusCode}');
+    }
+  }
+
+
 ////////////////////////////////////////////////////////////////// Crear transacción ingreso/gasto
 Future<Map<String, dynamic>?> createTransaction(
   String type,

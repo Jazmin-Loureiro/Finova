@@ -5,11 +5,14 @@ import 'package:http/http.dart' as http;
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 import '../models/money_maker.dart';
+import '../models/currency.dart';
 
 // URLs base
 const String baseUrl = "http://192.168.1.113:8000";
 //const String baseUrl = "http://192.168.0.162:8000"; guardo el mio je
 const String apiUrl = "$baseUrl/api";
+// Instancia de almacenamiento seguro
+final storage = const FlutterSecureStorage();
 
 class ApiService {
   final storage = const FlutterSecureStorage();
@@ -79,6 +82,7 @@ class ApiService {
     if (res.statusCode == 200) {
       final data = jsonDecode(res.body);
       await storage.write(key: 'token', value: data['token']);
+
       return data;
     } else {
       return jsonDecode(res.body);
@@ -89,7 +93,6 @@ class ApiService {
   Future<Map<String, dynamic>?> getUser() async {
     final token = await storage.read(key: 'token');
     if (token == null) return null;
-
     final res = await http.get(
       Uri.parse('$apiUrl/user'),
       headers: jsonHeaders(token),
@@ -115,12 +118,10 @@ class ApiService {
   Future<void> logout() async {
     final token = await storage.read(key: 'token');
     if (token == null) return;
-
     await http.post(
       Uri.parse('$apiUrl/logout'),
       headers: jsonHeaders(token),
     );
-
     await storage.delete(key: 'token');
   }
 
@@ -256,7 +257,6 @@ Future<Map<String, dynamic>?> createTransaction(
     if (frequencyRepetition != null) {
       request.fields['frequency_repetition'] = frequencyRepetition.toString();
     }
-
     // Adjuntar archivo si existe
     if (file != null) {
       request.files.add(await http.MultipartFile.fromPath(
@@ -265,11 +265,9 @@ Future<Map<String, dynamic>?> createTransaction(
         filename: basename(file.path),
       ));
     }
-
     // Enviar la solicitud
     final streamedResponse = await request.send();
     final res = await http.Response.fromStream(streamedResponse);
-
     if (res.statusCode == 200 || res.statusCode == 201) {
       return jsonDecode(res.body);
     } else {
@@ -285,27 +283,31 @@ Future<Map<String, dynamic>?> createTransaction(
 }
 
 
-///////////////////////////////////////////////////////////// Obtener lista de fuentes de dinero
-Future<List<MoneyMaker>> getMoneyMakers() async {
+///////////////////////////////////////////////////////////// Obtener lista de fuentes de dinero + moneda base
+Future<Map<String, dynamic>> getMoneyMakersFull() async {
   try {
     final token = await storage.read(key: 'token');
-    if (token == null) return [];
-
+    if (token == null) return {'moneyMakers': [], 'currency_base': ''};
     final res = await http.get(
       Uri.parse('$apiUrl/moneyMakers'),
       headers: jsonHeaders(token),
     );
+
     if (res.statusCode == 200) {
       final data = jsonDecode(res.body);
       final List<dynamic> list = data['moneyMakers'] ?? [];
-      return list.map((e) => MoneyMaker.fromJson(e)).toList();
+      final moneyMakers = list.map((e) => MoneyMaker.fromJson(e)).toList();
+      final currencyBase = data['currency_base'] ?? '';
+      final currencySymbol = data['currency_symbol'] ?? '';
+      return {'moneyMakers': moneyMakers, 'currency_base': currencyBase, 'currency_symbol': currencySymbol};
     } else {
-      return [];
+      return {'moneyMakers': [], 'currency_base': '', 'currency_symbol': ''};
     }
   } catch (e) {
-    return [];
+    return {'moneyMakers': [], 'currency_base': '', 'currency_symbol': ''};
   }
 }
+
 
 
   ////////////////////////////////////////////////////////// Agregar nueva fuente de pago
@@ -330,10 +332,9 @@ Future<MoneyMaker?> addPaymentSource(
       'color': color,
     }),
   );
-
   if (res.statusCode == 200 || res.statusCode == 201) {
     final data = jsonDecode(res.body);
-    return MoneyMaker.fromJson(data['data']);
+    return MoneyMaker.fromJson(data['moneyMaker']);
   }
 
   return null;
@@ -376,21 +377,71 @@ Future<MoneyMaker?> addPaymentSource(
     return [];
   }
 
-  //////////////////////////////////////// creo q no se usa todavia Obtener lista de monedas
-  Future<List<String>> getMonedas() async {
-    final token = await storage.read(key: 'token');
-    if (token == null) return [];
+  ////////////////////////////////////////  Obtener lista de monedas no necesita token
+    Future<List<dynamic>> getCurrencies() async {
+    final response = await http.get(Uri.parse('$baseUrl/api/currencies'),
+    headers: {
+      'Accept': 'application/json',
+    },);
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
+    } else {
+      throw Exception('Error al cargar las monedas');
+    }
+  }
 
-    final res = await http.get(
-      Uri.parse('$apiUrl/monedas'),
+  ///////////////////////////////////////// Método que ya devuelve la lista de monedas parseadas
+  Future<List<Currency>> getCurrenciesList() async {
+    final List<dynamic> data = await getCurrencies();
+    return data.map((e) => Currency.fromJson(e)).toList();
+  }
+
+  ///////////!!!!!!!!!!!!!!!!!!!!!!!!!Leer moneda base desde API
+    Future<String?> getUserCurrency() async {
+    final token = await storage.read(key: 'token'); 
+    if (token == null) return null;
+
+    final response = await http.get(
+      Uri.parse('$baseUrl/api/userCurrency'),
       headers: jsonHeaders(token),
     );
-
-    if (res.statusCode == 200) {
-      final data = jsonDecode(res.body);
-      return List<String>.from(data['monedas'] ?? []);
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body)['userBaseCurrency'] as String?;
     }
-    return [];
+    return null;
   }
+
+  ////////////////////////////////////////////////////////// Obtener datos para formulario de transacción
+Future<Map<String, dynamic>> getTransactionFormData(String type) async {
+  // Traer categorías y fuentes de dinero + moneda base
+  final results = await Future.wait([
+    getCategories(type),       // List<Map<String, dynamic>>
+    getMoneyMakersFull(),      // Map con moneyMakers y currency_base
+    getCurrenciesList(),       // List<Currency>
+  ]);
+
+  final categories = results[0] as List<Map<String, dynamic>>;
+  final moneyMakersData = results[1] as Map<String, dynamic>;
+  final moneyMakers = moneyMakersData['moneyMakers'] as List<MoneyMaker>;
+  final currencyCode = moneyMakersData['currency_base'] as String?;
+  final currencies = results[2] as List<Currency>;
+
+  // Moneda por defecto
+  final defaultCurrency = currencyCode != null
+      ? currencies.firstWhere(
+          (c) => c.code == currencyCode,
+          orElse: () => currencies.first,
+        )
+      : currencies.first;
+
+  return {
+    'categories': categories,
+    'moneyMakers': moneyMakers,
+    'currencies': currencies,
+    'defaultCurrency': defaultCurrency,
+  };
+}
+
+
 
 }

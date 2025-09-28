@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_colorpicker/flutter_colorpicker.dart';
 import '../services/api_service.dart';
 
+import '../models/currency.dart';
+import '../widgets/currency_text_field.dart';
+
 class MoneyMakerFormScreen extends StatefulWidget {
   const MoneyMakerFormScreen({super.key});
 
@@ -13,21 +16,48 @@ class _MoneyMakerFormScreenState extends State<MoneyMakerFormScreen> {
   final ApiService api = ApiService();
 
   final TextEditingController nameController = TextEditingController();
-  final TextEditingController balanceController = TextEditingController(text: '0');
+  final TextEditingController balanceController = TextEditingController();
 
   final _formKey = GlobalKey<FormState>();
+  
+
+  Color? selectedColor;
 
   final List<String> types = [
     "Efectivo", "Mastercard", "Visa", "Tarjeta de débito", "Ahorros",
     "Banco", "Inversión", "Tarjeta de crédito", "Cuenta bancaria", "Criptomoneda",
     "Cheque", "Cuenta virtual", "PayPal", "Transferencia", "Préstamo", "Otro"
   ]; /////////////ESTO DEBERIA SALIR DE OTRO LADO O TENER UNA TABLA EN LA BASE DE DATOS PARA Q EL ADMIN PUEDA ADMINISTRAR O NOSE
+  
+  List<Currency> currencies = [];
+  String? selectedCurrency;
+  bool _isLoading = true;
 
-  String typeSelected = "Efectivo"; // por defecto
-  final List<String> typeMoney = ["USD", "ARS", "EUR"]; // ESTO SALE DEL BACKEND EN REALIDAD
-  String typeMoneySelected = "ARS"; //ESTO TIENE Q SER EL MONEDA BASE DEL USUARIO
+// Carga las monedas y la moneda base del usuario
+  Future<void> loadFormData() async {
+  final fetchedCurrencies = await api.getCurrenciesList(); // trae todas las monedas
+  final userBaseCurrency = await api.getUserCurrency();   
+    if (!mounted) return;
+    setState(() {
+      currencies = fetchedCurrencies; // actualiza la lista de monedas
+      if (currencies.isNotEmpty) {
+        selectedCurrency = currencies.firstWhere( // selecciona la moneda base del usuario o la primera si no está
+        (c) => c.code == userBaseCurrency,
+        orElse: () => currencies.first, // fallback a la primera moneda
+      ).code;
+      }
+      _isLoading = false; // ya cargó todo
+    });
+  }
 
-  Color? selectedColor;
+@override
+  void initState() {
+    super.initState();
+    loadFormData();
+  }
+
+
+String typeSelected = "Efectivo"; // por defecto
 
  Future<void> addMoneyMaker() async {
   if (!_formKey.currentState!.validate()) return;
@@ -35,7 +65,7 @@ class _MoneyMakerFormScreenState extends State<MoneyMakerFormScreen> {
   final balance = double.tryParse(balanceController.text) ?? 0;
   final colorHex = '#${selectedColor!.toARGB32().toRadixString(16).substring(2)}';
 
-  final newSource = await api.addPaymentSource( name, typeSelected, balance, typeMoneySelected, colorHex,);
+  final newSource = await api.addPaymentSource( name, typeSelected, balance, selectedCurrency!, colorHex,); // Llama al API para agregar la fuente
   if (!mounted) return;
   if (newSource != null) {
     Navigator.pop(context, newSource); 
@@ -46,13 +76,17 @@ class _MoneyMakerFormScreenState extends State<MoneyMakerFormScreen> {
   }
 }
 
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('Agregar Fuente')),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
-        child: Form(
+        child: _isLoading
+            ? const Center(child: CircularProgressIndicator())
+            : 
+        Form(
           key: _formKey,
           child: Column(
             children: [
@@ -88,35 +122,27 @@ class _MoneyMakerFormScreenState extends State<MoneyMakerFormScreen> {
               ),
               const SizedBox(height: 16),
 
-              // Tipo de moneda
-              DropdownButtonFormField<String>(
-                decoration: const InputDecoration(
-                  labelText: 'Tipo de moneda',
-                  border: OutlineInputBorder(),
-                ),
-                initialValue: typeMoneySelected,
-                items: typeMoney.map((m) => DropdownMenuItem(
-                      value: m,
-                      child: Text(m),
-                    )).toList(),
-                onChanged: (value) => setState(() => typeMoneySelected = value!),
-              ),
-              const SizedBox(height: 16),
+                // Tipo de moneda
+                   DropdownButtonFormField<String>(
+                   decoration: const InputDecoration(
+                   labelText: 'Tipo de moneda',
+                   border: OutlineInputBorder(),
+                      ),
+                        value: selectedCurrency,
+                        items: currencies.map((c) => DropdownMenuItem<String>(
+                              value: c.code,
+                              child: Text('${c.symbol} ${c.code} - ${c.name}'),
+                            )).toList(),
+                        onChanged: (value) => setState(() => selectedCurrency = value!),
+                      ),
+                const SizedBox(height: 16),
 
               // Saldo inicial
-              TextFormField(
+              CurrencyTextField(
                 controller: balanceController,
-                decoration: const InputDecoration(
-                  labelText: 'Saldo inicial',
-                  border: OutlineInputBorder(),
-                ),
-                keyboardType: TextInputType.numberWithOptions(decimal: true),
-                validator: (val) {
-                  if (val == null || val.trim().isEmpty) return null;
-                  final parsed = double.tryParse(val);
-                  if (parsed == null || parsed < 0) return 'Ingresa un número válido para el saldo';
-                  return null;
-                },
+                currencies: currencies,
+                selectedCurrency: selectedCurrency ?? currencies.first.code,
+                label: 'Saldo inicial',
               ),
               const SizedBox(height: 16),
 

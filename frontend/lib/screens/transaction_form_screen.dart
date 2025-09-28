@@ -4,8 +4,11 @@ import 'package:file_picker/file_picker.dart';
 
 import '../services/api_service.dart';
 import '../models/money_maker.dart';
+import '../models/currency.dart';
+
 import 'money_maker_form_screen.dart';
 import 'category_form_screen.dart';
+import '../widgets/currency_text_field.dart';
 
 class TransactionFormScreen extends StatefulWidget {
   final String type; // "income" o "expense"
@@ -22,54 +25,39 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
   final TextEditingController amountController = TextEditingController();
   final TextEditingController nameController = TextEditingController();
 
+  bool isLoading = true; // Loader general
+
   List<MoneyMaker> moneyMakers = [];
   MoneyMaker? selectedMoneyMaker;
 
   List<Map<String, dynamic>> categories = [];
   Map<String, dynamic>? selectedCategory;
 
-  List<String> currencies = ["USD", "EUR", "ARG"];
+  List<Currency> currencies = [];
   String? selectedCurrency;
 
   File? attachedFile;
   int? repeatEveryNDays;
-  String? repeatEnd; // para fin de repetición
+  String? repeatEnd;
 
   @override
   void initState() {
     super.initState();
-    _loadMoneyMakers();
-    _loadCurrencies();
-    _loadCategories();
+    loadFormData();
   }
 
-  Future<void> _loadCategories() async {
-    final categoriesApi = await api.getCategories(widget.type);
-    if (categoriesApi.isNotEmpty) {
-      setState(() {
-        categories = categoriesApi;
-        selectedCategory = categories.first;
-      });
-    }
-  }
+  Future<void> loadFormData() async {
+    final data = await api.getTransactionFormData(widget.type);
+    setState(() {
+      categories = data['categories'];
+      selectedCategory = categories.isNotEmpty ? categories.first : null;
+      moneyMakers = data['moneyMakers'];
+      selectedMoneyMaker = moneyMakers.isNotEmpty ? moneyMakers.first : null;
+      currencies = data['currencies'];
+      selectedCurrency = (data['defaultCurrency'] as Currency).code;
 
-  Future<void> _loadMoneyMakers() async {
-    final makersApi = await api.getMoneyMakers();
-    if (makersApi.isNotEmpty) {
-      setState(() {
-        moneyMakers = makersApi;
-        selectedMoneyMaker = moneyMakers.first;
-      });
-    }
-  }
-
-  void _loadCurrencies() async {
-    final currenciesApi = await api.getMonedas();
-    if (currenciesApi.isNotEmpty) {
-      setState(() {
-        selectedCurrency = currenciesApi.first;
-      });
-    }
+      isLoading = false;
+    });
   }
 
   Future<void> _pickFile() async {
@@ -81,7 +69,6 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
 
   void saveTransaction() async {
     if (!_formKey.currentState!.validate()) return;
-
     final amount = double.tryParse(amountController.text);
     final name = nameController.text;
     if (amount == null || name.isEmpty || selectedMoneyMaker == null || selectedCategory == null) return;
@@ -114,13 +101,6 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
           ],
         ),
       );
-      amountController.clear();
-      nameController.clear();
-      setState(() {
-        attachedFile = null;
-        repeatEveryNDays = null;
-        repeatEnd = null;
-      });
       Navigator.pop(context);
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -129,16 +109,17 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
     }
   }
 
-  InputDecoration _inputDecoration(String label) {
-    return InputDecoration(
-      labelText: label,
-      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-    );
-  }
 
   @override
   Widget build(BuildContext context) {
+    if (isLoading) {
+      return const Scaffold(
+        body: Center(
+          child: CircularProgressIndicator(),
+        ),
+      );
+    }
+
     const Map<String, String> typeLabels = {
       "income": "Ingreso",
       "expense": "Gasto",
@@ -158,40 +139,96 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
                 // Nombre
                 TextFormField(
                   controller: nameController,
-                  decoration: _inputDecoration('Nombre'),
+                 decoration: const InputDecoration(
+                  labelText: 'Nombre',
+                  border: OutlineInputBorder(),
+                ),
                   validator: (value) => value == null || value.isEmpty ? 'Ingrese un nombre' : null,
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: 16),
 
                 // Monto
-                TextFormField(
+                CurrencyTextField(
                   controller: amountController,
-                  decoration: _inputDecoration('Monto'),
-                  keyboardType: TextInputType.number,
-                  validator: (value) {
-                    if (value == null || value.isEmpty) return 'Ingrese un monto';
-                    if (double.tryParse(value) == null) return 'Monto inválido';
-                    return null;
-                  },
+                  currencies: currencies,
+                  selectedCurrency: selectedCurrency ?? (currencies.isNotEmpty ? currencies.first.code : null),
+                  label: 'Monto',
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: 16),
 
-                // Moneda
-                DropdownButtonFormField<String>(
-                  decoration: _inputDecoration('Moneda'),
-                  value: selectedCurrency,
-                  items: currencies.map((c) => DropdownMenuItem(value: c, child: Text(c))).toList(),
-                  onChanged: (value) => setState(() => selectedCurrency = value),
+                // Fuente de dinero
+                Row(
+                  children: [
+                    Expanded(
+                      child: DropdownButtonFormField<MoneyMaker>(
+                       decoration: const InputDecoration(
+                        labelText: 'Tipo de fuente',
+                       
+                       border: OutlineInputBorder(),
+                      ),
+                        initialValue: selectedMoneyMaker,
+                        items: moneyMakers
+                            .map((m) => DropdownMenuItem(value: m, child: Text(m.name)))
+                            .toList(),
+                        onChanged: (value) {
+                          setState(() {
+                            selectedMoneyMaker = value;
+                            selectedCurrency = value?.typeMoney;
+                          });
+                        },
+                      ),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.add),
+                      tooltip: 'Agregar fuente de dinero',
+                      onPressed: () async {
+                        final newMaker = await Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (_) => const MoneyMakerFormScreen()),
+                        );
+                        if (newMaker != null) {
+                          setState(() {
+                            moneyMakers.add(newMaker);
+                            selectedMoneyMaker = newMaker;
+                            selectedCurrency = newMaker.typeMoney;
+                          });
+                        }
+                      },
+                    ),
+                  ],
                 ),
-                const SizedBox(height: 12),
+                 const SizedBox(height: 16),
+
+                //Drop desabilitado de moneda (la moneda se elige con la fuente de dinero)
+                DropdownButtonFormField<Currency>(
+                initialValue: currencies.firstWhere(
+                  (c) => c.code == selectedCurrency,
+                  orElse: () => currencies.first,
+                ),
+                items: currencies
+                    .map((c) => DropdownMenuItem(
+                          value: c,
+                          child: Text('${c.symbol} ${c.code} - ${c.name}'),
+                        ))
+                    .toList(),
+                onChanged: null, // null = deshabilitado
+                decoration: const InputDecoration(
+                  labelText: 'Tipo de moneda',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+              const SizedBox(height: 16),
 
                 // Categoría
                 Row(
                   children: [
                     Expanded(
                       child: DropdownButtonFormField<Map<String, dynamic>>(
-                        decoration: _inputDecoration('Categoría'),
-                        value: selectedCategory,
+                       decoration: const InputDecoration(
+                  labelText: 'Categoría',
+                  border: OutlineInputBorder(),
+                ),
+                        initialValue: selectedCategory,
                         items: categories
                             .map((c) => DropdownMenuItem(value: c, child: Text(c['name'])))
                             .toList(),
@@ -218,40 +255,7 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
                     ),
                   ],
                 ),
-                const SizedBox(height: 12),
-
-                // Fuente de dinero
-                Row(
-                  children: [
-                    Expanded(
-                      child: DropdownButtonFormField<MoneyMaker>(
-                        decoration: _inputDecoration('Fuente de dinero'),
-                        value: selectedMoneyMaker,
-                        items: moneyMakers
-                            .map((m) => DropdownMenuItem(value: m, child: Text(m.name)))
-                            .toList(),
-                        onChanged: (value) => setState(() => selectedMoneyMaker = value),
-                      ),
-                    ),
-                    IconButton(
-                      icon: const Icon(Icons.add),
-                      tooltip: 'Agregar fuente de dinero',
-                      onPressed: () async {
-                        final newMaker = await Navigator.push(
-                          context,
-                          MaterialPageRoute(builder: (_) => const MoneyMakerFormScreen()),
-                        );
-                        if (newMaker != null) {
-                          setState(() {
-                            moneyMakers.add(newMaker);
-                            selectedMoneyMaker = newMaker;
-                          });
-                        }
-                      },
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 12),
+                const SizedBox(height: 16),
 
                 // Archivo adjunto
                 ListTile(
@@ -276,83 +280,12 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
                     onPressed: _pickFile,
                   ),
                 ),
-                const SizedBox(height: 16),
-
-                // Repetición
-                DropdownButtonFormField<String>(
-                  decoration: _inputDecoration("Repetir"),
-                  value: repeatEveryNDays != null
-                      ? (repeatEveryNDays == 1
-                          ? "Daily"
-                          : repeatEveryNDays == 7
-                              ? "Weekly"
-                              : repeatEveryNDays == 30
-                                  ? "Monthly"
-                                  : repeatEveryNDays == 365
-                                      ? "Yearly"
-                                      : "Never")
-                      : "Never",
-                  items: const [
-                    DropdownMenuItem(value: "Never", child: Text("Nunca")),
-                    DropdownMenuItem(value: "Daily", child: Text("Todos los días")),
-                    DropdownMenuItem(value: "Weekly", child: Text("Una vez a la semana")),
-                    DropdownMenuItem(value: "Monthly", child: Text("Una vez al mes")),
-                    DropdownMenuItem(value: "Yearly", child: Text("Una vez al año")),
-                  ],
-                  onChanged: (val) {
-                    setState(() {
-                      switch (val) {
-                        case "Daily":
-                          repeatEveryNDays = 1;
-                          break;
-                        case "Weekly":
-                          repeatEveryNDays = 7;
-                          break;
-                        case "Monthly":
-                          repeatEveryNDays = 30;
-                          break;
-                        case "Yearly":
-                          repeatEveryNDays = 365;
-                          break;
-                        default:
-                          repeatEveryNDays = null;
-                      }
-                    });
-                  },
-                ),
-                const SizedBox(height: 12),
-
-                // Fin de repetición
-                DropdownButtonFormField<String>(
-                  decoration: _inputDecoration("Fin de la repetición"),
-                  value: repeatEnd,
-                  items: const [
-                    DropdownMenuItem(value: "Never", child: Text("Nunca")),
-                    DropdownMenuItem(value: "After5", child: Text("Después de 5 veces")),
-                    DropdownMenuItem(value: "After10", child: Text("Después de 10 veces")),
-                    DropdownMenuItem(value: "CustomDate", child: Text("Fecha personalizada")),
-                  ],
-                  onChanged: (val) {
-                    setState(() => repeatEnd = val);
-                    // Aquí puedes abrir un DatePicker si es CustomDate
-                  },
-                ),
                 const SizedBox(height: 20),
 
                 // Guardar
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    onPressed: saveTransaction,
-                    style: ElevatedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                    ),
-                    child: const Text(
-                      'Guardar',
-                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                    ),
-                  ),
+               ElevatedButton(
+                  onPressed: saveTransaction,
+                  child: const Text('Guardar'),
                 ),
               ],
             ),

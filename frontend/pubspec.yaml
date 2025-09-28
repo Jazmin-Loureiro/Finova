@@ -40,6 +40,7 @@ dependencies:
   fl_chart: ^0.69.0 # para graficos
   flutter_svg: ^2.1.1  # para manejar imagenes SVG
   lottie: ^3.1.2 # para animaciones
+  intl: ^0.18.1 # para formateo de fechas y numeros
 
 
   # The following adds the Cupertino Icons font to your application.

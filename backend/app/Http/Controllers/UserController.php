@@ -6,49 +6,64 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
+use App\Services\CurrencyService; // 👈 importante
 
 class UserController extends Controller
 {
     // Actualizar usuario autenticado
     public function update(Request $request)
-{
-    Log::info('Update user request', $request->all());
+    {
+        Log::info('Update user request', $request->all());
 
-    $user = $request->user();
+        $user = $request->user();
 
-    // 👇 log para ver qué llega desde Flutter
-    Log::info('Update user request', $request->all());
+        $request->validate([
+            'name' => 'sometimes|string|max:255',
+            'email' => 'sometimes|email|unique:users,email,' . $user->id,
+            'password' => 'nullable|string|min:6|confirmed',
+            'icon' => 'nullable|image|max:2048',
+            'currencyBase' => 'sometimes|string',
+            'balance' => 'sometimes|numeric|min:0',
+        ]);
 
-    $request->validate([
-        'name' => 'sometimes|string|max:255',
-        'email' => 'sometimes|email|unique:users,email,' . $user->id,
-        'password' => 'nullable|string|min:6|confirmed',
-        'icon' => 'nullable|image|max:2048',
-        'currencyBase' => 'sometimes|string',
-        'balance' => 'sometimes|numeric|min:0',
-    ]);
+        // Manejo de icono
+        if ($request->hasFile('icon')) {
+            $path = $request->file('icon')->store('icons', 'public');
+            $user->icon = $path;
+        }
 
-    if ($request->hasFile('icon')) {
-        $path = $request->file('icon')->store('icons', 'public');
-        $user->icon = $path;
+        // Manejo de password
+        if ($request->filled('password')) {
+            $user->password = Hash::make($request->password);
+        }
+
+        // Solo actualizamos currencyBase, balance se deja como está
+        if ($request->filled('currencyBase')) {
+            $user->currencyBase = $request->currencyBase;
+        }
+
+        $user->fill($request->except(['password', 'icon', 'currencyBase', 'balance']));
+        $user->save();
+// 👇 Agregamos balance convertido y símbolo (igual que moneyMakers)
+$symbol = optional(\App\Models\Currency::where('code',$user->currencyBase)->first())->symbol ?? '';
+$balanceConverted = CurrencyService::convert(
+    (float)$user->balance,
+    'ARS', // ✅ origen fijo
+    $user->currencyBase
+);
+
+return response()->json([
+    'message' => 'Usuario actualizado',
+    'user' => array_merge(
+        $user->toArray(),
+        [
+            'balance_converted' => round($balanceConverted, 2),
+            'currency_symbol'   => $symbol,
+            'full_icon_url'     => $user->icon ? asset('storage/' . $user->icon) : null,
+        ]
+    )
+]); 
     }
-
-    if ($request->filled('password')) {
-        $user->password = Hash::make($request->password);
-    }
-
-    $user->fill($request->except(['password', 'icon']));
-    $user->save();
-
-    return response()->json([
-        'message' => 'Usuario actualizado',
-        'user' => array_merge(
-            $user->toArray(),
-            ['full_icon_url' => $user->icon ? asset('storage/' . $user->icon) : null]
-        )
-    ]);
-}
-
 
     // Eliminar usuario autenticado
     public function destroy(Request $request)

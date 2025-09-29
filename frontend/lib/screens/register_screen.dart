@@ -1,12 +1,14 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-
+import 'login_screen.dart';
 import '../services/api_service.dart';
 import '../models/currency.dart';
 import '../widgets/currency_text_field.dart';
+import '../widgets/loading_widget.dart';
+import '../widgets/success_dialog_widget.dart';
 
-import 'login_screen.dart';
+
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -28,6 +30,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   List<Currency> currencyBases = [];
   bool isLoadingCurrencies = true;
+  bool isLoading = false; // 👈 nuevo estado de loading
 
   final ImagePicker _picker = ImagePicker();
 
@@ -57,8 +60,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
       });
     } catch (_) {
       setState(() => isLoadingCurrencies = false);
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Error al cargar las monedas')),
+      await showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (_) => const SuccessDialogWidget(
+          title: 'Error',
+          message: 'Error al cargar las monedas.',
+          buttonText: 'Aceptar',
+        ),
       );
     }
   }
@@ -67,150 +76,175 @@ class _RegisterScreenState extends State<RegisterScreen> {
     if (!_formKey.currentState!.validate()) return;
 
     final double balance = double.tryParse(
-            balanceStr.replaceAll(RegExp('[^0-9.]'), '')) ??
-        0;
+            balanceStr.replaceAll(RegExp('[^0-9.]'), '')) ?? 0;
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Registrando...')),
-    );
+    setState(() => isLoading = true); // 👈 mostramos loading
 
-    await api.register(
-      name,
-      email,
-      password,
-      currencyBase: currencyBase,
-      balance: balance,
-      icon: icon,
-    );
+    try {
+      await api.register(
+        name,
+        email,
+        password,
+        currencyBase: currencyBase,
+        balance: balance,
+        icon: icon,
+      );
 
-    if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-          content: Text(
-              'Registro exitoso. Verifica tu email antes de iniciar sesión.')),
-    );
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(builder: (_) => const LoginScreen()),
-    );
+      if (!mounted) return;
+
+      setState(() => isLoading = false); // 👈 quitamos loading
+
+      final result = await showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (_) => const SuccessDialogWidget(
+          title: 'Registro exitoso',
+          message:
+              'Te enviamos un email. Debes confirmar tu cuenta antes de poder iniciar sesión.',
+          buttonText: 'Aceptar',
+        ),
+      );
+
+      if (result == true && mounted) {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (_) => const LoginScreen()),
+        );
+      }
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => isLoading = false);
+      await showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (_) => SuccessDialogWidget(
+          title: 'Error',
+          message: 'Ocurrió un error en el registro: $e',
+          buttonText: 'Aceptar',
+        ),
+      );
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('Registro')),
-      body: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Form(
-          key: _formKey,
-          child: SingleChildScrollView(
-            child: Column(
-              children: [
-                // Imagen de perfil
-                GestureDetector(
-                  onTap: pickIcon,
-                  child: CircleAvatar(
-                    radius: 60,
-                    backgroundImage: icon != null ? FileImage(icon!) : null,
-                    child: icon == null
-                        ? const Icon(Icons.add_a_photo, size: 40)
-                        : null,
+      body: isLoading
+          ? const LoadingWidget(message: "Registrando usuario...")
+          : Padding(
+              padding: const EdgeInsets.all(16),
+              child: Form(
+                key: _formKey,
+                child: SingleChildScrollView(
+                  child: Column(
+                    children: [
+                      GestureDetector(
+                        onTap: pickIcon,
+                        child: CircleAvatar(
+                          radius: 60,
+                          backgroundImage: icon != null ? FileImage(icon!) : null,
+                          child: icon == null
+                              ? const Icon(Icons.add_a_photo, size: 40)
+                              : null,
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+
+                      TextFormField(
+                        decoration: const InputDecoration(
+                            labelText: 'Nombre', border: OutlineInputBorder()),
+                        onChanged: (val) => name = val,
+                        validator: (val) =>
+                            val == null || val.isEmpty ? 'Obligatorio' : null,
+                      ),
+                      const SizedBox(height: 16),
+                      TextFormField(
+                        decoration: const InputDecoration(
+                            labelText: 'Email', border: OutlineInputBorder()),
+                        keyboardType: TextInputType.emailAddress,
+                        onChanged: (val) => email = val,
+                        validator: (val) {
+                          if (val == null || val.isEmpty) return 'Obligatorio';
+                          if (!val.contains('@')) return 'Email inválido';
+                          return null;
+                        },
+                      ),
+                      const SizedBox(height: 16),
+
+                      TextFormField(
+                        decoration: const InputDecoration(
+                            labelText: 'Contraseña', border: OutlineInputBorder()),
+                        obscureText: true,
+                        onChanged: (val) => password = val,
+                        validator: (val) =>
+                            val == null || val.isEmpty ? 'Obligatorio' : null,
+                      ),
+                      const SizedBox(height: 16),
+                      TextFormField(
+                        decoration: const InputDecoration(
+                            labelText: 'Confirmar Contraseña',
+                            border: OutlineInputBorder()),
+                        obscureText: true,
+                        validator: (val) {
+                          if (val == null || val.isEmpty) return 'Obligatorio';
+                          if (val != password) return 'Las contraseñas no coinciden';
+                          return null;
+                        },
+                      ),
+                      const SizedBox(height: 16),
+
+                      isLoadingCurrencies
+                          ? const CircularProgressIndicator()
+                          : DropdownButtonFormField<Currency>(
+                              value: currencyBases.firstWhere(
+                                  (c) => c.code == currencyBase,
+                                  orElse: () => currencyBases.first),
+                              items: currencyBases
+                                  .map((c) => DropdownMenuItem(
+                                        value: c,
+                                        child: Text(
+                                            '${c.symbol} ${c.code} - ${c.name}'),
+                                      ))
+                                  .toList(),
+                              onChanged: (val) {
+                                if (val != null) setState(() => currencyBase = val.code);
+                              },
+                              decoration: const InputDecoration(
+                                  labelText: 'Moneda Base',
+                                  border: OutlineInputBorder()),
+                              validator: (val) =>
+                                  val == null ? 'Obligatorio' : null,
+                            ),
+                      const SizedBox(height: 16),
+
+                      CurrencyTextField(
+                        controller: balanceController,
+                        currencies: currencyBases,
+                        selectedCurrency: currencyBase,
+                        label: 'Saldo Inicial (opcional)',
+                        onChanged: (val) => balanceStr = val,
+                      ),
+                      const SizedBox(height: 16),
+
+                      ElevatedButton(
+                        onPressed: registerUser,
+                        child: const Text('Registrar'),
+                      ),
+                      TextButton(
+                        onPressed: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(builder: (_) => const LoginScreen()),
+                          );
+                        },
+                        child: const Text('Ya tienes cuenta? Ingresar'),
+                      ),
+                    ],
                   ),
                 ),
-                const SizedBox(height: 16),
-
-                // Campos de texto
-                TextFormField(
-                  decoration: const InputDecoration(labelText: 'Nombre',border: OutlineInputBorder()),
-                  onChanged: (val) => name = val,
-                  validator: (val) =>
-                      val == null || val.isEmpty ? 'Obligatorio' : null,
-                ),
-                const SizedBox(height: 16),
-                TextFormField(
-                  decoration: const InputDecoration(labelText: 'Email',border: OutlineInputBorder()),
-                  keyboardType: TextInputType.emailAddress,
-                  onChanged: (val) => email = val,
-                  validator: (val) {
-                    if (val == null || val.isEmpty) return 'Obligatorio';
-                    if (!val.contains('@')) return 'Email inválido';
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 16),
-
-                TextFormField(
-                  decoration: const InputDecoration(labelText: 'Contraseña',border: OutlineInputBorder()),
-                  obscureText: true,
-                  onChanged: (val) => password = val,
-                  validator: (val) =>
-                      val == null || val.isEmpty ? 'Obligatorio' : null,
-                ),
-                const SizedBox(height: 16),
-                TextFormField(
-                  decoration:
-                      const InputDecoration(labelText: 'Confirmar Contraseña',border: OutlineInputBorder()),
-                  obscureText: true,
-                  validator: (val) {
-                    if (val == null || val.isEmpty) return 'Obligatorio';
-                    if (val != password) return 'Las contraseñas no coinciden';
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 16),
-
-                // Dropdown de monedas
-                isLoadingCurrencies
-                    ? const CircularProgressIndicator()
-                    : DropdownButtonFormField<Currency>(
-                        value: currencyBases.firstWhere(
-                            (c) => c.code == currencyBase,
-                            orElse: () => currencyBases.first),
-                        items: currencyBases
-                            .map((c) => DropdownMenuItem(
-                                  value: c,
-                                  child: Text('${c.symbol} ${c.code} - ${c.name}'),
-                                ))
-                            .toList(),
-                        onChanged: (val) {
-                          if (val != null) setState(() => currencyBase = val.code);
-                        },
-                        decoration:
-                            const InputDecoration(labelText: 'Moneda Base', border: OutlineInputBorder()),
-                        validator: (val) =>
-                            val == null ? 'Obligatorio' : null,
-                      ),
-                const SizedBox(height: 16),
-
-                // Saldo inicial
-                CurrencyTextField(
-                  controller: balanceController,
-                  currencies: currencyBases,
-                  selectedCurrency: currencyBase,
-                  label: 'Saldo Inicial (opcional)',
-                  onChanged: (val) => balanceStr = val,
-                ),
-                const SizedBox(height: 16),
-
-                // Botón Registrar
-                ElevatedButton(
-                  onPressed: registerUser,
-                  child: const Text('Registrar'),
-                ),
-                TextButton(
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (_) => const LoginScreen()),
-                    );
-                  },
-                  child: const Text('Ya tienes cuenta? Ingresar'),
-                ),
-              ],
+              ),
             ),
-          ),
-        ),
-      ),
     );
   }
 }

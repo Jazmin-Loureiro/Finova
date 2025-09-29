@@ -41,6 +41,7 @@ dependencies:
   flutter_svg: ^2.1.1  # para manejar imagenes SVG
   lottie: ^3.1.2 # para animaciones
   intl: ^0.18.1 # para formateo de fechas y numeros
+  provider: ^6.0.5 # para manejo de estado
 
 
   # The following adds the Cupertino Icons font to your application.

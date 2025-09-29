@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import '../services/api_service.dart';
+import '../models/currency.dart';
 
 class UserWidget extends StatelessWidget {
   final Map<String, dynamic> user;
@@ -28,7 +30,7 @@ class UserWidget extends StatelessWidget {
     final iconUrl = user['full_icon_url'] as String?;
     final name = user['name'] ?? 'Usuario';
     final email = user['email'] ?? '';
-    final currency = user['currencyBase'] ?? '';
+    final currencyCode = user['currencyBase'] ?? '';
     final createdAt = _formatSpanishDate(user['created_at']);
 
     return Column(
@@ -91,10 +93,29 @@ class UserWidget extends StatelessWidget {
                   subtitle: Text(createdAt),
                 ),
                 const Divider(),
-                ListTile(
-                  leading: const Icon(Icons.attach_money),
-                  title: const Text("Moneda base"),
-                  subtitle: Text(currency),
+                FutureBuilder<List<Currency>>(
+                  future: ApiService().getCurrenciesList(),
+                  builder: (context, snapshot) {
+                    if (!snapshot.hasData) {
+                      return const ListTile(
+                        leading: Icon(Icons.attach_money),
+                        title: Text("Moneda base"),
+                        subtitle: Text("Cargando..."),
+                      );
+                    }
+
+                    final currencies = snapshot.data!;
+                    final found = currencies.firstWhere(
+                      (c) => c.code == currencyCode,
+                      orElse: () => Currency(code: currencyCode, name: currencyCode, symbol: currencyCode),
+                    );
+
+                    return ListTile(
+                      leading: const Icon(Icons.attach_money),
+                      title: const Text("Moneda base"),
+                      subtitle: Text('${found.symbol} ${found.code} - ${found.name}'),
+                    );
+                  },
                 ),
               ],
             ),

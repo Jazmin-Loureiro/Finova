@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
 import '../widgets/confirm_dialog_widget.dart'; 
 import '../widgets/success_dialog_widget.dart';
+import '../services/api_service.dart';
+import '../models/currency.dart';
 
 class UserFormScreen extends StatefulWidget {
   final Map<String, dynamic> user;
@@ -21,6 +23,9 @@ class _UserFormScreenState extends State<UserFormScreen> {
   String? selectedCurrency;
   File? newIcon;
 
+  List<Currency> currencies = [];
+  bool isLoadingCurrencies = true;
+
   @override
   void initState() {
     super.initState();
@@ -28,6 +33,19 @@ class _UserFormScreenState extends State<UserFormScreen> {
     emailController = TextEditingController(text: widget.user['email']);
     passwordController = TextEditingController();
     selectedCurrency = widget.user['currencyBase'];
+    _fetchCurrencies();
+  }
+
+  Future<void> _fetchCurrencies() async {
+    try {
+      final data = await ApiService().getCurrenciesList();
+      setState(() {
+        currencies = data;
+        isLoadingCurrencies = false;
+      });
+    } catch (_) {
+      setState(() => isLoadingCurrencies = false);
+    }
   }
 
   Future<void> _pickFile() async {
@@ -87,14 +105,19 @@ class _UserFormScreenState extends State<UserFormScreen> {
                   decoration: _inputDecoration("Nueva contraseña (opcional)"),
                 ),
                 const SizedBox(height: 12),
-                DropdownButtonFormField<String>(
-                  value: selectedCurrency,
-                  decoration: _inputDecoration("Moneda base"),
-                  items: ["ARG", "USD", "EUR"]
-                      .map((c) => DropdownMenuItem(value: c, child: Text(c)))
-                      .toList(),
-                  onChanged: (v) => setState(() => selectedCurrency = v),
-                ),
+                isLoadingCurrencies
+                    ? const CircularProgressIndicator()
+                    : DropdownButtonFormField<String>(
+                        value: selectedCurrency,
+                        decoration: _inputDecoration("Moneda base"),
+                        items: currencies
+                            .map((c) => DropdownMenuItem(
+                                  value: c.code,
+                                  child: Text('${c.symbol} ${c.code} - ${c.name}'),
+                                ))
+                            .toList(),
+                        onChanged: (v) => setState(() => selectedCurrency = v),
+                      ),
                 const SizedBox(height: 12),
                 ListTile(
                   shape: RoundedRectangleBorder(
@@ -120,6 +143,7 @@ class _UserFormScreenState extends State<UserFormScreen> {
 
                       final confirmed = await showDialog<bool>(
                         context: context,
+                        barrierDismissible: false,
                         builder: (_) => ConfirmDialogWidget(
                           title: "Guardar cambios",
                           message: "¿Querés guardar los cambios del perfil?",
@@ -132,6 +156,7 @@ class _UserFormScreenState extends State<UserFormScreen> {
                       if (confirmed == true) {
                         final success = await showDialog<bool>(
                           context: context,
+                          barrierDismissible: false,
                           builder: (_) => const SuccessDialogWidget(
                             title: "¡Éxito!",
                             message: "Los cambios se guardaron correctamente.",

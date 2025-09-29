@@ -5,7 +5,9 @@ import '../widgets/navigation_bar_widget.dart';
 import '../widgets/custom_app_bar.dart';
 import '../screens/user_form_screen.dart';
 import '../widgets/confirm_dialog_widget.dart';
-import '../widgets/loading_widget.dart'; // 👈 nuevo import
+import '../widgets/loading_widget.dart';
+import '../widgets/success_dialog_widget.dart';
+import 'login_screen.dart'; // 👈 import directo
 
 class UserScreen extends StatefulWidget {
   const UserScreen({Key? key}) : super(key: key);
@@ -18,20 +20,64 @@ class _UserScreenState extends State<UserScreen> {
   final ApiService api = ApiService();
   late Future<Map<String, dynamic>?> userFuture;
 
+  bool _isDeleting = false; // 👈 flag para mostrar loading al eliminar
+
   @override
   void initState() {
     super.initState();
-    userFuture = api.getUser(); // 👈 cargo datos iniciales
+    userFuture = api.getUser();
   }
 
   void _refreshUser() {
     setState(() {
-      userFuture = api.getUser(); // 👈 refresco desde ApiService
+      userFuture = api.getUser();
     });
+  }
+
+  Future<void> _deleteAccount() async {
+    setState(() {
+      _isDeleting = true; // 👈 mostrar loading
+    });
+
+    final ok = await api.deleteUser();
+
+    if (!mounted) return;
+
+    if (ok) {
+      // 👉 navegar con MaterialPageRoute al login
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => const LoginScreen()),
+      );
+
+      // 👉 después mostrar el success
+      showDialog(
+        context: context,
+        builder: (_) => const SuccessDialogWidget(
+          title: "Éxito",
+          message: "La cuenta fue eliminada correctamente.",
+        ),
+      );
+    } else {
+      setState(() {
+        _isDeleting = false; // 👈 volvemos al estado normal si falla
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Error al eliminar la cuenta")),
+      );
+    }
   }
 
   @override
   Widget build(BuildContext context) {
+    if (_isDeleting) {
+      // 👈 pantalla completa con loading
+      return const Scaffold(
+        body: LoadingWidget(message: "Eliminando cuenta..."),
+      );
+    }
+
     return Scaffold(
       appBar: const CustomAppBar(title: 'Usuario'),
       body: FutureBuilder<Map<String, dynamic>?>(
@@ -54,11 +100,12 @@ class _UserScreenState extends State<UserScreen> {
                 UserWidget(user: user),
                 const SizedBox(height: 20),
 
-                // --- Botones en fila con padding ---
+                // --- Botones en fila ---
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 20.0),
                   child: Row(
                     children: [
+                      // --- Editar usuario ---
                       Expanded(
                         child: ElevatedButton(
                           child: const Text("Editar usuario"),
@@ -97,6 +144,8 @@ class _UserScreenState extends State<UserScreen> {
                         ),
                       ),
                       const SizedBox(width: 12),
+
+                      // --- Eliminar cuenta ---
                       Expanded(
                         child: ElevatedButton(
                           style: ElevatedButton.styleFrom(
@@ -107,6 +156,7 @@ class _UserScreenState extends State<UserScreen> {
                           onPressed: () async {
                             final confirmed = await showDialog<bool>(
                               context: context,
+                              barrierDismissible: false,
                               builder: (_) => const ConfirmDialogWidget(
                                 title: "Eliminar cuenta",
                                 message:
@@ -118,11 +168,7 @@ class _UserScreenState extends State<UserScreen> {
                             );
 
                             if (confirmed == true) {
-                              final ok = await api.deleteUser();
-                              if (ok && context.mounted) {
-                                Navigator.pushReplacementNamed(
-                                    context, "/login");
-                              }
+                              _deleteAccount();
                             }
                           },
                         ),

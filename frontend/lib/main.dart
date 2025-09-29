@@ -1,11 +1,18 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart'; // 👈 import del provider
 import 'screens/login_screen.dart';
 import 'screens/home_screen.dart';
 import 'services/api_service.dart';
+import 'providers/house_provider.dart'; // 👈 tu nuevo provider
 
 // Punto de entrada de la aplicación
 void main() {
-  runApp(const MyApp());
+  runApp(
+    ChangeNotifierProvider(
+      create: (_) => HouseProvider(), // 👈 se inicializa apenas arranca la app
+      child: const MyApp(),
+    ),
+  );
 }
 
 // Widget raíz de la aplicación
@@ -15,45 +22,42 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-  title: 'Finova',
+      title: 'Finova',
 
-  // 🎨 Tema claro
-  theme: ThemeData(
-  colorScheme: const ColorScheme.light(
-    primary: Colors.deepPurple,
-    onPrimary: Colors.white,
-    secondary: Color(0xFF9575CD),
-    onSecondary: Colors.white,
-    surface: Colors.white,      // superficies claras
-    onSurface: Colors.black,
-  ),
-  scaffoldBackgroundColor: const Color.fromARGB(255, 232, 229, 229), // fondo general CREMITA
-  useMaterial3: true,
-),
+      // 🎨 Tema claro
+      theme: ThemeData(
+        colorScheme: const ColorScheme.light(
+          primary: Colors.deepPurple,
+          onPrimary: Colors.white,
+          secondary: Color(0xFF9575CD),
+          onSecondary: Colors.white,
+          surface: Colors.white,
+          onSurface: Colors.black,
+        ),
+        scaffoldBackgroundColor: const Color.fromARGB(255, 232, 229, 229),
+        useMaterial3: true,
+      ),
 
-darkTheme: ThemeData(
-  colorScheme: const ColorScheme.dark(
-    primary: Colors.deepPurple, // violeta claro
-    onPrimary: Colors.black,
-    secondary: Color(0xFF9575CD),
-    onSecondary: Colors.white,
-    surface: Color(0xFF121212), // 👈 NEGRO para barras/cards
-    onSurface: Colors.white,
-  ),
-  scaffoldBackgroundColor: Color.fromARGB(255, 48, 48, 48), // 👈 fondo más CLARO, GRIS CLARO
-  useMaterial3: true,
-),
+      // 🎨 Tema oscuro
+      darkTheme: ThemeData(
+        colorScheme: const ColorScheme.dark(
+          primary: Colors.deepPurple,
+          onPrimary: Colors.black,
+          secondary: Color(0xFF9575CD),
+          onSecondary: Colors.white,
+          surface: Color(0xFF121212),
+          onSurface: Colors.white,
+        ),
+        scaffoldBackgroundColor: const Color.fromARGB(255, 48, 48, 48),
+        useMaterial3: true,
+      ),
 
+      // 👇 Usa el tema según el sistema
+      themeMode: ThemeMode.system,
 
-
-  // 👇 Usa el tema según el sistema
-  themeMode: ThemeMode.system,
-
-  debugShowCheckedModeBanner: false,
-  home: const SplashScreen(),
-);
-
-
+      debugShowCheckedModeBanner: false,
+      home: const SplashScreen(),
+    );
   }
 }
 

@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use App\Services\CurrencyService; // NUEVO
 
 class HouseController extends Controller
 {
@@ -12,21 +13,17 @@ class HouseController extends Controller
         $user = Auth::user();
         $house = $user->house; // relación 1 a 1
 
-        //$balance = $user->balance; SE USARIA ASI SI EL BALANCE DE USUARIO SE ACTUALIZARA EN LA BASE DE DATOS CADA VEZ QUE SE REGISTRA UN NUEVO INGRESO O GASTO Y BAJA
+        // Balance guardado SIEMPRE en ARS
+        $balanceARS = (float) $user->balance;
 
-        //$ingresos = $user->registers()->where('type', 'income')->sum('balance');
-        //$gastos   = $user->registers()->where('type', 'expense')->sum('balance');
-        //$balance  = $ingresos - $gastos;
+        // 👇 Convertir a la moneda base del usuario
+        $balance = CurrencyService::convert(
+            $balanceARS,
+            'ARS',                  // origen fijo
+            $user->currencyBase     // destino: moneda base del usuario
+        );
 
-        $balance = (float) $user->moneyMakers()->sum('balance');
-
-        //$balance = (float) ($user->moneyMakers()->sum('balance') ?? 0);
-        //siempre se devuelva numérico aunque el resultado sea null EN
-        //CASO DE QUE AL REGISTRARSE SE PERMITA DEJAR VACIO ESE PARAMETRO
-
-
-
-        // Reglas de desbloqueo
+        // Reglas de desbloqueo (siguen igual, usan el balance convertido)
         if ($balance >= 1000 && !$house->unlocked_second_floor) {
             $house->update(['unlocked_second_floor' => true]);
         }
@@ -40,7 +37,7 @@ class HouseController extends Controller
         ];
 
         return response()->json([
-            'balance' => $balance,
+            'balance' => number_format($balance, 2, '.', ''), // NUEVO → convertido + decimales
             'casa'    => [
                 'base'      => $this->getBase($desbloqueado),
                 'modulos'   => $this->getModulos($desbloqueado, $balance),

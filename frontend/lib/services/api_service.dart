@@ -91,28 +91,32 @@ class ApiService {
 
   //////////////////////////////////////////////////////////////// Obtener usuario logueado
   Future<Map<String, dynamic>?> getUser() async {
-    final token = await storage.read(key: 'token');
-    if (token == null) return null;
-    final res = await http.get(
-      Uri.parse('$apiUrl/user'),
-      headers: jsonHeaders(token),
-    );
+  final token = await storage.read(key: 'token');
+  if (token == null) return null;
 
-    if (res.statusCode == 200) {
-      final Map<String, dynamic> user = jsonDecode(res.body);
+  final res = await http.get(
+    Uri.parse('$apiUrl/user'),
+    headers: jsonHeaders(token),
+  );
 
-      // 👇 agrego la URL completa del icono
-      final icon = user['icon'] as String?;
-      final fullIconUrl =
-          (icon != null && icon.isNotEmpty) ? '$baseUrl/storage/$icon' : null;
+  if (res.statusCode == 200) {
+    final Map<String, dynamic> user = jsonDecode(res.body);
 
-      return {
-        ...user,
-        'full_icon_url': fullIconUrl,
-      };
-    }
-    return null;
+    final icon = user['icon'] as String?;
+    final fullIconUrl =
+        (icon != null && icon.isNotEmpty) ? '$baseUrl/storage/$icon' : null;
+
+    return {
+      ...user,
+      'full_icon_url': fullIconUrl,
+      // 👇 aseguramos que existan estos campos nuevos
+      'balance_converted': user['balance_converted'] ?? user['balance'],
+      'currency_symbol': user['currency_symbol'] ?? '',
+    };
   }
+  return null;
+}
+
 
   /////////////////////////////////////////////////////////////////Logout
   Future<void> logout() async {

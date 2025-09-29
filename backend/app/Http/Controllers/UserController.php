@@ -21,15 +21,19 @@ class UserController extends Controller
             'name' => 'sometimes|string|max:255',
             'email' => 'sometimes|email|unique:users,email,' . $user->id,
             'password' => 'nullable|string|min:6|confirmed',
-            'icon' => 'nullable|image|max:2048',
+            'icon' => 'nullable', // 👈 quitamos "image"
             'currencyBase' => 'sometimes|string',
             'balance' => 'sometimes|numeric|min:0',
         ]);
 
         // Manejo de icono
         if ($request->hasFile('icon')) {
+            // Caso 1: subió foto
             $path = $request->file('icon')->store('icons', 'public');
             $user->icon = $path;
+        } elseif ($request->filled('icon')) {
+            // Caso 2: mandó un avatarSeed como texto
+            $user->icon = $request->icon;
         }
 
         // Manejo de password
@@ -44,13 +48,13 @@ class UserController extends Controller
 
         $user->fill($request->except(['password', 'icon', 'currencyBase', 'balance']));
         $user->save();
-// 👇 Agregamos balance convertido y símbolo (igual que moneyMakers)
-$symbol = optional(\App\Models\Currency::where('code',$user->currencyBase)->first())->symbol ?? '';
-$balanceConverted = CurrencyService::convert(
-    (float)$user->balance,
-    'ARS', // ✅ origen fijo
-    $user->currencyBase
-);
+        // 👇 Agregamos balance convertido y símbolo (igual que moneyMakers)
+        $symbol = optional(\App\Models\Currency::where('code',$user->currencyBase)->first())->symbol ?? '';
+        $balanceConverted = CurrencyService::convert(
+            (float)$user->balance,
+            'ARS', // ✅ origen fijo
+            $user->currencyBase
+        );
 
 return response()->json([
     'message' => 'Usuario actualizado',

@@ -1,14 +1,17 @@
 import 'dart:io';
+import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:flutter_svg/flutter_svg.dart';
+import 'package:multiavatar/multiavatar.dart';
+
 import 'login_screen.dart';
 import '../services/api_service.dart';
 import '../models/currency.dart';
 import '../widgets/currency_text_field.dart';
 import '../widgets/loading_widget.dart';
 import '../widgets/success_dialog_widget.dart';
-
-
+import '../widgets/user_avatar_widget.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -26,11 +29,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
   String name = '', email = '', password = '';
   String balanceStr = '';
   String currencyBase = '';
-  File? icon;
+  File? icon; // archivo de imagen
+  String? selectedAvatarSeed; // semilla de avatar generado
 
   List<Currency> currencyBases = [];
   bool isLoadingCurrencies = true;
-  bool isLoading = false; // 👈 nuevo estado de loading
+  bool isLoading = false;
 
   final ImagePicker _picker = ImagePicker();
 
@@ -44,7 +48,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
     final XFile? pickedFile =
         await _picker.pickImage(source: ImageSource.gallery);
     if (pickedFile != null) {
-      setState(() => icon = File(pickedFile.path));
+      setState(() {
+        icon = File(pickedFile.path);
+        selectedAvatarSeed = null; // si sube imagen, limpiamos avatar
+      });
     }
   }
 
@@ -72,13 +79,86 @@ class _RegisterScreenState extends State<RegisterScreen> {
     }
   }
 
+  void _showAvatarOptions() async {
+    final choice = await showModalBottomSheet<String>(
+      context: context,
+      builder: (_) {
+        return SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ListTile(
+                leading: const Icon(Icons.photo_library),
+                title: const Text("Subir desde galería"),
+                onTap: () => Navigator.pop(context, "gallery"),
+              ),
+              ListTile(
+                leading: const Icon(Icons.auto_awesome),
+                title: const Text("Elegir avatar generado"),
+                onTap: () => Navigator.pop(context, "avatar"),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+
+    if (choice == "gallery") {
+      pickIcon();
+    } else if (choice == "avatar") {
+      _showAvatarPicker();
+    }
+  }
+
+  void _showAvatarPicker() async {
+    final base = email.isNotEmpty ? email : 'default';
+    final seeds = List.generate(
+      6,
+      (i) => "$base-${DateTime.now().microsecondsSinceEpoch}-$i",
+    );
+
+    final selected = await showModalBottomSheet<String>(
+      context: context,
+      builder: (_) {
+        return GridView.builder(
+          padding: const EdgeInsets.all(16),
+          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: 3,
+            mainAxisSpacing: 10,
+            crossAxisSpacing: 10,
+          ),
+          itemCount: seeds.length,
+          itemBuilder: (context, index) {
+            final svgCode = multiavatar(seeds[index]);
+            return GestureDetector(
+              onTap: () => Navigator.pop(context, seeds[index]),
+              child: CircleAvatar(
+                radius: 40,
+                backgroundColor: Colors.grey[200],
+                child: SvgPicture.string(svgCode),
+              ),
+            );
+          },
+        );
+      },
+    );
+
+    if (selected != null) {
+      setState(() {
+        selectedAvatarSeed = selected;
+        icon = null; // limpiamos si eligió avatar
+      });
+    }
+  }
+
   void registerUser() async {
     if (!_formKey.currentState!.validate()) return;
 
     final double balance = double.tryParse(
-            balanceStr.replaceAll(RegExp('[^0-9.]'), '')) ?? 0;
+            balanceStr.replaceAll(RegExp('[^0-9.]'), '')) ??
+        0;
 
-    setState(() => isLoading = true); // 👈 mostramos loading
+    setState(() => isLoading = true);
 
     try {
       await api.register(
@@ -88,11 +168,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
         currencyBase: currencyBase,
         balance: balance,
         icon: icon,
+        avatarSeed: selectedAvatarSeed, // 👈 ahora lo mandamos
       );
 
       if (!mounted) return;
 
-      setState(() => isLoading = false); // 👈 quitamos loading
+      setState(() => isLoading = false);
 
       final result = await showDialog(
         context: context,
@@ -139,21 +220,18 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 child: SingleChildScrollView(
                   child: Column(
                     children: [
-                      GestureDetector(
-                        onTap: pickIcon,
-                        child: CircleAvatar(
-                          radius: 60,
-                          backgroundImage: icon != null ? FileImage(icon!) : null,
-                          child: icon == null
-                              ? const Icon(Icons.add_a_photo, size: 40)
-                              : null,
-                        ),
+                      UserAvatarWidget(
+                        iconFile: icon,
+                        avatarSeed: selectedAvatarSeed,
+                        radius: 60,
+                        onTap: _showAvatarOptions,
                       ),
                       const SizedBox(height: 16),
 
                       TextFormField(
                         decoration: const InputDecoration(
-                            labelText: 'Nombre', border: OutlineInputBorder()),
+                            labelText: 'Nombre',
+                            border: OutlineInputBorder()),
                         onChanged: (val) => name = val,
                         validator: (val) =>
                             val == null || val.isEmpty ? 'Obligatorio' : null,
@@ -161,7 +239,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       const SizedBox(height: 16),
                       TextFormField(
                         decoration: const InputDecoration(
-                            labelText: 'Email', border: OutlineInputBorder()),
+                            labelText: 'Email',
+                            border: OutlineInputBorder()),
                         keyboardType: TextInputType.emailAddress,
                         onChanged: (val) => email = val,
                         validator: (val) {
@@ -174,7 +253,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
                       TextFormField(
                         decoration: const InputDecoration(
-                            labelText: 'Contraseña', border: OutlineInputBorder()),
+                            labelText: 'Contraseña',
+                            border: OutlineInputBorder()),
                         obscureText: true,
                         onChanged: (val) => password = val,
                         validator: (val) =>
@@ -188,7 +268,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         obscureText: true,
                         validator: (val) {
                           if (val == null || val.isEmpty) return 'Obligatorio';
-                          if (val != password) return 'Las contraseñas no coinciden';
+                          if (val != password) {
+                            return 'Las contraseñas no coinciden';
+                          }
                           return null;
                         },
                       ),
@@ -208,7 +290,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                       ))
                                   .toList(),
                               onChanged: (val) {
-                                if (val != null) setState(() => currencyBase = val.code);
+                                if (val != null) {
+                                  setState(() => currencyBase = val.code);
+                                }
                               },
                               decoration: const InputDecoration(
                                   labelText: 'Moneda Base',
@@ -235,7 +319,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         onPressed: () {
                           Navigator.push(
                             context,
-                            MaterialPageRoute(builder: (_) => const LoginScreen()),
+                            MaterialPageRoute(
+                                builder: (_) => const LoginScreen()),
                           );
                         },
                         child: const Text('Ya tienes cuenta? Ingresar'),

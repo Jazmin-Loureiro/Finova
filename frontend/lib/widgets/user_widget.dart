@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_svg/flutter_svg.dart';
+import 'package:multiavatar/multiavatar.dart';
+
 import '../services/api_service.dart';
 import '../models/currency.dart';
 
@@ -27,21 +30,51 @@ class UserWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final iconUrl = user['full_icon_url'] as String?;
+    final iconValue = user['icon'] as String?; // 👈 único campo
     final name = user['name'] ?? 'Usuario';
     final email = user['email'] ?? '';
     final currencyCode = user['currencyBase'] ?? '';
     final createdAt = _formatSpanishDate(user['created_at']);
 
+    Widget avatar;
+    if (iconValue != null && iconValue.isNotEmpty) {
+      if (iconValue.contains('/')) {
+        // 🌐 es ruta → imagen subida en backend
+        avatar = CircleAvatar(
+          radius: 70,
+          backgroundImage: NetworkImage(iconValue),
+        );
+      } else {
+        // 🎨 es seed → generamos con multiavatar
+        final svgCode = multiavatar(iconValue);
+        avatar = CircleAvatar(
+          radius: 70,
+          backgroundColor: Colors.grey[200],
+          child: SvgPicture.string(
+            svgCode,
+            width: 140,
+            height: 140,
+          ),
+        );
+      }
+    } else {
+      // 🟦 fallback
+      final svgCode = multiavatar("default_seed");
+      avatar = CircleAvatar(
+        radius: 70,
+        backgroundColor: Colors.grey[200],
+        child: SvgPicture.string(
+          svgCode,
+          width: 140,
+          height: 140,
+        ),
+      );
+    }
+
     return Column(
       children: [
-        // Foto grande arriba
-        CircleAvatar(
-          radius: 70,
-          backgroundImage: (iconUrl != null && iconUrl.isNotEmpty)
-              ? NetworkImage(iconUrl)
-              : const AssetImage('assets/default_user.png') as ImageProvider,
-        ),
+        // Avatar grande arriba
+        avatar,
         const SizedBox(height: 16),
 
         // Nombre

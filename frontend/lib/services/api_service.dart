@@ -29,47 +29,52 @@ class ApiService {
 
   ///////////////////////////////////////// Registro de usuario
   Future<Map<String, dynamic>?> register(
-    String name,
-    String email,
-    String password, {
-    required String currencyBase,
-    double? balance,
-    File? icon,
-  }) async {
-    try {
-      final uri = Uri.parse('$apiUrl/register');
-      var request = http.MultipartRequest('POST', uri)
-        ..fields['name'] = name
-        ..fields['email'] = email
-        ..fields['password'] = password
-        ..fields['password_confirmation'] = password
-        ..fields['currencyBase'] = currencyBase
-        ..fields['balance'] = (balance ?? 0).toString();
+  String name,
+  String email,
+  String password, {
+  required String currencyBase,
+  double? balance,
+  File? icon,
+  String? avatarSeed, // 👈 nuevo
+}) async {
+  try {
+    final uri = Uri.parse('$apiUrl/register');
+    var request = http.MultipartRequest('POST', uri)
+      ..fields['name'] = name
+      ..fields['email'] = email
+      ..fields['password'] = password
+      ..fields['password_confirmation'] = password
+      ..fields['currencyBase'] = currencyBase
+      ..fields['balance'] = (balance ?? 0).toString();
 
-      if (icon != null) {
-        request.files.add(await http.MultipartFile.fromPath(
-          'icon',
-          icon.path,
-          filename: basename(icon.path),
-        ));
-      }
-
-      final streamedResponse = await request.send();
-      final res = await http.Response.fromStream(streamedResponse);
-
-      if (res.statusCode == 200 || res.statusCode == 201) {
-        return jsonDecode(res.body);
-      } else {
-        try {
-          return jsonDecode(res.body);
-        } catch (_) {
-          return {'error': 'Error en el registro, intente nuevamente'};
-        }
-      }
-    } catch (e) {
-      return {'error': 'No se pudo conectar con el servidor'};
+    if (icon != null) {
+      request.files.add(await http.MultipartFile.fromPath(
+        'icon',
+        icon.path,
+        filename: basename(icon.path),
+      ));
+    } else if (avatarSeed != null) {
+      // si no hay icon, mandamos el seed en el mismo campo
+      request.fields['icon'] = avatarSeed;
     }
+
+    final streamedResponse = await request.send();
+    final res = await http.Response.fromStream(streamedResponse);
+
+    if (res.statusCode == 200 || res.statusCode == 201) {
+      return jsonDecode(res.body);
+    } else {
+      try {
+        return jsonDecode(res.body);
+      } catch (_) {
+        return {'error': 'Error en el registro, intente nuevamente'};
+      }
+    }
+  } catch (e) {
+    return {'error': 'No se pudo conectar con el servidor'};
   }
+}
+
 
   /////////////////////////////////////////////////////////////////// Login
   Future<Map<String, dynamic>?> login(String email, String password) async {
@@ -103,13 +108,21 @@ class ApiService {
     final Map<String, dynamic> user = jsonDecode(res.body);
 
     final icon = user['icon'] as String?;
-    final fullIconUrl =
-        (icon != null && icon.isNotEmpty) ? '$baseUrl/storage/$icon' : null;
+    String? fullIconUrl;
+    bool isSeed = false;
+
+    if (icon != null && icon.isNotEmpty) {
+      if (icon.startsWith('icons/')) {
+        fullIconUrl = '$baseUrl/storage/$icon';
+      } else {
+        isSeed = true; // 👈 el backend guardó un avatarSeed en vez de un archivo
+      }
+    }
 
     return {
       ...user,
       'full_icon_url': fullIconUrl,
-      // 👇 aseguramos que existan estos campos nuevos
+      'is_avatar_seed': isSeed,
       'balance_converted': user['balance_converted'] ?? user['balance'],
       'currency_symbol': user['currency_symbol'] ?? '',
     };
@@ -137,16 +150,16 @@ class ApiService {
   String? passwordConfirmation,
   String? currencyBase,
   double? balance,
-  File? icon,
+  dynamic icon, // 👈 puede ser File o String
 }) async {
   final token = await storage.read(key: 'token');
   if (token == null) return null;
 
   try {
     final uri = Uri.parse('$apiUrl/user');
-    var request = http.MultipartRequest('POST', uri) // 👈 cambio a POST
+    var request = http.MultipartRequest('POST', uri)
       ..headers['Authorization'] = 'Bearer $token'
-      ..fields['_method'] = 'PUT'; // 👈 hack para Laravel
+      ..fields['_method'] = 'PUT';
 
     if (name != null) request.fields['name'] = name;
     if (email != null) request.fields['email'] = email;
@@ -158,12 +171,17 @@ class ApiService {
     if (currencyBase != null) request.fields['currencyBase'] = currencyBase;
     if (balance != null) request.fields['balance'] = balance.toString();
 
+    // 👇 acá chequeamos qué tipo de icon recibimos
     if (icon != null) {
-      request.files.add(await http.MultipartFile.fromPath(
-        'icon',
-        icon.path,
-        filename: basename(icon.path),
-      ));
+      if (icon is File) {
+        request.files.add(await http.MultipartFile.fromPath(
+          'icon',
+          icon.path,
+          filename: basename(icon.path),
+        ));
+      } else if (icon is String) {
+        request.fields['icon'] = icon; // semilla
+      }
     }
 
     final streamedResponse = await request.send();
@@ -172,15 +190,24 @@ class ApiService {
     if (res.statusCode == 200) {
       final Map<String, dynamic> user = jsonDecode(res.body)['user'];
 
-      final icon = user['icon'] as String?;
-      final fullIconUrl =
-          (icon != null && icon.isNotEmpty) ? '$baseUrl/storage/$icon' : null;
+      final iconVal = user['icon'] as String?;
+      String? fullIconUrl;
+      bool isSeed = false;
+
+      if (iconVal != null && iconVal.isNotEmpty) {
+        if (iconVal.startsWith('icons/')) {
+          fullIconUrl = '$baseUrl/storage/$iconVal';
+        } else {
+          isSeed = true;
+        }
+      }
 
       return {
         ...jsonDecode(res.body),
         'user': {
           ...user,
           'full_icon_url': fullIconUrl,
+          'is_avatar_seed': isSeed,
         },
       };
     } else {
@@ -194,7 +221,6 @@ class ApiService {
     return {'error': 'No se pudo conectar con el servidor'};
   }
 }
-
 
   ///////////////////////////////////////////////////////////////// Eliminar usuario
   Future<bool> deleteUser() async {

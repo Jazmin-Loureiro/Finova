@@ -4,6 +4,8 @@ import '../services/api_service.dart';
 
 import '../models/currency.dart';
 import '../widgets/currency_text_field.dart';
+import 'package:frontend/widgets/loading_widget.dart';
+import '../widgets/success_dialog_widget.dart';
 
 class MoneyMakerFormScreen extends StatefulWidget {
   const MoneyMakerFormScreen({super.key});
@@ -74,7 +76,18 @@ final newSource = await api.addPaymentSource(
 );
 
   if (newSource != null) {
+    //mostrar el dialogo
+    final confirmed = await showDialog(
+      context: context,
+      builder: (context) => SuccessDialogWidget(
+        title: 'Fuente Agregada',
+        message: 'La fuente de dinero se ha agregado exitosamente.',
+        buttonText: 'Aceptar',
+      ),
+    );
+    if (confirmed) {
     Navigator.pop(context, newSource); 
+    }
   } else {
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text('Error al agregar la fuente')),
@@ -90,9 +103,8 @@ final newSource = await api.addPaymentSource(
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: _isLoading
-            ? const Center(child: CircularProgressIndicator())
-            : 
-        Form(
+            ? const LoadingWidget(message: 'Cargando...')
+            : Form(
           key: _formKey,
           child: Column(
             children: [

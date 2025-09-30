@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
+import 'package:frontend/screens/register_list_screen.dart';
 import '../services/api_service.dart';
 import '../models/money_maker.dart';
 import 'money_maker_form_screen.dart';
@@ -93,8 +94,8 @@ class _MoneyMakerListScreenState extends State<MoneyMakerListScreen> {
                               title: '${porcentaje.toStringAsFixed(1)}%',
                               radius: 60,
                               titleStyle: const TextStyle(
-                                  fontSize: 14, fontWeight: FontWeight.bold, color: Colors.black),
-                            );
+                                fontSize: 14, fontWeight: FontWeight.bold, color: Colors.black),
+                                );
                           }).toList(),
                         ),
                       ),
@@ -117,17 +118,28 @@ class _MoneyMakerListScreenState extends State<MoneyMakerListScreen> {
                             margin: const EdgeInsets.symmetric(vertical: 8),
                             child: ListTile(
                               leading:
-                                  Icon(Icons.account_balance_wallet, color: fromHex(m.color)),
+                                Icon(Icons.account_balance_wallet, color: fromHex(m.color)),
                               title: Text(m.name, style: const TextStyle(fontWeight: FontWeight.bold)),
                               subtitle: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
-                               children: [
-                                Text('${m.type} - ${m.typeMoney}'),
-                                Text('${m.typeMoney}: ${m.currencySymbol}${m.balance.toStringAsFixed(2)} '),
-                                if (currencyBase != m.typeMoney)
-                                  Text('Balance: $currencyBase $currencySymbol${m.balanceConverted.toStringAsFixed(2)}'),
-                              ],
+                                children: [
+                                  Text('${m.type} - ${m.currency?.code}'),
+                                  Text('${m.currency?.code}: ${m.currency?.symbol}${m.balance.toStringAsFixed(2)} '),
+                                  if (currencyBase != m.currency?.code)
+                                    Text(
+                                        'Balance: $currencyBase $currencySymbol ${m.balanceConverted.toStringAsFixed(2)}'),
+                                ],
                               ),
+                              onTap: () async {
+                                await Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => RegisterListScreen(
+                                        currencyId: m.currency!.id),
+                                  ),
+                                );
+                                await fetchMoneyMakers(); // refrescamos al volver
+                              },
                             ),
                           );
                         },
@@ -142,7 +154,7 @@ class _MoneyMakerListScreenState extends State<MoneyMakerListScreen> {
             MaterialPageRoute(builder: (context) => const MoneyMakerFormScreen()),
           );
           if (result != null) {
-            fetchMoneyMakers();
+            await fetchMoneyMakers();
           }
         },
         child: const Icon(Icons.add),

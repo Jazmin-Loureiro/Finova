@@ -18,7 +18,8 @@ class AuthController extends Controller {
             'email' => 'required|email|unique:users',
             'password' => 'required|string|min:6|confirmed',
             'icon' => 'nullable|image|max:2048', 
-            'currencyBase' => ['required', 'string'],
+            //'currencyBase' => ['required', 'string'],
+            'currency_id' => ['required', 'exists:currencies,id'], // CAMBIO: validar que exista en la tabla currencies
             'balance' => ['nullable', 'numeric', 'min:0'],
         ]);
         $path = null;
@@ -30,10 +31,11 @@ class AuthController extends Controller {
             'email'=> $request->email,
             'password' => Hash::make($request->password),
             'icon' => $path,
-            'currencyBase' => $request->currencyBase,
+            //'currencyBase' => $request->currencyBase,
+            'currency_id' => $request->currency_id, // CAMBIO: guardar el ID de la moneda
             'balance' => $request->balance ?? 0,
         ]);
-
+        
         // Crear la casa del usuario
         $user->house()->create([
             'unlocked_second_floor' => false,
@@ -45,7 +47,8 @@ class AuthController extends Controller {
             'name' => 'Efectivo',
             'type' => 'Efectivo',
             'balance' => $request->balance ?? 0,
-            'typeMoney' => $request->currencyBase, // Moneda base del usuario
+            //'typeMoney' => $request->currencyBase, // Moneda base del usuario
+            'currency_id' => $request->currency_id, // CAMBIO: usar el ID de la moneda
             'color' => '#4CAF50',
             ]);
         // Crear categorías por defecto usando el servicio

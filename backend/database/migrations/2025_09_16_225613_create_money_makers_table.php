@@ -19,7 +19,8 @@ return new class extends Migration
             $table->string('name');
             $table->string('type');
             $table->decimal('balance', 12, 2)->default(0);
-            $table->string('typeMoney');
+            //$table->string('typeMoney');
+            $table->foreignId('currency_id')->constrained('currencies'); // clave foránea a la tabla currencies   
             $table->string('color')->nullable(); // Nueva columna para el color
 
             $table->timestamps();

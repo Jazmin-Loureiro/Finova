@@ -14,14 +14,20 @@ class MoneyMaker extends Model
         'name',
         'type',
         'balance',
-        'typeMoney',
+        'currency_id',
         'color',
     ];
 
     /**
      * Relaciones
      */
-    public function users()
+
+    public function currency()
+    {
+        return $this->belongsTo(Currency::class); // Relación con la tabla Currency 
+    }
+
+    public function user()
     {
         return $this->belongsTo(User::class);
     }

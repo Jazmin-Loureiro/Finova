@@ -20,7 +20,9 @@ return new class extends Migration
             $table->foreignId('moneyMaker_id')->constrained('money_makers')->onDelete('cascade');
             $table->string('name'); 
             $table->decimal('balance', 12, 2);
-            $table->string('typeMoney');
+            //$table->string('typeMoney');
+            $table->foreignId('currency_id') // clave foránea a la tabla currencies
+            ->constrained('currencies');
             $table->string('type');
             $table->string('file')->nullable();
             $table->boolean('repetition')->default(false);

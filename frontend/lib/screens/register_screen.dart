@@ -25,8 +25,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   String name = '', email = '', password = '';
   String balanceStr = '';
-  String currencyBase = '';
-  File? icon;
+  Currency? currencyBase; // CAMBIO: ahora es Currency? en vez de String
+   File? icon;
 
   List<Currency> currencyBases = [];
   bool isLoadingCurrencies = true;
@@ -50,11 +50,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   Future<void> fetchCurrencies() async {
     try {
-      final data = await api.getCurrenciesList(); // List<Currency>
+      final data = await api.getCurrencies(); // List<Currency>
       setState(() {
-        currencyBases = data;
-        if (currencyBases.isNotEmpty) {
-          currencyBase = currencyBases.first.code; // default
+        currencyBases = data; // 👈 Guardamos todas las monedas
+        if (data.isNotEmpty) {
+          currencyBase = data.first; // CAMBIO: seleccionamos la primera moneda por defecto
         }
         isLoadingCurrencies = false;
       });
@@ -77,7 +77,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
     final double balance = double.tryParse(
             balanceStr.replaceAll(RegExp('[^0-9.]'), '')) ?? 0;
-
+            
     setState(() => isLoading = true); // 👈 mostramos loading
 
     try {
@@ -85,7 +85,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
         name,
         email,
         password,
-        currencyBase: currencyBase,
+        currencyBase: currencyBase!, // CAMBIO: ahora pasamos el objeto Currency
         balance: balance,
         icon: icon,
       );
@@ -197,25 +197,23 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       isLoadingCurrencies
                           ? const CircularProgressIndicator()
                           : DropdownButtonFormField<Currency>(
-                              value: currencyBases.firstWhere(
-                                  (c) => c.code == currencyBase,
-                                  orElse: () => currencyBases.first),
-                              items: currencyBases
-                                  .map((c) => DropdownMenuItem(
-                                        value: c,
-                                        child: Text(
-                                            '${c.symbol} ${c.code} - ${c.name}'),
-                                      ))
-                                  .toList(),
-                              onChanged: (val) {
-                                if (val != null) setState(() => currencyBase = val.code);
-                              },
-                              decoration: const InputDecoration(
-                                  labelText: 'Moneda Base',
-                                  border: OutlineInputBorder()),
-                              validator: (val) =>
-                                  val == null ? 'Obligatorio' : null,
-                            ),
+                          value: currencyBase ?? (currencyBases.isNotEmpty ? currencyBases.first : null), // CAMBIO: valor inicial como Currency
+                          items: currencyBases
+                              .map((c) => DropdownMenuItem(
+                                    value: c,
+                                    child: Text(
+                                      '${c.symbol} ${c.code} - ${c.name}'),
+                                  ))
+                              .toList(),
+                          onChanged: (Currency? val) {
+                            if (val != null) setState(() => currencyBase = val);
+                          },
+                          decoration: const InputDecoration(
+                              labelText: 'Moneda Base',
+                              border: OutlineInputBorder()),
+                          validator: (val) => 
+                          val == null ? 'Obligatorio' : null,
+                        ),
                       const SizedBox(height: 16),
 
                       CurrencyTextField(

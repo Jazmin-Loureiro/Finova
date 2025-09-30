@@ -52,7 +52,6 @@ class _MoneyMakerListScreenState extends State<MoneyMakerListScreen> {
   @override
   Widget build(BuildContext context) {
     double totalBalance = moneyMakers.fold(0, (sum, m) => sum + m.balanceConverted);
-
     return Scaffold(
       appBar: AppBar(title: const Text('Fuentes de Dinero')),
       body: isLoading

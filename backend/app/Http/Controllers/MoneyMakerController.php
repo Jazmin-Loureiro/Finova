@@ -18,15 +18,20 @@ class MoneyMakerController extends Controller
     public function index(Request $request) {
         $user = $request->user();
         $toCurrency = $user->currency->code; // moneda base del usuario
+
         $moneyMakers = $user->moneyMakers()->with('currency')->get(); // obtengo todas las fuentes de dinero del usuario
         $totalInBase = 0; // saldo total en moneda base
         $result = $moneyMakers->map(function ($m) use ($toCurrency, &$totalInBase) { // paso $totalInBase por referencia
             $fromCurrency = $m->currency->code; // moneda del MoneyMaker
+            \Log::info("Convirtiendo de $fromCurrency a $toCurrency");
             $rate = $fromCurrency === $toCurrency
                 ? 1.0
                 : CurrencyService::getRate($fromCurrency, $toCurrency); // obtengo la tasa
-
+            \Log::info("Tasa: $rate");
+            \Log::info ($m->balance);
+            
             $balanceConverted = $m->balance * $rate; // convierto el balance a la moneda base
+            \Log::info ($balanceConverted);
             $totalInBase += $balanceConverted; // acumulo al total en moneda base 
 
             return [ // retorno los datos del MoneyMaker junto con el balance convertido

@@ -6,10 +6,11 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 import '../models/money_maker.dart';
 import '../models/currency.dart';
+import '../models/register.dart';
 
 // URLs base
-const String baseUrl = "http://192.168.1.113:8000";
-//const String baseUrl = "http://192.168.0.162:8000"; guardo el mio je
+//const String baseUrl = "http://192.168.1.113:8000";
+const String baseUrl = "http://192.168.0.162:8000";// guardo el mio je
 const String apiUrl = "$baseUrl/api";
 // Instancia de almacenamiento seguro
 final storage = const FlutterSecureStorage();
@@ -32,7 +33,8 @@ class ApiService {
     String name,
     String email,
     String password, {
-    required String currencyBase,
+    //required String currencyBase,
+    required Currency currencyBase, // CAMBIO: ahora es Currency
     double? balance,
     File? icon,
   }) async {
@@ -43,7 +45,7 @@ class ApiService {
         ..fields['email'] = email
         ..fields['password'] = password
         ..fields['password_confirmation'] = password
-        ..fields['currencyBase'] = currencyBase
+        ..fields['currency_id'] = currencyBase.id.toString()
         ..fields['balance'] = (balance ?? 0).toString();
 
       if (icon != null) {
@@ -135,7 +137,7 @@ class ApiService {
   String? email,
   String? password,
   String? passwordConfirmation,
-  String? currencyBase,
+  int? currencyBase,
   double? balance,
   File? icon,
 }) async {
@@ -155,7 +157,7 @@ class ApiService {
       request.fields['password_confirmation'] =
           passwordConfirmation ?? password;
     }
-    if (currencyBase != null) request.fields['currencyBase'] = currencyBase;
+    if (currencyBase != null) request.fields['currency_id'] = currencyBase.toString();
     if (balance != null) request.fields['balance'] = balance.toString();
 
     if (icon != null) {
@@ -238,7 +240,7 @@ Future<Map<String, dynamic>?> createTransaction(
   String name, {
   int? moneyMakerId,
   int? categoryId,
-  String? typeMoney,
+  int? currencyId,
   File? file,
   bool? repetition,
   int? frequencyRepetition,
@@ -250,12 +252,15 @@ Future<Map<String, dynamic>?> createTransaction(
     final uri = Uri.parse('$apiUrl/transactions');
     var request = http.MultipartRequest('POST', uri)
       ..headers['Authorization'] = 'Bearer $token'
+            ..headers['Accept'] = 'application/json'
+
+
       ..fields['type'] = type
       ..fields['balance'] = balance.toString()
       ..fields['name'] = name
       ..fields['moneyMaker_id'] = moneyMakerId?.toString() ?? ''
       ..fields['category_id'] = categoryId?.toString() ?? ''
-      ..fields['typeMoney'] = typeMoney ?? ''
+      ..fields['currency_id'] = currencyId?.toString() ?? ''
       ..fields['repetition'] = (repetition ?? false) ? '1' : '0';
 
     if (frequencyRepetition != null) {
@@ -285,6 +290,27 @@ Future<Map<String, dynamic>?> createTransaction(
     return {'error': 'No se pudo conectar con el servidor'};
   }
 }
+//////////////////////////////////////////////////////////////////
+
+Future<List<Register>> getRegistersByMoneyMaker(int moneyMakerId) async {
+  final token = await storage.read(key: 'token');
+  if (token == null) return [];
+
+  final res = await http.get(
+    Uri.parse('$apiUrl/transactions?moneyMaker=$moneyMakerId'),
+    headers: jsonHeaders(token),
+  );
+  if (res.statusCode == 200) {
+    final data = jsonDecode(res.body);
+    // Si la API devuelve una lista directa
+    return (data['registers'] as List)
+        .map((json) => Register.fromJson(json))
+        .toList();
+  }
+
+  return [];
+}
+
 
 
 ///////////////////////////////////////////////////////////// Obtener lista de fuentes de dinero + moneda base
@@ -319,7 +345,7 @@ Future<MoneyMaker?> addPaymentSource(
   String name,
   String typeSelected,
   double balance,
-  String typeMoney,
+  Currency currency, // CAMBIO: objeto completo 
   String color,
 ) async {
   final token = await storage.read(key: 'token');
@@ -332,7 +358,7 @@ Future<MoneyMaker?> addPaymentSource(
       'name': name,
       'type': typeSelected,
       'balance': balance,
-      'typeMoney': typeMoney,
+      'currency_id': currency.id, // CAMBIO: enviamos id
       'color': color,
     }),
   );
@@ -382,7 +408,7 @@ Future<MoneyMaker?> addPaymentSource(
   }
 
   ////////////////////////////////////////  Obtener lista de monedas no necesita token
-    Future<List<dynamic>> getCurrencies() async {
+    /*Future<List<dynamic>> getCurrencies() async {
     final response = await http.get(Uri.parse('$baseUrl/api/currencies'),
     headers: {
       'Accept': 'application/json',
@@ -399,9 +425,23 @@ Future<MoneyMaker?> addPaymentSource(
     final List<dynamic> data = await getCurrencies();
     return data.map((e) => Currency.fromJson(e)).toList();
   }
+  */
+  Future<List<Currency>> getCurrencies() async {
+  final response = await http.get(
+    Uri.parse('$baseUrl/api/currencies'),
+    headers: {'Accept': 'application/json'},
+  );
+  if (response.statusCode == 200) {
+    final List<dynamic> data = jsonDecode(response.body);
+    return data.map((e) => Currency.fromJson(e)).toList();
+  } else {
+    throw Exception('Error al cargar las monedas');
+  }
+}
+
 
   ///////////!!!!!!!!!!!!!!!!!!!!!!!!!Leer moneda base desde API
-    Future<String?> getUserCurrency() async {
+    Future<int?> getUserCurrency() async {
     final token = await storage.read(key: 'token'); 
     if (token == null) return null;
 
@@ -410,7 +450,7 @@ Future<MoneyMaker?> addPaymentSource(
       headers: jsonHeaders(token),
     );
     if (response.statusCode == 200) {
-      return jsonDecode(response.body)['userBaseCurrency'] as String?;
+      return jsonDecode(response.body)['userBaseCurrency'] as int?;
     }
     return null;
   }
@@ -421,7 +461,7 @@ Future<Map<String, dynamic>> getTransactionFormData(String type) async {
   final results = await Future.wait([
     getCategories(type),       // List<Map<String, dynamic>>
     getMoneyMakersFull(),      // Map con moneyMakers y currency_base
-    getCurrenciesList(),       // List<Currency>
+    getCurrencies(),       // List<Currency>
   ]);
 
   final categories = results[0] as List<Map<String, dynamic>>;

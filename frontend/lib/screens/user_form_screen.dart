@@ -1,7 +1,7 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
-import '../widgets/confirm_dialog_widget.dart'; 
+import '../widgets/confirm_dialog_widget.dart';
 import '../widgets/success_dialog_widget.dart';
 import '../services/api_service.dart';
 import '../models/currency.dart';
@@ -20,7 +20,7 @@ class _UserFormScreenState extends State<UserFormScreen> {
   late TextEditingController nameController;
   late TextEditingController emailController;
   late TextEditingController passwordController;
-  String? selectedCurrency;
+  Currency? selectedCurrency;
   File? newIcon;
 
   List<Currency> currencies = [];
@@ -32,15 +32,20 @@ class _UserFormScreenState extends State<UserFormScreen> {
     nameController = TextEditingController(text: widget.user['name']);
     emailController = TextEditingController(text: widget.user['email']);
     passwordController = TextEditingController();
-    selectedCurrency = widget.user['currencyBase'];
     _fetchCurrencies();
   }
 
   Future<void> _fetchCurrencies() async {
     try {
-      final data = await ApiService().getCurrenciesList();
+      final data = await ApiService().getCurrencies();
       setState(() {
         currencies = data;
+        if (currencies.isNotEmpty) {
+          selectedCurrency = currencies.firstWhere(
+            (c) => c.id == widget.user['currency_id'],
+            orElse: () => currencies[0],
+          );
+        }
         isLoadingCurrencies = false;
       });
     } catch (_) {
@@ -63,8 +68,8 @@ class _UserFormScreenState extends State<UserFormScreen> {
       'email': emailController.text,
       'password': passwordController.text.isNotEmpty ? passwordController.text : null,
       'password_confirmation': passwordController.text.isNotEmpty ? passwordController.text : null,
-      'currencyBase': selectedCurrency,
-      'icon': newIcon,
+      'currencyBase': selectedCurrency?.id, // ✅ ahora devuelve el ID correcto
+      'icon': newIcon
     });
   }
 
@@ -107,12 +112,12 @@ class _UserFormScreenState extends State<UserFormScreen> {
                 const SizedBox(height: 12),
                 isLoadingCurrencies
                     ? const CircularProgressIndicator()
-                    : DropdownButtonFormField<String>(
+                    : DropdownButtonFormField<Currency>(
                         value: selectedCurrency,
                         decoration: _inputDecoration("Moneda base"),
                         items: currencies
                             .map((c) => DropdownMenuItem(
-                                  value: c.code,
+                                  value: c,
                                   child: Text('${c.symbol} ${c.code} - ${c.name}'),
                                 ))
                             .toList(),

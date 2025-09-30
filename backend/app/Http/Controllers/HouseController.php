@@ -14,15 +14,16 @@ class HouseController extends Controller
         $house = $user->house; // relación 1 a 1
 
         // Balance guardado SIEMPRE en ARS
-        $balanceARS = (float) $user->balance;
+        $balance = (float) $user->balance;
 
         // 👇 Convertir a la moneda base del usuario
+        /*
         $balance = CurrencyService::convert(
             $balanceARS,
             'ARS',                  // origen fijo
-            $user->currencyBase     // destino: moneda base del usuario
+            $user->currency->code    // destino: moneda base del usuario
         );
-
+*/
         // Reglas de desbloqueo (siguen igual, usan el balance convertido)
         if ($balance >= 1000 && !$house->unlocked_second_floor) {
             $house->update(['unlocked_second_floor' => true]);

@@ -15,7 +15,7 @@ class Register extends Model
         'moneyMaker_id',
         'name',
         'balance',
-        'typeMoney',
+        'currency_id',
         'type',
         'file',
         'repetition',
@@ -26,22 +26,28 @@ class Register extends Model
     /**
      * Relaciones
      */
+
+    public function currency()
+    {
+        return $this->belongsTo(Currency::class); // Relación con la tabla Currency 
+    }
+
     public function user()
     {
         return $this->belongsTo(User::class);
     }
 
-    public function categories()
+    public function category()
     {
         return $this->belongsTo(Category::class); // Una categoría puede tener muchos registros
     }
 
-    public function moneyMakers()
+    public function moneyMaker()
     {
         return $this->belongsTo(MoneyMaker::class);
     }
 
-    public function goals()
+    public function goal()
     {
         return $this->belongsTo(Goal::class);
     }

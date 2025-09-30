@@ -20,7 +20,8 @@ return new class extends Migration
             $table->timestamp('email_verified_at')->nullable();
             $table->string('password');
             $table->string('icon')->nullable(); // nuevo campo
-            $table->string('currencyBase');      // nuevo campo
+            //$table->string('currencyBase');      
+            $table->foreignId('currency_id') ->constrained('currencies'); // nuevo campo como llave foránea
             $table->decimal('balance', 12, 2)->default(0); // nuevo campo
             $table->rememberToken();
             $table->timestamps();

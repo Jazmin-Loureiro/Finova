@@ -13,6 +13,7 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
   @override
   Widget build(BuildContext context) {
     return AppBar(
+      automaticallyImplyLeading: false, // 👈 saca la flecha de volver
       title: Text(title),
       backgroundColor: Theme.of(context).colorScheme.surface, // sólido dinámico
       foregroundColor: Theme.of(context).colorScheme.onSurface, // contraste dinámico

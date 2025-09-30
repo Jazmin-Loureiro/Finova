@@ -30,25 +30,25 @@ class _MoneyMakerFormScreenState extends State<MoneyMakerFormScreen> {
   ]; /////////////ESTO DEBERIA SALIR DE OTRO LADO O TENER UNA TABLA EN LA BASE DE DATOS PARA Q EL ADMIN PUEDA ADMINISTRAR O NOSE
   
   List<Currency> currencies = [];
-  String? selectedCurrency;
+  //String? selectedCurrency;
+  Currency? selectedCurrency;
   bool _isLoading = true;
 
 // Carga las monedas y la moneda base del usuario
-  Future<void> loadFormData() async {
-  final fetchedCurrencies = await api.getCurrenciesList(); // trae todas las monedas
+ Future<void> loadFormData() async {
+  final fetchedCurrencies = await api.getCurrencies(); // trae todas las monedas
   final userBaseCurrency = await api.getUserCurrency();   
-    if (!mounted) return;
-    setState(() {
-      currencies = fetchedCurrencies; // actualiza la lista de monedas
-      if (currencies.isNotEmpty) {
-        selectedCurrency = currencies.firstWhere( // selecciona la moneda base del usuario o la primera si no está
-        (c) => c.code == userBaseCurrency,
-        orElse: () => currencies.first, // fallback a la primera moneda
-      ).code;
-      }
-      _isLoading = false; // ya cargó todo
-    });
-  }
+  if (!mounted) return;
+  setState(() {
+    currencies = fetchedCurrencies; // actualiza la lista de monedas
+    selectedCurrency = currencies.firstWhere( // selecciona la moneda base del usuario o la primera si no está
+      (c) => c.id == userBaseCurrency,
+      orElse: () => currencies.first, // fallback a la primera moneda
+    );
+    _isLoading = false;
+  });
+}
+
 
 @override
   void initState() {
@@ -65,8 +65,14 @@ String typeSelected = "Efectivo"; // por defecto
   final balance = double.tryParse(balanceController.text) ?? 0;
   final colorHex = '#${selectedColor!.toARGB32().toRadixString(16).substring(2)}';
 
-  final newSource = await api.addPaymentSource( name, typeSelected, balance, selectedCurrency!, colorHex,); // Llama al API para agregar la fuente
-  if (!mounted) return;
+final newSource = await api.addPaymentSource(
+  name,
+  typeSelected,
+  balance,
+  selectedCurrency!, // enviamos el id directamente
+  colorHex,
+);
+
   if (newSource != null) {
     Navigator.pop(context, newSource); 
   } else {
@@ -123,27 +129,30 @@ String typeSelected = "Efectivo"; // por defecto
               const SizedBox(height: 16),
 
                 // Tipo de moneda
-                   DropdownButtonFormField<String>(
-                   decoration: const InputDecoration(
-                   labelText: 'Tipo de moneda',
-                   border: OutlineInputBorder(),
-                      ),
-                        value: selectedCurrency,
-                        items: currencies.map((c) => DropdownMenuItem<String>(
-                              value: c.code,
-                              child: Text('${c.symbol} ${c.code} - ${c.name}'),
-                            )).toList(),
-                        onChanged: (value) => setState(() => selectedCurrency = value!),
-                      ),
+                  DropdownButtonFormField<Currency>(
+                  value: selectedCurrency,
+                  decoration: const InputDecoration(
+                    labelText: 'Tipo de moneda',
+                    border: OutlineInputBorder(),
+                  ),
+                  items: currencies.map((c) => DropdownMenuItem<Currency>(
+                    value: c,
+                    child: Text('${c.symbol} ${c.code} - ${c.name}'),
+                  )).toList(),
+                  onChanged: (value) => setState(() => selectedCurrency = value),
+                  validator: (val) => val == null ? 'Debes seleccionar una moneda' : null,
+                ),
+
                 const SizedBox(height: 16),
 
               // Saldo inicial
               CurrencyTextField(
-                controller: balanceController,
-                currencies: currencies,
-                selectedCurrency: selectedCurrency ?? currencies.first.code,
-                label: 'Saldo inicial',
-              ),
+              controller: balanceController,
+              currencies: currencies,
+              selectedCurrency: selectedCurrency,
+              label: 'Saldo inicial',
+            ),
+
               const SizedBox(height: 16),
 
               // Selector de color como FormField con InputDecorator

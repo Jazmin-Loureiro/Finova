@@ -32,7 +32,7 @@ Route::middleware('auth:sanctum')->group(function () {
     // Moneda base del usuario
     Route::get('/userCurrency', function () {
     return response()->json([
-        'userBaseCurrency' => auth()->user()->currencyBase ,
+        'userBaseCurrency' => auth()->user()->currency_id ,
     ]);
 });
     // Logout
@@ -44,6 +44,10 @@ Route::middleware('auth:sanctum')->group(function () {
 /////////////////////////////////////////////////////////////////////////////////
     //Registrar Ingreso o Gasto
     Route::post('/transactions', [RegisterController::class, 'store']);
+    // Obtener todos los ingresos y gastos
+    Route::get('/transactions', [RegisterController::class, 'index']);
+    // Obtener todos los ingresos y gastos de una fuente de dinero
+    Route::get('/transactions/moneyMaker/{moneyMakerId}', [RegisterController::class, 'getByMoneyMaker']);
 ////////////////////////////////////////////////////////////////////////////////
     //Registrar Fuente de Dinero
     Route::post('/moneyMakers', [MoneyMakerController::class, 'store']);

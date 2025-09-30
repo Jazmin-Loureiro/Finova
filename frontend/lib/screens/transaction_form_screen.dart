@@ -34,7 +34,7 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
   Map<String, dynamic>? selectedCategory;
 
   List<Currency> currencies = [];
-  String? selectedCurrency;
+  Currency? selectedCurrency;
 
   File? attachedFile;
   int? repeatEveryNDays;
@@ -48,13 +48,15 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
 
   Future<void> loadFormData() async {
     final data = await api.getTransactionFormData(widget.type);
+    // Asegurarse de que el defaultCurrency sea un Currency
+    Currency defaultCurrency = data['defaultCurrency'] as Currency;
     setState(() {
       categories = data['categories'];
       selectedCategory = categories.isNotEmpty ? categories.first : null;
       moneyMakers = data['moneyMakers'];
       selectedMoneyMaker = moneyMakers.isNotEmpty ? moneyMakers.first : null;
       currencies = data['currencies'];
-      selectedCurrency = (data['defaultCurrency'] as Currency).code;
+      selectedCurrency = selectedMoneyMaker?.currency ?? defaultCurrency;
 
       isLoading = false;
     });
@@ -71,7 +73,7 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
     if (!_formKey.currentState!.validate()) return;
     final amount = double.tryParse(amountController.text);
     final name = nameController.text;
-    if (amount == null || name.isEmpty || selectedMoneyMaker == null || selectedCategory == null) return;
+    if (amount == null || name.isEmpty || selectedMoneyMaker == null || selectedCategory == null || selectedCurrency == null) return;
 
     final res = await api.createTransaction(
       widget.type,
@@ -79,7 +81,7 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
       name,
       moneyMakerId: selectedMoneyMaker!.id,
       categoryId: selectedCategory!['id'],
-      typeMoney: selectedCurrency,
+      currencyId: selectedCurrency!.id, // ✅ enviar solo el ID
       file: attachedFile,
       repetition: repeatEveryNDays != null,
       frequencyRepetition: repeatEveryNDays,
@@ -116,7 +118,7 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
       return const Scaffold(
         body: Center(
           child: CircularProgressIndicator(),
-        ),
+          ),
       );
     }
 
@@ -127,8 +129,8 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text('Nuevo ${typeLabels[widget.type] ?? widget.type}'),
-      ),
+        title: Text('Nuevo ${typeLabels[widget.type] ?? widget.type}')
+        ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Form(
@@ -139,10 +141,10 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
                 // Nombre
                 TextFormField(
                   controller: nameController,
-                 decoration: const InputDecoration(
-                  labelText: 'Nombre',
-                  border: OutlineInputBorder(),
-                ),
+                  decoration: const InputDecoration(
+                    labelText: 'Nombre',
+                    border: OutlineInputBorder(),
+                  ),
                   validator: (value) => value == null || value.isEmpty ? 'Ingrese un nombre' : null,
                 ),
                 const SizedBox(height: 16),
@@ -151,7 +153,7 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
                 CurrencyTextField(
                   controller: amountController,
                   currencies: currencies,
-                  selectedCurrency: selectedCurrency ?? (currencies.isNotEmpty ? currencies.first.code : null),
+                  selectedCurrency: selectedCurrency,
                   label: 'Monto',
                 ),
                 const SizedBox(height: 16),
@@ -161,11 +163,11 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
                   children: [
                     Expanded(
                       child: DropdownButtonFormField<MoneyMaker>(
-                       decoration: const InputDecoration(
-                        labelText: 'Tipo de fuente',
-                       
-                       border: OutlineInputBorder(),
-                      ),
+                        decoration: const InputDecoration(
+                          labelText: 'Fuente de dinero',
+
+                          border: OutlineInputBorder(),
+                        ),
                         initialValue: selectedMoneyMaker,
                         items: moneyMakers
                             .map((m) => DropdownMenuItem(value: m, child: Text(m.name)))
@@ -173,7 +175,7 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
                         onChanged: (value) {
                           setState(() {
                             selectedMoneyMaker = value;
-                            selectedCurrency = value?.typeMoney;
+                            selectedCurrency = value?.currency;
                           });
                         },
                       ),
@@ -190,45 +192,42 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
                           setState(() {
                             moneyMakers.add(newMaker);
                             selectedMoneyMaker = newMaker;
-                            selectedCurrency = newMaker.typeMoney;
+                            selectedCurrency = newMaker.currency; // ✅ consistente
                           });
                         }
                       },
                     ),
                   ],
                 ),
-                 const SizedBox(height: 16),
+                const SizedBox(height: 16),
 
-                //Drop desabilitado de moneda (la moneda se elige con la fuente de dinero)
-                DropdownButtonFormField<Currency>(
-                initialValue: currencies.firstWhere(
-                  (c) => c.code == selectedCurrency,
-                  orElse: () => currencies.first,
+                // Drop de moneda (deshabilitado)
+                DropdownButtonFormField<int>(
+                  initialValue: selectedCurrency?.id ?? currencies.first.id,
+                  items: currencies
+                      .map((c) => DropdownMenuItem(
+                            value: c.id,
+                            child: Text('${c.symbol} ${c.code} - ${c.name}'),
+                          ))
+                      .toList(),
+                  onChanged: null, // null = deshabilitado
+                  decoration: const InputDecoration(
+                    labelText: 'Tipo de moneda',
+                    border: OutlineInputBorder(),
+                  ),
                 ),
-                items: currencies
-                    .map((c) => DropdownMenuItem(
-                          value: c,
-                          child: Text('${c.symbol} ${c.code} - ${c.name}'),
-                        ))
-                    .toList(),
-                onChanged: null, // null = deshabilitado
-                decoration: const InputDecoration(
-                  labelText: 'Tipo de moneda',
-                  border: OutlineInputBorder(),
-                ),
-              ),
-              const SizedBox(height: 16),
+                const SizedBox(height: 16),
 
                 // Categoría
                 Row(
                   children: [
                     Expanded(
                       child: DropdownButtonFormField<Map<String, dynamic>>(
-                       decoration: const InputDecoration(
-                  labelText: 'Categoría',
-                  border: OutlineInputBorder(),
-                ),
-                        initialValue: selectedCategory,
+                        decoration: const InputDecoration(
+                          labelText: 'Categoría',
+                          border: OutlineInputBorder(),
+                        ),
+                        value: selectedCategory,
                         items: categories
                             .map((c) => DropdownMenuItem(value: c, child: Text(c['name'])))
                             .toList(),
@@ -242,8 +241,8 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
                         final newCategory = await Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (_) => CategoryFormScreen(type: widget.type),
-                          ),
+                            builder: (_) => CategoryFormScreen(type: widget.type)
+                            ),
                         );
                         if (newCategory != null) {
                           setState(() {
@@ -266,15 +265,8 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
                   leading: const Icon(Icons.attach_file, color: Colors.indigo),
                   title: const Text("Adjuntar archivo"),
                   subtitle: attachedFile != null
-                      ? Text(
-                          attachedFile!.path.split('/').last,
-                          overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(fontSize: 12, color: Colors.black54),
-                        )
-                      : const Text(
-                          "No se seleccionó archivo",
-                          style: TextStyle(fontSize: 12, color: Colors.black45),
-                        ),
+                      ? Text(attachedFile!.path.split('/').last, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 12, color: Colors.black54))
+                      : const Text("No se seleccionó archivo", style: TextStyle(fontSize: 12, color: Colors.black45)),
                   trailing: IconButton(
                     icon: const Icon(Icons.upload_file, color: Colors.indigo),
                     onPressed: _pickFile,
@@ -283,7 +275,7 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
                 const SizedBox(height: 20),
 
                 // Guardar
-               ElevatedButton(
+                ElevatedButton(
                   onPressed: saveTransaction,
                   child: const Text('Guardar'),
                 ),

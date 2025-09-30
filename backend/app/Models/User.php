@@ -24,13 +24,19 @@ class User extends Authenticatable implements MustVerifyEmail // añadido MustVe
         'email',
         'password',
         'icon',
-        'currencyBase',
+        'currency_id', // Esto tiene q se runa relacion con la otra tabla
         'balance',
     ];
 
     /**
      * Relaciones
      */
+
+    public function currency()
+    {
+        return $this->belongsTo(Currency::class); // Relación con la tabla Currency 
+    }
+
     public function categories()
     {
         return $this->hasMany(Category::class);

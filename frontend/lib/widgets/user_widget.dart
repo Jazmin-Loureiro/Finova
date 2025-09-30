@@ -31,7 +31,7 @@ class UserWidget extends StatelessWidget {
     final iconValue = user['icon'] as String?; // 👈 único campo
     final name = user['name'] ?? 'Usuario';
     final email = user['email'] ?? '';
-    final currencyCode = user['currencyBase'] ?? '';
+    final currencyId = user['currency_id'] as int? ?? 0; // <-- ahora es int
     final createdAt = _formatSpanishDate(user['created_at']);
 
     Widget avatar;
@@ -108,7 +108,7 @@ class UserWidget extends StatelessWidget {
 
         const SizedBox(height: 20),
 
-        // Info extra en card apilada
+        // Info extra en card apilada        
         Card(
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
@@ -125,7 +125,7 @@ class UserWidget extends StatelessWidget {
                 ),
                 const Divider(),
                 FutureBuilder<List<Currency>>(
-                  future: ApiService().getCurrenciesList(),
+                  future: ApiService().getCurrencies(),
                   builder: (context, snapshot) {
                     if (!snapshot.hasData) {
                       return const ListTile(
@@ -137,8 +137,13 @@ class UserWidget extends StatelessWidget {
 
                     final currencies = snapshot.data!;
                     final found = currencies.firstWhere(
-                      (c) => c.code == currencyCode,
-                      orElse: () => Currency(code: currencyCode, name: currencyCode, symbol: currencyCode),
+                      (c) => c.id == currencyId, // <-- buscamos por id
+                      orElse: () => Currency(
+                        id: 0,
+                        code: 'USD',
+                        name: 'Desconocida',
+                        symbol: '',
+                      ),
                     );
 
                     return ListTile(

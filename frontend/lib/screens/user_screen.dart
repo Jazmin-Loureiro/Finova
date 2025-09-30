@@ -19,8 +19,8 @@ class UserScreen extends StatefulWidget {
 class _UserScreenState extends State<UserScreen> {
   final ApiService api = ApiService();
   late Future<Map<String, dynamic>?> userFuture;
-
-  bool _isDeleting = false; // 👈 flag para mostrar loading al eliminar
+  
+    bool _isDeleting = false; // 👈 flag para mostrar loading al eliminar
 
   @override
   void initState() {
@@ -30,12 +30,20 @@ class _UserScreenState extends State<UserScreen> {
 
   void _refreshUser() {
     setState(() {
-      userFuture = api.getUser();
+      userFuture = Future.value(null); // Limpia datos → muestra "Actualizando..."
+    });
+    // En el siguiente frame, pide de nuevo el usuario
+    Future.delayed(Duration.zero, () {
+      if (mounted) {
+        setState(() {
+          userFuture = api.getUser();
+        });
+      }
     });
   }
 
   Future<void> _deleteAccount() async {
-    setState(() {
+   setState(() {
       _isDeleting = true; // 👈 mostrar loading
     });
 
@@ -50,7 +58,7 @@ class _UserScreenState extends State<UserScreen> {
         MaterialPageRoute(builder: (_) => const LoginScreen()),
       );
 
-      // 👉 después mostrar el success
+        // 👉 después mostrar el success
       showDialog(
         context: context,
         builder: (_) => const SuccessDialogWidget(
@@ -59,7 +67,7 @@ class _UserScreenState extends State<UserScreen> {
         ),
       );
     } else {
-      setState(() {
+     setState(() {
         _isDeleting = false; // 👈 volvemos al estado normal si falla
       });
 
@@ -85,9 +93,11 @@ class _UserScreenState extends State<UserScreen> {
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const LoadingWidget(message: "Actualizando...");
-          } else if (snapshot.hasError) {
+          }
+          if (snapshot.hasError) {
             return Center(child: Text('Error: ${snapshot.error}'));
-          } else if (!snapshot.hasData || snapshot.data == null) {
+          }
+          if (!snapshot.hasData || snapshot.data == null) {
             return const LoadingWidget(message: "Actualizando...");
           }
 
@@ -100,7 +110,7 @@ class _UserScreenState extends State<UserScreen> {
                 UserWidget(user: user),
                 const SizedBox(height: 20),
 
-                // --- Botones en fila ---
+                                // --- Botones en fila ---
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 20.0),
                   child: Row(

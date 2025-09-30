@@ -18,6 +18,25 @@ class Currency extends Model
         'rate',
     ];
 
+    // Relaciones
+
+     public function users()
+    {
+        return $this->hasMany(User::class);
+    }
+
+    public function moneyMakers()
+    {
+        return $this->hasMany(MoneyMaker::class);
+    }
+
+    public function registers()
+    {
+        return $this->hasMany(Register::class);
+    }
+
+
+
     public function scopeCode($query, $code)
 {
     return $query->where('code', $code);

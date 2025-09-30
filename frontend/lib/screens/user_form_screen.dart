@@ -27,7 +27,7 @@ class _UserFormScreenState extends State<UserFormScreen> {
   late TextEditingController nameController;
   late TextEditingController emailController;
   late TextEditingController passwordController;
-  String? selectedCurrency;
+  Currency? selectedCurrency;
   File? newIcon;
   String? selectedAvatarSeed; // 👈 nuevo
 
@@ -40,15 +40,20 @@ class _UserFormScreenState extends State<UserFormScreen> {
     nameController = TextEditingController(text: widget.user['name']);
     emailController = TextEditingController(text: widget.user['email']);
     passwordController = TextEditingController();
-    selectedCurrency = widget.user['currencyBase'];
     _fetchCurrencies();
   }
 
   Future<void> _fetchCurrencies() async {
     try {
-      final data = await ApiService().getCurrenciesList();
+      final data = await ApiService().getCurrencies();
       setState(() {
         currencies = data;
+        if (currencies.isNotEmpty) {
+          selectedCurrency = currencies.firstWhere(
+            (c) => c.id == widget.user['currency_id'],
+            orElse: () => currencies[0],
+          );
+        }
         isLoadingCurrencies = false;
       });
     } catch (_) {
@@ -122,8 +127,8 @@ class _UserFormScreenState extends State<UserFormScreen> {
       'email': emailController.text,
       'password': passwordController.text.isNotEmpty ? passwordController.text : null,
       'password_confirmation': passwordController.text.isNotEmpty ? passwordController.text : null,
-      'currencyBase': selectedCurrency,
-      'icon': iconValue, // 👈 unificado en un solo campo
+      'currencyBase': selectedCurrency?.id, // ✅ ahora devuelve el ID correcto
+      'icon':  iconValue, // 👈 unificado en un solo campo
     });
   }
 
@@ -204,12 +209,12 @@ class _UserFormScreenState extends State<UserFormScreen> {
                 const SizedBox(height: 12),
                 isLoadingCurrencies
                     ? const CircularProgressIndicator()
-                    : DropdownButtonFormField<String>(
-                        initialValue: selectedCurrency,
+                    : DropdownButtonFormField<Currency>(
+                        value: selectedCurrency,
                         decoration: _inputDecoration("Moneda base"),
                         items: currencies
                             .map((c) => DropdownMenuItem(
-                                  value: c.code,
+                                  value: c,
                                   child: Text('${c.symbol} ${c.code} - ${c.name}'),
                                 ))
                             .toList(),

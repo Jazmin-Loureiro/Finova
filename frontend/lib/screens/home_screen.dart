@@ -56,7 +56,7 @@ class _HomeScreenState extends State<HomeScreen> {
       extendBodyBehindAppBar: true,
       // 👇 quitamos Colors.transparent para que no aparezca el “negro” detrás del FAB/notch
       appBar: CustomAppBar(
-        title: 'Home',
+        title: 'Inicio',
         actions: [
           IconButton(
             icon: const Icon(Icons.logout),

@@ -11,6 +11,7 @@ import '../models/register.dart';
 // URLs base
 //const String baseUrl = "http://192.168.1.113:8000";
 const String baseUrl = "http://192.168.0.162:8000";// guardo el mio je
+//const String baseUrl = "http://172.16.89.42:8000"; // IP de la facu
 const String apiUrl = "$baseUrl/api";
 // Instancia de almacenamiento seguro
 final storage = const FlutterSecureStorage();

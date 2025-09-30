@@ -10,6 +10,8 @@ import '../widgets/success_dialog_widget.dart';
 import '../services/api_service.dart';
 import '../models/currency.dart';
 import '../widgets/user_avatar_widget.dart';
+import '../widgets/custom_app_bar.dart';         // 👈 agregado
+import '../widgets/navigation_bar_widget.dart'; // 👈 agregado
 
 class UserFormScreen extends StatefulWidget {
   final Map<String, dynamic> user;
@@ -106,25 +108,24 @@ class _UserFormScreenState extends State<UserFormScreen> {
   }
 
   void _submitForm() {
-  if (!_formKey.currentState!.validate()) return;
+    if (!_formKey.currentState!.validate()) return;
 
-  dynamic iconValue;
-  if (newIcon != null) {
-    iconValue = newIcon; // File
-  } else if (selectedAvatarSeed != null) {
-    iconValue = selectedAvatarSeed; // String
+    dynamic iconValue;
+    if (newIcon != null) {
+      iconValue = newIcon; // File
+    } else if (selectedAvatarSeed != null) {
+      iconValue = selectedAvatarSeed; // String
+    }
+
+    Navigator.pop(context, {
+      'name': nameController.text,
+      'email': emailController.text,
+      'password': passwordController.text.isNotEmpty ? passwordController.text : null,
+      'password_confirmation': passwordController.text.isNotEmpty ? passwordController.text : null,
+      'currencyBase': selectedCurrency,
+      'icon': iconValue, // 👈 unificado en un solo campo
+    });
   }
-
-  Navigator.pop(context, {
-    'name': nameController.text,
-    'email': emailController.text,
-    'password': passwordController.text.isNotEmpty ? passwordController.text : null,
-    'password_confirmation': passwordController.text.isNotEmpty ? passwordController.text : null,
-    'currencyBase': selectedCurrency,
-    'icon': iconValue, // 👈 unificado en un solo campo
-  });
-}
-
 
   InputDecoration _inputDecoration(String label) {
     return InputDecoration(
@@ -137,7 +138,8 @@ class _UserFormScreenState extends State<UserFormScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("Editar Usuario")),
+      appBar: const CustomAppBar(title: "Editar Usuario"), // 👈 usamos tu AppBar
+
       body: Padding(
         padding: const EdgeInsets.all(16),
         child: Form(
@@ -203,7 +205,7 @@ class _UserFormScreenState extends State<UserFormScreen> {
                 isLoadingCurrencies
                     ? const CircularProgressIndicator()
                     : DropdownButtonFormField<String>(
-                        value: selectedCurrency,
+                        initialValue: selectedCurrency,
                         decoration: _inputDecoration("Moneda base"),
                         items: currencies
                             .map((c) => DropdownMenuItem(
@@ -257,6 +259,10 @@ class _UserFormScreenState extends State<UserFormScreen> {
           ),
         ),
       ),
+
+      bottomNavigationBar: NavigationBarWidget.bottomAppBar(context), // 👈 navegación
+      floatingActionButton: NavigationBarWidget.fab(context),         // 👈 FAB central
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
     );
   }
 }

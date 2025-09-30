@@ -15,9 +15,7 @@ class UserWidget extends StatelessWidget {
     DateTime? dt;
     try {
       dt = DateTime.tryParse(raw);
-      if (dt == null) {
-        dt = DateTime.tryParse("${raw}T00:00:00");
-      }
+      dt ??= DateTime.tryParse("${raw}T00:00:00");
     } catch (_) {}
     if (dt == null) return '—';
 

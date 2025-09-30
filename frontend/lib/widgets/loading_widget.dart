@@ -11,7 +11,7 @@ class LoadingWidget extends StatelessWidget {
     // mismo color que se usa en UserScreen para "Actualizando..."
     final textColor =
         Theme.of(context).textTheme.bodyMedium?.color ??
-        Theme.of(context).colorScheme.onBackground;
+        Theme.of(context).colorScheme.onSurface;
 
     return Center(
       child: Column(

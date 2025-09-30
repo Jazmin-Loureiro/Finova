@@ -49,68 +49,77 @@ class CasaWidget extends StatelessWidget {
     final casa = houseData['casa'];
 
     return Stack(
-      children: [
-        // --- Fondo dinámico de cielo ---
-        SizedBox(
-          width: screenWidth,
-          height: screenHeight + 1000,
-          child: AnimatedSwitcher(
-            duration: const Duration(seconds: 2),
-            child: Image.asset(
-              "assets/cielos/$fondoActual",
-              key: ValueKey(fondoActual),
-              fit: BoxFit.cover,
-            ),
-          ),
+  children: [
+    // --- Fondo dinámico de cielo ---
+    SizedBox(
+      width: screenWidth,
+      height: screenHeight + 1000,
+      child: AnimatedSwitcher(
+        duration: const Duration(seconds: 2),
+        child: Image.asset(
+          "assets/cielos/$fondoActual",
+          key: ValueKey(fondoActual),
+          fit: BoxFit.cover,
         ),
+      ),
+    ),
 
-        // --- Suelo ---
-        Positioned(
-          bottom: groundOffsetY,
-          left: groundOffsetX,
-          right: groundOffsetX,
+    // --- Suelo ---
+    Positioned(
+      bottom: groundOffsetY,
+      left: groundOffsetX,
+      right: groundOffsetX,
+      child: SizedBox(
+        width: screenWidth,
+        height: screenHeight * groundScale,
+        child: Stack(
+          children: [
+            ...List<Widget>.from(
+              (casa['suelo']['capas'] as List)
+                  .map((s) => Positioned.fill(child: buildLayer(s))),
+            ),
+            Positioned.fill(child: buildLayer(casa['suelo']['vereda'])),
+          ],
+        ),
+      ),
+    ),
+
+    // --- Calle (fuera del suelo, sin escalar) ---
+    Positioned(
+      bottom: 20,
+      left: 0,
+      right: 0,
+      child: buildLayer('calle/calle.svg'),
+    ),
+
+    // --- Casa ---
+    Positioned(
+      bottom: (screenHeight * groundScale) + houseOffsetY,
+      left: houseOffsetX,
+      right: houseOffsetX,
+      child: Transform.scale(
+        scale: houseScale,
+        child: Center(
           child: SizedBox(
-            width: screenWidth,
-            height: screenHeight * groundScale,
+            width: screenWidth * 0.8,
             child: Stack(
+              alignment: Alignment.bottomCenter,
               children: [
+                buildLayer(casa['base']),
                 ...List<Widget>.from(
-                  (casa['suelo']['capas'] as List)
-                      .map((s) => Positioned.fill(child: buildLayer(s))),
+                  (casa['modulos'] as List).map((m) => buildLayer(m)),
                 ),
-                Positioned.fill(child: buildLayer(casa['suelo']['vereda'])),
+                ...List<Widget>.from(
+                  (casa['deterioro'] as List).map((d) => buildLayer(d)),
+                ),
               ],
             ),
           ),
         ),
+      ),
+    ),
+  ],
+);
 
-        // --- Casa ---
-        Positioned(
-          bottom: (screenHeight * groundScale) + houseOffsetY,
-          left: houseOffsetX,
-          right: houseOffsetX,
-          child: Transform.scale(
-            scale: houseScale,
-            child: Center(
-              child: SizedBox(
-                width: screenWidth * 0.8,
-                child: Stack(
-                  alignment: Alignment.bottomCenter,
-                  children: [
-                    buildLayer(casa['base']),
-                    ...List<Widget>.from(
-                      (casa['modulos'] as List).map((m) => buildLayer(m)),
-                    ),
-                    ...List<Widget>.from(
-                      (casa['deterioro'] as List).map((d) => buildLayer(d)),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-        ),
-      ],
-    );
   }
 }

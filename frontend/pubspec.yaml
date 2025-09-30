@@ -75,6 +75,7 @@ flutter:
   assets:
     - assets/base/base.svg
     - assets/base/base-centrada.svg
+    - assets/calle/
     - assets/cielos/
     - assets/deterioro/
     - assets/modulos/

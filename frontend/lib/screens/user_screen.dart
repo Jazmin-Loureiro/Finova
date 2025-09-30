@@ -10,7 +10,7 @@ import '../widgets/success_dialog_widget.dart';
 import 'login_screen.dart'; // 👈 import directo
 
 class UserScreen extends StatefulWidget {
-  const UserScreen({Key? key}) : super(key: key);
+  const UserScreen({super.key});
 
   @override
   State<UserScreen> createState() => _UserScreenState();

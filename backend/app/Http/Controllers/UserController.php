@@ -20,16 +20,20 @@ class UserController extends Controller
         'name' => 'sometimes|string|max:255',
         'email' => 'sometimes|email|unique:users,email,' . $user->id,
         'password' => 'nullable|string|min:6|confirmed',
-        'icon' => 'nullable|image|max:2048',
+        'icon' => 'nullable', // 👈 quitamos "image"
         'currency_id' => 'sometimes|exists:currencies,id',
         'balance' => 'sometimes|numeric|min:0',
     ]);
 
-    // Manejo de icono
-    if ($request->hasFile('icon')) {
-        $path = $request->file('icon')->store('icons', 'public');
-        $user->icon = $path;
-    }
+        // Manejo de icono
+        if ($request->hasFile('icon')) {
+            // Caso 1: subió foto
+            $path = $request->file('icon')->store('icons', 'public');
+            $user->icon = $path;
+        } elseif ($request->filled('icon')) {
+            // Caso 2: mandó un avatarSeed como texto
+            $user->icon = $request->icon;
+        }
 
     // Manejo de password
     if ($request->filled('password')) {

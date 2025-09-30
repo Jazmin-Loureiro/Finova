@@ -42,6 +42,7 @@ dependencies:
   lottie: ^3.1.2 # para animaciones
   intl: ^0.18.1 # para formateo de fechas y numeros
   provider: ^6.0.5 # para manejo de estado
+  multiavatar: ^0.1.5 # para generar avatares aleatorios
 
 
   # The following adds the Cupertino Icons font to your application.

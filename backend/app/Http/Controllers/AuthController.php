@@ -14,27 +14,37 @@ class AuthController extends Controller {
     // Registro de usuario
     public function register(Request $request){
         $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => 'required|email|unique:users',
-            'password' => 'required|string|min:6|confirmed',
-            'icon' => 'nullable|image|max:2048', 
-            //'currencyBase' => ['required', 'string'],
+    'name' => 'required|string|max:255',
+    'email' => 'required|email|unique:users',
+    'password' => 'required|string|min:6|confirmed',
+    'icon' => 'nullable', // 👈 quitamos 'image'
+    //'currencyBase' => ['required', 'string'],
             'currency_id' => ['required', 'exists:currencies,id'], // CAMBIO: validar que exista en la tabla currencies
-            'balance' => ['nullable', 'numeric', 'min:0'],
-        ]);
-        $path = null;
-        if ($request->hasFile('icon')) {
-            $path = $request->file('icon')->store('icons', 'public');
-        }
-        $user = User::create([
-            'name' => $request->name,
-            'email'=> $request->email,
-            'password' => Hash::make($request->password),
-            'icon' => $path,
-            //'currencyBase' => $request->currencyBase,
+    'balance' => ['nullable', 'numeric', 'min:0'],
+]);
+
+$path = null;
+if ($request->hasFile('icon')) {
+    // Caso 1: imagen subida
+    $path = $request->file('icon')->store('icons', 'public');
+} elseif ($request->filled('icon')) {
+    // Caso 2: avatar seed
+    $path = $request->icon;
+} else {
+    // Caso 3: ninguno → asignar seed por defecto
+    $path = 'default_seed';
+}
+
+$user = User::create([
+    'name' => $request->name,
+    'email'=> $request->email,
+    'password' => Hash::make($request->password),
+    'icon' => $path,
+    //'currencyBase' => $request->currencyBase,
             'currency_id' => $request->currency_id, // CAMBIO: guardar el ID de la moneda
-            'balance' => $request->balance ?? 0,
-        ]);
+    'balance' => $request->balance ?? 0,
+]);
+
         
         // Crear la casa del usuario
         $user->house()->create([

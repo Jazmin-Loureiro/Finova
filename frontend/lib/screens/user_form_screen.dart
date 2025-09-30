@@ -1,10 +1,15 @@
 import 'dart:io';
+import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
-import '../widgets/confirm_dialog_widget.dart';
+import 'package:flutter_svg/flutter_svg.dart';
+import 'package:multiavatar/multiavatar.dart';
+
+import '../widgets/confirm_dialog_widget.dart'; 
 import '../widgets/success_dialog_widget.dart';
 import '../services/api_service.dart';
 import '../models/currency.dart';
+import '../widgets/user_avatar_widget.dart';
 
 class UserFormScreen extends StatefulWidget {
   final Map<String, dynamic> user;
@@ -22,6 +27,7 @@ class _UserFormScreenState extends State<UserFormScreen> {
   late TextEditingController passwordController;
   Currency? selectedCurrency;
   File? newIcon;
+  String? selectedAvatarSeed; // 👈 nuevo
 
   List<Currency> currencies = [];
   bool isLoadingCurrencies = true;
@@ -56,12 +62,63 @@ class _UserFormScreenState extends State<UserFormScreen> {
   Future<void> _pickFile() async {
     final result = await FilePicker.platform.pickFiles(type: FileType.image);
     if (result != null && result.files.single.path != null) {
-      setState(() => newIcon = File(result.files.single.path!));
+      setState(() {
+        newIcon = File(result.files.single.path!);
+        selectedAvatarSeed = null; // 👈 limpiamos avatar si subió foto
+      });
+    }
+  }
+
+  void _showAvatarPicker() async {
+    final base = emailController.text.isNotEmpty ? emailController.text : 'default';
+    final seeds = List.generate(
+      6,
+      (i) => "$base-${DateTime.now().microsecondsSinceEpoch}-$i",
+    );
+
+    final selected = await showModalBottomSheet<String>(
+      context: context,
+      builder: (_) {
+        return GridView.builder(
+          padding: const EdgeInsets.all(16),
+          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: 3,
+            mainAxisSpacing: 10,
+            crossAxisSpacing: 10,
+          ),
+          itemCount: seeds.length,
+          itemBuilder: (context, index) {
+            final svgCode = multiavatar(seeds[index]);
+            return GestureDetector(
+              onTap: () => Navigator.pop(context, seeds[index]),
+              child: CircleAvatar(
+                radius: 40,
+                backgroundColor: Colors.grey[200],
+                child: SvgPicture.string(svgCode),
+              ),
+            );
+          },
+        );
+      },
+    );
+
+    if (selected != null) {
+      setState(() {
+        selectedAvatarSeed = selected;
+        newIcon = null; // limpiamos si eligió avatar
+      });
     }
   }
 
   void _submitForm() {
-    if (!_formKey.currentState!.validate()) return;
+  if (!_formKey.currentState!.validate()) return;
+
+  dynamic iconValue;
+  if (newIcon != null) {
+    iconValue = newIcon; // File
+  } else if (selectedAvatarSeed != null) {
+    iconValue = selectedAvatarSeed; // String
+  }
 
     Navigator.pop(context, {
       'name': nameController.text,
@@ -69,7 +126,7 @@ class _UserFormScreenState extends State<UserFormScreen> {
       'password': passwordController.text.isNotEmpty ? passwordController.text : null,
       'password_confirmation': passwordController.text.isNotEmpty ? passwordController.text : null,
       'currencyBase': selectedCurrency?.id, // ✅ ahora devuelve el ID correcto
-      'icon': newIcon
+      'icon':  iconValue, // 👈 unificado en un solo campo
     });
   }
 
@@ -92,6 +149,43 @@ class _UserFormScreenState extends State<UserFormScreen> {
           child: SingleChildScrollView(
             child: Column(
               children: [
+                UserAvatarWidget(
+                  iconFile: newIcon,
+                  avatarSeed: selectedAvatarSeed ?? widget.user['icon'],
+                  radius: 50,
+                  onTap: () {
+                    showModalBottomSheet<String>(
+                      context: context,
+                      builder: (_) {
+                        return SafeArea(
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              ListTile(
+                                leading: const Icon(Icons.photo_library),
+                                title: const Text("Subir desde galería"),
+                                onTap: () {
+                                  Navigator.pop(context, "gallery");
+                                  _pickFile();
+                                },
+                              ),
+                              ListTile(
+                                leading: const Icon(Icons.auto_awesome),
+                                title: const Text("Elegir avatar generado"),
+                                onTap: () {
+                                  Navigator.pop(context, "avatar");
+                                  _showAvatarPicker();
+                                },
+                              ),
+                            ],
+                          ),
+                        );
+                      },
+                    );
+                  },
+                ),
+                const SizedBox(height: 16),
+
                 TextFormField(
                   controller: nameController,
                   decoration: _inputDecoration("Nombre"),
@@ -124,21 +218,7 @@ class _UserFormScreenState extends State<UserFormScreen> {
                         onChanged: (v) => setState(() => selectedCurrency = v),
                       ),
                 const SizedBox(height: 12),
-                ListTile(
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    side: BorderSide(color: Colors.grey.shade300),
-                  ),
-                  leading: const Icon(Icons.image, color: Colors.indigo),
-                  title: const Text("Foto de perfil"),
-                  subtitle: newIcon != null
-                      ? Text(newIcon!.path.split('/').last)
-                      : const Text("No seleccionada"),
-                  trailing: IconButton(
-                    icon: const Icon(Icons.upload),
-                    onPressed: _pickFile,
-                  ),
-                ),
+
                 const SizedBox(height: 20),
                 SizedBox(
                   width: double.infinity,

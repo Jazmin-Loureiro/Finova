@@ -1,28 +1,31 @@
+import 'currency.dart';
 class Register {
   final int id;
   final String name;
-  final String type; // "income" o "expense"
-  final double amount;
-  final DateTime date;
-  final int currencyId;
+  final String type;
+  final double balance;
+  final DateTime created_at;
+  final Currency currency; 
 
   Register({
     required this.id,
     required this.name,
     required this.type,
-    required this.amount,
-    required this.date,
-    required this.currencyId,
+    required this.balance,
+    required this.created_at,
+    required this.currency,
   });
 
   factory Register.fromJson(Map<String, dynamic> json) {
     return Register(
-      id: json['id'],
+      id: json['id'] is int ? json['id'] : int.tryParse(json['id'].toString()) ?? 0,
       name: json['name'] ?? '',
       type: json['type'] ?? '',
-      amount: (json['balance'] as num).toDouble(), // asumimos que en la API se llama "balance"
-      date: DateTime.parse(json['created_at']),   // parsea fecha de la API
-      currencyId: json['currency_id'] ?? 0,
+      balance: json['balance'] is num
+          ? (json['balance'] as num).toDouble()
+          : double.tryParse(json['balance'].toString()) ?? 0.0,
+      created_at: DateTime.parse(json['created_at']),
+      currency: json['currency'] = Currency.fromJson(json['currency']), // 👈 parsea el objeto Currency
     );
   }
 
@@ -31,9 +34,9 @@ class Register {
       'id': id,
       'name': name,
       'type': type,
-      'amount': amount,
-      'date': date.toIso8601String(),
-      'currency_id': currencyId,
+      'balance': balance,
+      'created_at': created_at.toIso8601String(),
+      'currency': currency.toJson(),
     };
   }
 }

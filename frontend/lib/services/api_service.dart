@@ -323,7 +323,7 @@ Future<List<Register>> getRegistersByMoneyMaker(int moneyMakerId) async {
   if (token == null) return [];
 
   final res = await http.get(
-    Uri.parse('$apiUrl/transactions?moneyMaker=$moneyMakerId'),
+    Uri.parse('$apiUrl/transactions/moneyMaker/$moneyMakerId'),
     headers: jsonHeaders(token),
   );
   if (res.statusCode == 200) {

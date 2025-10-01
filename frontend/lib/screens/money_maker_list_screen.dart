@@ -134,7 +134,7 @@ class _MoneyMakerListScreenState extends State<MoneyMakerListScreen> {
                                   context,
                                   MaterialPageRoute(
                                     builder: (context) => RegisterListScreen(
-                                        currencyId: m.currency!.id),
+                                        moneyMakerId: m.id),
                                   ),
                                 );
                                 await fetchMoneyMakers(); // refrescamos al volver

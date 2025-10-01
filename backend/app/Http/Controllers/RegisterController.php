@@ -105,16 +105,16 @@ class RegisterController extends Controller {
     
 
     public function getByMoneyMaker($moneyMakerId) {
-        $user = auth()->user();
-        $registers = Register::where('user_id', $user->id)
-            ->where('moneyMaker_id', $moneyMakerId)
-            ->orderBy('created_at', 'desc')
-            ->get();
-        return response()->json([
-            'registers' => $registers
-        ]);
-        print_r($registers);
-    }
+    $user = auth()->user();
+    $registers = Register::with('currency') // carga relación
+        ->where('user_id', $user->id)
+        ->where('moneyMaker_id', $moneyMakerId)
+        ->orderBy('created_at', 'desc')
+        ->get();
+    return response()->json([
+        'registers' => $registers
+    ]);
+}
 
     /**
      * Update the specified resource in storage.

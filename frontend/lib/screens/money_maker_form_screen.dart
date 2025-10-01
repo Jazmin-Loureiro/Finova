@@ -105,133 +105,136 @@ final newSource = await api.addPaymentSource(
         child: _isLoading
             ? const LoadingWidget(message: 'Cargando...')
             : Form(
-          key: _formKey,
-          child: Column(
-            children: [
-              // Nombre
-              TextFormField(
-                controller: nameController,
-                decoration: const InputDecoration(
-                  labelText: 'Nombre de la fuente',
-                  border: OutlineInputBorder(),
-                ),
-                validator: (val) {
-                  if (val == null || val.trim().isEmpty) return 'El nombre no puede estar vacío';
-                  if (val.trim().length < 3) return 'El nombre debe tener al menos 3 caracteres';
-                  return null;
-                },
-              ),
-              const SizedBox(height: 16),
+                key: _formKey,
+                child: SingleChildScrollView(     // ✅ Se agregó esto
+                  child: Column(
+                    children: [
+                      // Nombre
+                      TextFormField(
+                        controller: nameController,
+                        decoration: const InputDecoration(
+                          labelText: 'Nombre de la fuente',
+                          border: OutlineInputBorder(),
+                        ),
+                        validator: (val) {
+                          if (val == null || val.trim().isEmpty) return 'El nombre no puede estar vacío';
+                          if (val.trim().length < 3) return 'El nombre debe tener al menos 3 caracteres';
+                          return null;
+                        },
+                      ),
+                      const SizedBox(height: 16),
 
-              // Tipo de fuente
-              DropdownButtonFormField<String>(
-                decoration: const InputDecoration(
-                  labelText: 'Tipo de fuente',
-                  border: OutlineInputBorder(),
-                ),
-                initialValue: typeSelected,
-                items: types.map((f) => DropdownMenuItem(
-                      value: f,
-                      child: Text(f),
-                    )).toList(),
-                onChanged: (value) {
-                  if (value != null) setState(() => typeSelected = value);
-                },
-              ),
-              const SizedBox(height: 16),
+                      // Tipo de fuente
+                      DropdownButtonFormField<String>(
+                        decoration: const InputDecoration(
+                          labelText: 'Tipo de fuente',
+                          border: OutlineInputBorder(),
+                        ),
+                        initialValue: typeSelected,
+                        items: types.map((f) => DropdownMenuItem(
+                              value: f,
+                              child: Text(f),
+                            )).toList(),
+                        onChanged: (value) {
+                          if (value != null) setState(() => typeSelected = value);
+                        },
+                      ),
+                      const SizedBox(height: 16),
 
-                // Tipo de moneda
-                  DropdownButtonFormField<Currency>(
-                  value: selectedCurrency,
-                  decoration: const InputDecoration(
-                    labelText: 'Tipo de moneda',
-                    border: OutlineInputBorder(),
-                  ),
-                  items: currencies.map((c) => DropdownMenuItem<Currency>(
-                    value: c,
-                    child: Text('${c.symbol} ${c.code} - ${c.name}'),
-                  )).toList(),
-                  onChanged: (value) => setState(() => selectedCurrency = value),
-                  validator: (val) => val == null ? 'Debes seleccionar una moneda' : null,
-                ),
+                      // Tipo de moneda
+                      DropdownButtonFormField<Currency>(
+                        value: selectedCurrency,
+                        decoration: const InputDecoration(
+                          labelText: 'Tipo de moneda',
+                          border: OutlineInputBorder(),
+                        ),
+                        items: currencies.map((c) => DropdownMenuItem<Currency>(
+                          value: c,
+                          child: Text('${c.symbol} ${c.code} - ${c.name}'),
+                        )).toList(),
+                        onChanged: (value) => setState(() => selectedCurrency = value),
+                        validator: (val) => val == null ? 'Debes seleccionar una moneda' : null,
+                      ),
+                      const SizedBox(height: 16),
 
-                const SizedBox(height: 16),
+                      // Saldo inicial
+                      CurrencyTextField(
+                        controller: balanceController,
+                        currencies: currencies,
+                        selectedCurrency: selectedCurrency,
+                        label: 'Saldo inicial',
+                      ),
 
-              // Saldo inicial
-              CurrencyTextField(
-              controller: balanceController,
-              currencies: currencies,
-              selectedCurrency: selectedCurrency,
-              label: 'Saldo inicial',
-            ),
+                      const SizedBox(height: 16),
 
-              const SizedBox(height: 16),
-
-              // Selector de color como FormField con InputDecorator
-              FormField<Color>(
-                validator: (val) {
-                  if (selectedColor == null) return 'Debes seleccionar un color';
-                  return null;
-                },
-                builder: (state) {
-                  return InputDecorator(
-                    decoration: InputDecoration(
-                      labelText: 'Color',
-                      border: const OutlineInputBorder(),
-                      errorText: state.errorText,
-                    ),
-                    child: GestureDetector(
-                      onTap: () {
-                        showDialog(
-                          context: context,
-                          builder: (context) => AlertDialog(
-                            title: const Text('Elige un color'),
-                            content: SingleChildScrollView(
-                              child: BlockPicker(
-                                pickerColor: selectedColor ?? Colors.blue,
-                                onColorChanged: (color) {
-                                  setState(() {
-                                    selectedColor = color;
-                                    state.didChange(color);
-                                  });
-                                },
+                      // Selector de color
+                      FormField<Color>(
+                        validator: (val) {
+                          if (selectedColor == null) return 'Debes seleccionar un color';
+                          return null;
+                        },
+                        builder: (state) {
+                          return InputDecorator(
+                            decoration: InputDecoration(
+                              labelText: 'Color',
+                              border: const OutlineInputBorder(),
+                              errorText: state.errorText,
+                            ),
+                            child: GestureDetector(
+                              onTap: () {
+                                showDialog(
+                                  context: context,
+                                  builder: (context) => AlertDialog(
+                                    title: const Text('Elige un color'),
+                                    content: SingleChildScrollView(
+                                      child: BlockPicker(
+                                        pickerColor: selectedColor ?? Colors.blue,
+                                        onColorChanged: (color) {
+                                          setState(() {
+                                            selectedColor = color;
+                                            state.didChange(color);
+                                          });
+                                        },
+                                      ),
+                                    ),
+                                    actions: [
+                                      TextButton(
+                                        child: const Text('Cerrar'),
+                                        onPressed: () => Navigator.of(context).pop(),
+                                      ),
+                                    ],
+                                  ),
+                                );
+                              },
+                              child: Row(
+                                children: [
+                                  CircleAvatar(
+                                    backgroundColor: selectedColor ?? Colors.transparent,
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Text(selectedColor == null
+                                      ? 'Seleccionar Color'
+                                      : '#${selectedColor!.toARGB32().toRadixString(16).substring(2)}'),
+                                ],
                               ),
                             ),
-                            actions: [
-                              TextButton(
-                                child: const Text('Cerrar'),
-                                onPressed: () => Navigator.of(context).pop(),
-                              ),
-                            ],
-                          ),
-                        );
-                      },
-                      child: Row(
-                        children: [
-                          CircleAvatar(
-                            backgroundColor: selectedColor ?? Colors.transparent,
-                          ),
-                          const SizedBox(width: 12),
-                          Text(selectedColor == null ? 'Seleccionar Color' : '#${selectedColor!.toARGB32().toRadixString(16).substring(2)}'),
-                        ],
+                          );
+                        },
                       ),
-                    ),
-                  );
-                },
-              ),
-              const SizedBox(height: 24),
+                      const SizedBox(height: 24),
 
-              // Botón agregar
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: addMoneyMaker,
-                  child: const Text('Agregar'),
+                      // Botón agregar
+                      SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton(
+                          onPressed: addMoneyMaker,
+                          child: const Text('Agregar'),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
-            ],
-          ),
-        ),
       ),
     );
   }

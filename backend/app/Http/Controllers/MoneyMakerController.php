@@ -93,12 +93,16 @@ class MoneyMakerController extends Controller
             'color' => $request->color,
         ]);
         //crear registro de tipo ingreso por el monto inicial del MoneyMaker
+        // obtener categoría "General" del usuario
+        $defaultCategory = $user->categories()->where('name', 'General')->first();
         $user->registers()->create([
             'type' => 'income',
             'balance' => $request->balance,
             'moneyMaker_id' => $moneyMaker->id,
             'currency_id' => $fromCurrency,
-            'name' => 'Saldo inicial' . $moneyMaker->name,
+            'name' => 'Saldo inicial ',
+            //categoria "General" por defecto
+            'category_id' => $defaultCategory->id, // categoría "Otros" por defecto
         ]);
         // actualizar el balance del usuario (siempre en ARS)
         $user->balance=(float) $user->balance + (float)$convertedBalance; // actualizar saldo del usuario

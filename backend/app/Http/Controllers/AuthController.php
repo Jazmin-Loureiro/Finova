@@ -53,7 +53,8 @@ $user = User::create([
         ]);
 
         event(new Registered($user));
-        $user->moneyMakers()->create([
+        //Crear fuente de pago por defecto efectivo 
+        $moneyMaker= $user->moneyMakers()->create([
             'name' => 'Efectivo',
             'type' => 'Efectivo',
             'balance' => $request->balance ?? 0,
@@ -63,6 +64,18 @@ $user = User::create([
             ]);
         // Crear categorías por defecto usando el servicio
         CategoryService::createDefaultForUser($user);
+          // Crear registro de tipo ingreso por el monto inicial
+        if ($request->balance && $request->balance > 0) {
+            $defaultCategory = $user->categories()->where('name', 'General')->first();
+            $user->registers()->create([
+                'type' => 'income',
+                'balance' => $request->balance,
+                'moneyMaker_id' => $moneyMaker->id,
+                'currency_id' => $request->currency_id,
+                'name' => 'Saldo inicial',
+                'category_id' => $defaultCategory->id, // Usar el ID de la categoría "General"
+            ]);
+        }
         $user->sendEmailVerificationNotification(); 
         return response()->json([
             'message' => 'Usuario registrado, verifique su email.',

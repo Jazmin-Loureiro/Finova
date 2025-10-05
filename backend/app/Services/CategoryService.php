@@ -26,6 +26,7 @@ class CategoryService
                 ['name'=>'Otros','color'=>'#FF9800'],
             ],
             'income' => [
+                ['name'=>'General','color'=>'#66BB6A'],
                 ['name'=>'Salario','color'=>'#4CAF50'],
                 ['name'=>'Inversión','color'=>'#8BC34A'],
                 ['name'=>'Recompensa','color'=>'#CDDC39'],

@@ -11,38 +11,62 @@ class CurrencyService
      * Obtiene la tasa de conversión desde $from a $to.
      * Actualiza la tabla currencies si es necesario.
      */
-   public static function getRate(string $from, string $to): float {
-    $from = strtoupper(trim($from)); // Asegurarse que los códigos estén en mayúsculas y sin espacios
-    $to   = strtoupper(trim($to));   // Asegurarse que los códigos estén en mayúsculas y sin espacios
-    if ($from === $to) {
-        return 1.0;
-    }
-    $currency = Currency::where('code', $from)->first();
-    if ($currency) {
-                    // Si la DB está actualizada (<24h), uso la DB
-        if ($currency->updated_at && $currency->rate > 0 && $currency->updated_at->diffInHours(now()) < 24) {
-            return $currency->rate;
+    public static function getRate(string $from, string $to): float {
+        $from = strtoupper(trim($from));
+        $to   = strtoupper(trim($to));
+
+        if ($from === $to) return 1.0;
+
+        $currencyFrom = Currency::where('code', $from)->first();
+        $currencyTo   = Currency::where('code', $to)->first();
+
+        // Si existen y están actualizadas (<24h) uso DB
+        if ($currencyFrom && $currencyTo) {
+            $lastUpdated = min($currencyFrom->updated_at, $currencyTo->updated_at);
+
+            if ( $currencyFrom->rate > 0 &&
+                $currencyTo->rate > 0 &&
+                $lastUpdated &&
+                $lastUpdated->diffInHours(now()) < 24) {
+                return round($currencyTo->rate / $currencyFrom->rate, 6);
+            }
         }
+
+        $apiKey = env('API_KEY');
+        $url = "https://openexchangerates.org/api/latest.json?app_id={$apiKey}&base=USD";
+        $response = Http::withOptions(['verify' => false])->get($url);
+
+        if ($response->failed()) {
+            throw new \Exception("No se pudo obtener la tasa de cambio.");
+        }
+
+        $json = $response->json();
+
+        if (!isset($json['rates'])) {
+            throw new \Exception("No se encontraron rates en la respuesta.");
+        }
+
+        $rates = $json['rates'];
+
+        foreach ($rates as $code => $rate) {
+            $currency = Currency::where('code', $code)->first();
+            if ($currency) {
+                $currency->rate = $rate;
+                $currency->updated_at = now();
+                $currency->save();
+            }
+        }
+
+        if (!isset($rates[$from]) || !isset($rates[$to])) {
+            throw new \Exception("No se encontró la tasa para $from o $to.");
+        }
+
+        $rateFrom = $rates[$from];
+        $rateTo   = $rates[$to];
+
+        return round($rateTo / $rateFrom, 6);
     }
-    // Si no hay tasa o está vieja, llamo a la API
-    $apiKey = env('EXCHANGE_API_KEY'); // asegurate de poner tu clave en .env
-    $url = "https://v6.exchangerate-api.com/v6/{$apiKey}/pair/{$from}/{$to}";
-        // Llamada a la API ignorando SSL (solo para desarrollo HAY Q REVISAR)
-    $response = Http::withOptions(['verify' => false])->get($url);
-    if ($response->failed()) {
-        throw new \Exception("No se pudo obtener la tasa de cambio.");
-    }
-    $json = $response->json();
-    if (!isset($json['conversion_rate'])) {
-        throw new \Exception("Conversion rate no encontrado.");
-    }
-    $rate = floatval($json['conversion_rate']); // tasa obtenida de la API 
-    Currency::updateOrCreate(
-        ['code' => $from],
-        ['rate' => $rate,'updated_at' => now(),]
-    );
-    return $rate;
-}
+
 
     /**
      * Convierte un monto de $from a $to

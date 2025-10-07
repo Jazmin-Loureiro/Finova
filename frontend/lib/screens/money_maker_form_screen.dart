@@ -32,7 +32,6 @@ class _MoneyMakerFormScreenState extends State<MoneyMakerFormScreen> {
   ]; /////////////ESTO DEBERIA SALIR DE OTRO LADO O TENER UNA TABLA EN LA BASE DE DATOS PARA Q EL ADMIN PUEDA ADMINISTRAR O NOSE
   
   List<Currency> currencies = [];
-  //String? selectedCurrency;
   Currency? selectedCurrency;
   bool _isLoading = true;
 
@@ -63,6 +62,17 @@ String typeSelected = "Efectivo"; // por defecto
 
  Future<void> addMoneyMaker() async {
   if (!_formKey.currentState!.validate()) return;
+  // Mostrar el loading modal
+  showDialog(
+    context: context,
+    barrierDismissible: false, // para que no se cierre al tocar fuera
+    builder: (context) => const Dialog(
+      backgroundColor: Colors.transparent,
+      elevation: 0,
+      child: LoadingWidget(message: 'Agregando fuente...'),
+    ),
+  );
+
   final name = nameController.text.trim();
   final balance = double.tryParse(balanceController.text) ?? 0;
   final colorHex = '#${selectedColor!.toARGB32().toRadixString(16).substring(2)}';
@@ -75,6 +85,8 @@ final newSource = await api.addPaymentSource(
   colorHex,
 );
 
+// Cerrar el loading
+    if (mounted) Navigator.of(context).pop();
   if (newSource != null) {
     //mostrar el dialogo
     final confirmed = await showDialog(

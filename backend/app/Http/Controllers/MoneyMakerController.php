@@ -23,29 +23,23 @@ class MoneyMakerController extends Controller
         $totalInBase = 0; // saldo total en moneda base
         $result = $moneyMakers->map(function ($m) use ($toCurrency, &$totalInBase) { // paso $totalInBase por referencia
             $fromCurrency = $m->currency->code; // moneda del MoneyMaker
-            //\Log::info("Convirtiendo de $fromCurrency a $toCurrency");
             $rate = $fromCurrency === $toCurrency
                 ? 1.0
                 : CurrencyService::getRate($fromCurrency, $toCurrency); // obtengo la tasa
-           // \Log::info("Tasa: $rate");
-            //\Log::info ($m->balance);
-            
-            $balanceConverted = $m->balance * $rate; // convierto el balance a la moneda base
-            // \Log::info ($balanceConverted);
-            $totalInBase += $balanceConverted; // acumulo al total en moneda base 
-
+            $balanceConverted = round($m->balance * $rate, 2); // convierto el balance a la moneda base
+            $totalInBase += $balanceConverted; // acumulo al total en moneda base
             return [ // retorno los datos del MoneyMaker junto con el balance convertido
                 'id' => $m->id,
                 'name' => $m->name,
                 'type' => $m->type,
                 'balance' => $m->balance,
-              //  'typeMoney' => $fromCurrency,
                 'balanceConverted' => round($balanceConverted, 2),
-              //  'currencySymbol' => $m->currency->symbol ?? '',
                 'color' => $m->color,
                 'currency' => $m->currency,
             ];
         });
+          //  Actualizo el saldo total del usuario 
+        $user->update(['balance' => round($totalInBase, 2)]);
         $currency = Currency::find($toCurrency); // obtengo la moneda base del usuario para el símbolo
         return response()->json([ // retorno el listado junto con el total en moneda base
             'total_in_base' => round($totalInBase, 2),
@@ -83,7 +77,7 @@ class MoneyMakerController extends Controller
         } else {
             $rate = CurrencyService::getRate($fromCurrencyCode, $toCurrencyCode);
         }
-        $convertedBalance = $request->balance * $rate;
+        $convertedBalance = round($request->balance * $rate , 2); // balance convertido a moneda base del usuario
         // Crear MoneyMaker en la DB (siempre en su moneda original)
         $moneyMaker = $user->moneyMakers()->create([
             'name' => $request->name,
@@ -102,9 +96,9 @@ class MoneyMakerController extends Controller
             'currency_id' => $fromCurrency,
             'name' => 'Saldo inicial ',
             //categoria "General" por defecto
-            'category_id' => $defaultCategory->id, // categoría "Otros" por defecto
+            'category_id' => $defaultCategory->id,
         ]);
-        // actualizar el balance del usuario (siempre en ARS)
+        // actualizar el balance del usuario
         $user->balance=(float) $user->balance + (float)$convertedBalance; // actualizar saldo del usuario
         $user->save();
 

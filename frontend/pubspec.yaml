@@ -91,6 +91,7 @@ flutter:
     - assets/suelos/pasto-seco/
     - assets/lottie/home_loading1.json
     - assets/lottie/home_loading2.json
+    - assets/icon.png
     
   
 

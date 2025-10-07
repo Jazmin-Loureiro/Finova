@@ -3,28 +3,72 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:provider/provider.dart';
 import '../providers/house_provider.dart';
 
-class CasaWidget extends StatelessWidget {
+class CasaWidget extends StatefulWidget {
   const CasaWidget({super.key});
 
-  // 🔹 Escalas (tamaños relativos)
+  @override
+  State<CasaWidget> createState() => _CasaWidgetState();
+}
+
+class _CasaWidgetState extends State<CasaWidget>
+    with SingleTickerProviderStateMixin {
+  // 🔹 Escalas
   final double houseScale = 1.35;
   final double groundScale = 0.12;
 
-  // 🔹 Offsets (posiciones en píxeles)
+  // 🔹 Offsets
   final double houseOffsetX = 0;
   final double houseOffsetY = -14.5;
   final double groundOffsetX = 0;
   final double groundOffsetY = 135;
 
+  late AnimationController _fadeController;
+  late Animation<double> _fade;
+  String _fondoActual = 'dia.png';
+  String? _fondoAnterior;
+
+  @override
+  void initState() {
+    super.initState();
+    _fondoActual = getFondoCielo();
+    _fadeController =
+        AnimationController(vsync: this, duration: const Duration(seconds: 4));
+    _fade = CurvedAnimation(parent: _fadeController, curve: Curves.easeInOut);
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _checkCambioCielo();
+  }
+
+  @override
+  void dispose() {
+    _fadeController.dispose();
+    super.dispose();
+  }
+
   String getFondoCielo() {
     final hora = DateTime.now().hour;
-    if (hora >= 6 && hora < 18) {
-      return "dia.png";
-    } else if (hora >= 18 && hora < 21) {
-      return "atardecer.png";
-    } else {
-      return "noche.png";
+    if (hora >= 6 && hora < 18) return "dia.png";
+    if (hora >= 18 && hora < 21) return "atardecer.png";
+    return "noche.png";
+  }
+
+  void _checkCambioCielo() {
+    final nuevo = getFondoCielo();
+    if (nuevo != _fondoActual) {
+      setState(() => _fondoAnterior = _fondoActual);
+      _fondoActual = nuevo;
+      _fadeController.forward(from: 0);
     }
+  }
+
+  Widget _imgCielo(String nombre) {
+    return Image.asset(
+      "assets/cielos/$nombre",
+      fit: BoxFit.cover,
+    );
   }
 
   Widget buildLayer(String path) {
@@ -36,12 +80,12 @@ class CasaWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    _checkCambioCielo();
+
     final screenHeight = MediaQuery.of(context).size.height;
     final screenWidth = MediaQuery.of(context).size.width;
 
     final houseData = context.watch<HouseProvider>().houseData;
-    final fondoActual = getFondoCielo();
-
     if (houseData == null) {
       return const Center(child: CircularProgressIndicator());
     }
@@ -49,77 +93,95 @@ class CasaWidget extends StatelessWidget {
     final casa = houseData['casa'];
 
     return Stack(
-  children: [
-    // --- Fondo dinámico de cielo ---
-    SizedBox(
-      width: screenWidth,
-      height: screenHeight + 1000,
-      child: AnimatedSwitcher(
-        duration: const Duration(seconds: 2),
-        child: Image.asset(
-          "assets/cielos/$fondoActual",
-          key: ValueKey(fondoActual),
-          fit: BoxFit.cover,
-        ),
-      ),
-    ),
-
-    // --- Suelo ---
-    Positioned(
-      bottom: groundOffsetY,
-      left: groundOffsetX,
-      right: groundOffsetX,
-      child: SizedBox(
-        width: screenWidth,
-        height: screenHeight * groundScale,
-        child: Stack(
-          children: [
-            ...List<Widget>.from(
-              (casa['suelo']['capas'] as List)
-                  .map((s) => Positioned.fill(child: buildLayer(s))),
-            ),
-            Positioned.fill(child: buildLayer(casa['suelo']['vereda'])),
-          ],
-        ),
-      ),
-    ),
-
-    // --- Calle (fuera del suelo, sin escalar) ---
-    Positioned(
-      bottom: 20,
-      left: 0,
-      right: 0,
-      child: buildLayer('calle/calle.svg'),
-    ),
-
-    // --- Casa ---
-    Positioned(
-      bottom: (screenHeight * groundScale) + houseOffsetY,
-      left: houseOffsetX,
-      right: houseOffsetX,
-      child: Transform.scale(
-        scale: houseScale,
-        child: Center(
-          child: SizedBox(
-            width: screenWidth * 0.8,
-            child: Stack(
-              alignment: Alignment.bottomCenter,
-              children: [
-                buildLayer(casa['base']),
-                ...List<Widget>.from(
-                  (casa['modulos'] as List).map((m) => buildLayer(m)),
+      children: [
+        // --- 🌤 CIELO con fade suave (4s) ---
+        SizedBox(
+          width: screenWidth,
+          height: screenHeight + 1000,
+          child: Stack(
+            fit: StackFit.expand,
+            children: [
+              if (_fondoAnterior != null)
+                FadeTransition(
+                  opacity: Tween(begin: 1.0, end: 0.0).animate(_fade),
+                  child: _imgCielo(_fondoAnterior!),
                 ),
-                ...List<Widget>.from(
-                  (casa['deterioro'] as List).map((d) => buildLayer(d)),
-                ),
-              ],
+              _imgCielo(_fondoActual),
+            ],
+          ),
+        ),
+
+        // --- 🌱 SUELO con fade global ---
+        Positioned(
+          bottom: groundOffsetY,
+          left: groundOffsetX,
+          right: groundOffsetX,
+          child: AnimatedSwitcher(
+            duration: const Duration(seconds: 1),
+            switchInCurve: Curves.easeInOut,
+            switchOutCurve: Curves.easeInOut,
+            transitionBuilder: (child, anim) =>
+                FadeTransition(opacity: anim, child: child),
+            child: SizedBox(
+              key: ValueKey(casa['suelo'].toString()),
+              width: screenWidth,
+              height: screenHeight * groundScale,
+              child: Stack(
+                children: [
+                  ...List<Widget>.from(
+                    (casa['suelo']['capas'] as List)
+                        .map((s) => Positioned.fill(child: buildLayer(s))),
+                  ),
+                  Positioned.fill(child: buildLayer(casa['suelo']['vereda'])),
+                ],
+              ),
             ),
           ),
         ),
-      ),
-    ),
-  ],
-);
 
+        // --- 🚗 CALLE (fija) ---
+        Positioned(
+          bottom: 20,
+          left: 0,
+          right: 0,
+          child: buildLayer('calle/calle.svg'),
+        ),
+
+        // --- 🏠 CASA con fade global ---
+        Positioned(
+          bottom: (screenHeight * groundScale) + houseOffsetY,
+          left: houseOffsetX,
+          right: houseOffsetX,
+          child: Transform.scale(
+            scale: houseScale,
+            child: Center(
+              child: AnimatedSwitcher(
+                duration: const Duration(seconds: 1),
+                switchInCurve: Curves.easeInOut,
+                switchOutCurve: Curves.easeInOut,
+                transitionBuilder: (child, anim) =>
+                    FadeTransition(opacity: anim, child: child),
+                child: SizedBox(
+                  key: ValueKey(casa.toString()),
+                  width: screenWidth * 0.8,
+                  child: Stack(
+                    alignment: Alignment.bottomCenter,
+                    children: [
+                      buildLayer(casa['base']),
+                      ...List<Widget>.from(
+                        (casa['modulos'] as List).map((m) => buildLayer(m)),
+                      ),
+                      ...List<Widget>.from(
+                        (casa['deterioro'] as List).map((d) => buildLayer(d)),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
   }
 }

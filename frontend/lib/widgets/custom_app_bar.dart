@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
   final String title;
-  final List<Widget>? actions; // 👈 opcional (por si en Home querés el logout, y en otras no)
+  final List<Widget>? actions;
 
   const CustomAppBar({
     super.key,
@@ -13,10 +13,16 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
   @override
   Widget build(BuildContext context) {
     return AppBar(
-      automaticallyImplyLeading: false, // 👈 saca la flecha de volver
+      leading: Builder(
+        builder: (context) => IconButton(
+          icon: const Icon(Icons.menu),
+          onPressed: () => Scaffold.of(context).openDrawer(),
+        ),
+      ),
+      automaticallyImplyLeading: false,
       title: Text(title),
-      backgroundColor: Theme.of(context).colorScheme.surface, // sólido dinámico
-      foregroundColor: Theme.of(context).colorScheme.onSurface, // contraste dinámico
+      backgroundColor: Theme.of(context).colorScheme.surface,
+      foregroundColor: Theme.of(context).colorScheme.onSurface,
       elevation: 2,
       actions: actions,
     );

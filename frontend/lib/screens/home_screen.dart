@@ -2,15 +2,14 @@ import 'package:flutter/material.dart';
 import '../services/api_service.dart';
 import 'login_screen.dart';
 import '../widgets/casa_widget.dart';
-import '../widgets/navigation_bar_widget.dart'; 
 import '../widgets/home_info_widget.dart';
-import '../widgets/custom_app_bar.dart';
-import '../widgets/success_dialog_widget.dart'; // 👈 importa tu diálogo
+import '../widgets/success_dialog_widget.dart';
+import '../widgets/custom_scaffold.dart';
 
 class HomeScreen extends StatefulWidget {
-  final bool showSuccessDialog; // 👈 parámetro opcional
+  final bool showSuccessDialog;
 
-  const HomeScreen({super.key, this.showSuccessDialog = false}); // 👈 por defecto no muestra
+  const HomeScreen({super.key, this.showSuccessDialog = false});
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
@@ -24,7 +23,6 @@ class _HomeScreenState extends State<HomeScreen> {
     super.initState();
 
     if (widget.showSuccessDialog) {
-      // 🔹 Mostrar el diálogo apenas la pantalla se pinte
       WidgetsBinding.instance.addPostFrameCallback((_) {
         showDialog(
           context: context,
@@ -49,24 +47,20 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-
-    return Scaffold(
+    return CustomScaffold(
+      title: 'Inicio',
+      currentRoute: 'inicio',
       extendBody: true,
       extendBodyBehindAppBar: true,
-      // 👇 quitamos Colors.transparent para que no aparezca el “negro” detrás del FAB/notch
-      appBar: CustomAppBar(
-        title: 'Inicio',
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.logout),
-            onPressed: logout,
-          ),
-        ],
-      ),
+      actions: [
+        IconButton(
+          icon: const Icon(Icons.logout),
+          onPressed: logout,
+        ),
+      ],
       body: Stack(
         children: [
-          const CasaWidget(), // 👈 ocupa todo el fondo dinámico
+          const CasaWidget(),
           SafeArea(
             child: SingleChildScrollView(
               padding: const EdgeInsets.all(16),
@@ -80,9 +74,6 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ],
       ),
-      bottomNavigationBar: NavigationBarWidget.bottomAppBar(context),
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
-      floatingActionButton: NavigationBarWidget.fab(context),
     );
   }
 }

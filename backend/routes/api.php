@@ -19,10 +19,16 @@ Route::post('/login', [AuthController::class, 'login']);
 // Obtener todas las monedas
 Route::get('/currencies', [CurrencyController::class, 'index']);
 
+// 🔹 Nueva ruta pública para pedir reactivación
+Route::post('/users/request-reactivation', [UserController::class, 'requestReactivation']);
 
 // Verificación de email
     Route::get('/email/verify/{id}/{hash}', [AuthController::class, 'verifyEmail'])
         ->name('verification.verify');
+
+// Ruta para reenviar el email de verificación
+    Route::post('/resend-verification', [AuthController::class, 'resendVerificationByEmail']);
+
 
 // Rutas protegidas (requieren token)
 Route::middleware('auth:sanctum')->group(function () {

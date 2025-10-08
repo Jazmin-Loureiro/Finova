@@ -86,7 +86,7 @@ class _CurrencyConverterScreenState extends State<CurrencyConverterScreen> {
     final primary = theme.colorScheme.primary;
     final background = theme.scaffoldBackgroundColor;
     final surface = theme.colorScheme.surface;
-    final textColor = theme.colorScheme.onBackground;
+    final textColor = theme.colorScheme.onSurface;
 
     return CustomScaffold(
       title: 'Conversor',
@@ -113,7 +113,7 @@ class _CurrencyConverterScreenState extends State<CurrencyConverterScreen> {
                     const SizedBox(height: 20),
                     Center(
                       child: Text(
-                        'Convertir Monedas',
+                        'Converzor de monedas',
                         style: theme.textTheme.headlineSmall?.copyWith(
                           color: textColor,
                           fontWeight: FontWeight.bold,
@@ -259,7 +259,7 @@ class _CurrencyConverterScreenState extends State<CurrencyConverterScreen> {
   // 🔽 Dropdown con solo iniciales y limpieza de resultado
   Widget _buildDropdown(bool isFrom, ThemeData theme) {
     final surface = theme.colorScheme.surface;
-    final textColor = theme.colorScheme.onBackground;
+    final textColor = theme.colorScheme.onSurface;
     final primary = theme.colorScheme.primary;
 
     return Container(

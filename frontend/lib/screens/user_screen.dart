@@ -1,13 +1,12 @@
 import 'package:flutter/material.dart';
 import '../services/api_service.dart';
 import '../widgets/user_widget.dart';
-import '../widgets/navigation_bar_widget.dart';
-import '../widgets/custom_app_bar.dart';
 import '../screens/user_form_screen.dart';
 import '../widgets/confirm_dialog_widget.dart';
 import '../widgets/loading_widget.dart';
 import '../widgets/success_dialog_widget.dart';
-import 'login_screen.dart'; // 👈 import directo
+import '../widgets/custom_scaffold.dart'; // 👈 agregado
+import 'login_screen.dart';
 
 class UserScreen extends StatefulWidget {
   const UserScreen({super.key});
@@ -19,8 +18,7 @@ class UserScreen extends StatefulWidget {
 class _UserScreenState extends State<UserScreen> {
   final ApiService api = ApiService();
   late Future<Map<String, dynamic>?> userFuture;
-  
-    bool _isDeleting = false; // 👈 flag para mostrar loading al eliminar
+  bool _isDeleting = false;
 
   @override
   void initState() {
@@ -30,9 +28,8 @@ class _UserScreenState extends State<UserScreen> {
 
   void _refreshUser() {
     setState(() {
-      userFuture = Future.value(null); // Limpia datos → muestra "Actualizando..."
+      userFuture = Future.value(null);
     });
-    // En el siguiente frame, pide de nuevo el usuario
     Future.delayed(Duration.zero, () {
       if (mounted) {
         setState(() {
@@ -43,34 +40,26 @@ class _UserScreenState extends State<UserScreen> {
   }
 
   Future<void> _deleteAccount() async {
-   setState(() {
-      _isDeleting = true; // 👈 mostrar loading
-    });
-
+    setState(() => _isDeleting = true);
     final ok = await api.deleteUser();
 
     if (!mounted) return;
 
     if (ok) {
-      // 👉 navegar con MaterialPageRoute al login
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (_) => const LoginScreen()),
       );
 
-        // 👉 después mostrar el success
       showDialog(
         context: context,
         builder: (_) => const SuccessDialogWidget(
           title: "Éxito",
-          message: "La cuenta fue eliminada correctamente.",
+          message: "La cuenta fue dada de baja correctamente.",
         ),
       );
     } else {
-     setState(() {
-        _isDeleting = false; // 👈 volvemos al estado normal si falla
-      });
-
+      setState(() => _isDeleting = false);
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("Error al eliminar la cuenta")),
       );
@@ -80,14 +69,14 @@ class _UserScreenState extends State<UserScreen> {
   @override
   Widget build(BuildContext context) {
     if (_isDeleting) {
-      // 👈 pantalla completa con loading
       return const Scaffold(
         body: LoadingWidget(message: "Eliminando cuenta..."),
       );
     }
 
-    return Scaffold(
-      appBar: const CustomAppBar(title: 'Usuario'),
+    return CustomScaffold(
+      title: 'Usuario',
+      currentRoute: '/user',
       body: FutureBuilder<Map<String, dynamic>?>(
         future: userFuture,
         builder: (context, snapshot) {
@@ -109,13 +98,10 @@ class _UserScreenState extends State<UserScreen> {
               children: [
                 UserWidget(user: user),
                 const SizedBox(height: 20),
-
-                                // --- Botones en fila ---
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 20.0),
                   child: Row(
                     children: [
-                      // --- Editar usuario ---
                       Expanded(
                         child: ElevatedButton(
                           child: const Text("Editar usuario"),
@@ -129,10 +115,7 @@ class _UserScreenState extends State<UserScreen> {
                             );
 
                             if (formResult != null) {
-                              setState(() {
-                                userFuture = Future.value(null);
-                              });
-
+                              setState(() => userFuture = Future.value(null));
                               final res = await api.updateUser(
                                 name: formResult['name'],
                                 email: formResult['email'],
@@ -147,31 +130,29 @@ class _UserScreenState extends State<UserScreen> {
                               if (res != null &&
                                   res['user'] != null &&
                                   mounted) {
-                                _refreshUser(); // 👈 refresco desde el API
+                                _refreshUser();
                               }
                             }
                           },
                         ),
                       ),
                       const SizedBox(width: 12),
-
-                      // --- Eliminar cuenta ---
                       Expanded(
                         child: ElevatedButton(
                           style: ElevatedButton.styleFrom(
                             backgroundColor: Colors.red,
                             foregroundColor: Colors.white,
                           ),
-                          child: const Text("Eliminar cuenta"),
+                          child: const Text("Dar de baja"),
                           onPressed: () async {
                             final confirmed = await showDialog<bool>(
                               context: context,
                               barrierDismissible: false,
                               builder: (_) => const ConfirmDialogWidget(
-                                title: "Eliminar cuenta",
+                                title: "Dar de baja cuenta",
                                 message:
-                                    "¿Seguro que querés eliminar tu cuenta? Esta acción no se puede deshacer.",
-                                confirmText: "Eliminar",
+                                    "¿Seguro que querés dar de baja tu cuenta? Podrás reactivarla más adelante.",
+                                confirmText: "Dar de baja",
                                 cancelText: "Cancelar",
                                 confirmColor: Colors.red,
                               ),
@@ -191,9 +172,6 @@ class _UserScreenState extends State<UserScreen> {
           );
         },
       ),
-      bottomNavigationBar: NavigationBarWidget.bottomAppBar(context),
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
-      floatingActionButton: NavigationBarWidget.fab(context),
     );
   }
 }

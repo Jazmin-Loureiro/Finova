@@ -64,11 +64,6 @@ class RegisterController extends Controller {
             'goal_id' => $request->goal_id,
         ]);
     } catch (\Exception $e) {
-        Log::error('Error creando registro', [
-            'message' => $e->getMessage(),
-            'trace' => $e->getTraceAsString()
-        ]);
-
         return response()->json([
             'error' => 'No se pudo crear el registro',
             'details' => $e->getMessage()
@@ -106,7 +101,7 @@ class RegisterController extends Controller {
 
     public function getByMoneyMaker($moneyMakerId) {
     $user = auth()->user();
-    $registers = Register::with('currency') // carga relación
+    $registers = Register::with('currency', 'category' ) // carga relación
         ->where('user_id', $user->id)
         ->where('moneyMaker_id', $moneyMakerId)
         ->orderBy('created_at', 'desc')

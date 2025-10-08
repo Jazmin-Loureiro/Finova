@@ -3,12 +3,15 @@ import 'package:flutter_colorpicker/flutter_colorpicker.dart';
 import '../services/api_service.dart';
 
 import '../models/currency.dart';
+import '../models/money_maker.dart';
 import '../widgets/currency_text_field.dart';
-import 'package:frontend/widgets/loading_widget.dart';
+import '../widgets/loading_widget.dart';
 import '../widgets/success_dialog_widget.dart';
 
 class MoneyMakerFormScreen extends StatefulWidget {
-  const MoneyMakerFormScreen({super.key});
+  final MoneyMaker? moneyMaker; // Fuente opcional (si se edita)
+
+  const MoneyMakerFormScreen({super.key, this.moneyMaker});
 
   @override
   State<MoneyMakerFormScreen> createState() => _MoneyMakerFormScreenState();
@@ -24,94 +27,104 @@ class _MoneyMakerFormScreenState extends State<MoneyMakerFormScreen> {
   
 
   Color? selectedColor;
-
-  final List<String> types = [
-    "Efectivo", "Mastercard", "Visa", "Tarjeta de débito", "Ahorros",
-    "Banco", "Inversión", "Tarjeta de crédito", "Cuenta bancaria", "Criptomoneda",
-    "Cheque", "Cuenta virtual", "PayPal", "Transferencia", "Préstamo", "Otro"
-  ]; /////////////ESTO DEBERIA SALIR DE OTRO LADO O TENER UNA TABLA EN LA BASE DE DATOS PARA Q EL ADMIN PUEDA ADMINISTRAR O NOSE
-  
+  String typeSelected = "Efectivo";
+  bool _isLoading = true;
   List<Currency> currencies = [];
   Currency? selectedCurrency;
-  bool _isLoading = true;
-
-// Carga las monedas y la moneda base del usuario
- Future<void> loadFormData() async {
-  final fetchedCurrencies = await api.getCurrencies(); // trae todas las monedas
-  final userBaseCurrency = await api.getUserCurrency();   
-  if (!mounted) return;
-  setState(() {
-    currencies = fetchedCurrencies; // actualiza la lista de monedas
-    selectedCurrency = currencies.firstWhere( // selecciona la moneda base del usuario o la primera si no está
-      (c) => c.id == userBaseCurrency,
-      orElse: () => currencies.first, // fallback a la primera moneda
-    );
-    _isLoading = false;
-  });
-}
-
 
 @override
   void initState() {
     super.initState();
+    if (widget.moneyMaker != null) {
+      final m = widget.moneyMaker!;
+      nameController.text = m.name;
+      balanceController.text = m.balance.toString();
+      selectedColor = Color(int.parse(m.color.replaceAll('#', '0xFF')));
+      typeSelected = m.type;
+    }
     loadFormData();
   }
 
+  Future<void> loadFormData() async {
+    final fetchedCurrencies = await api.getCurrencies();
+    final userBaseCurrency = await api.getUserCurrency();
+    if (!mounted) return;
+    setState(() {
+      currencies = fetchedCurrencies;
+      selectedCurrency = currencies.firstWhere(
+        (c) => c.id == userBaseCurrency,
+        orElse: () => currencies.first,
+      );
+      _isLoading = false;
+    });
+  }
 
-String typeSelected = "Efectivo"; // por defecto
+  Future<void> saveMoneyMaker() async {
+    if (!_formKey.currentState!.validate()) return;
 
- Future<void> addMoneyMaker() async {
-  if (!_formKey.currentState!.validate()) return;
-  // Mostrar el loading modal
-  showDialog(
-    context: context,
-    barrierDismissible: false, // para que no se cierre al tocar fuera
-    builder: (context) => const Dialog(
-      backgroundColor: Colors.transparent,
-      elevation: 0,
-      child: LoadingWidget(message: 'Agregando fuente...'),
-    ),
-  );
+    final isEditing = widget.moneyMaker != null;
+    final name = nameController.text.trim();
+    final balance = double.tryParse(balanceController.text) ?? 0;
+    final colorHex =
+        '#${selectedColor!.toARGB32().toRadixString(16).substring(2)}';
 
-  final name = nameController.text.trim();
-  final balance = double.tryParse(balanceController.text) ?? 0;
-  final colorHex = '#${selectedColor!.toARGB32().toRadixString(16).substring(2)}';
-
-final newSource = await api.addPaymentSource(
-  name,
-  typeSelected,
-  balance,
-  selectedCurrency!, // enviamos el id directamente
-  colorHex,
-);
-
-// Cerrar el loading
-    if (mounted) Navigator.of(context).pop();
-  if (newSource != null) {
-    //mostrar el dialogo
-    final confirmed = await showDialog(
+    // Mostrar el loading
+    showDialog(
       context: context,
-      builder: (context) => SuccessDialogWidget(
-        title: 'Fuente Agregada',
-        message: 'La fuente de dinero se ha agregado exitosamente.',
-        buttonText: 'Aceptar',
+      barrierDismissible: false,
+      builder: (_) => const Dialog(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        child: LoadingWidget(message: 'Guardando fuente...'),
       ),
     );
-    if (confirmed) {
-    Navigator.pop(context, newSource); 
-    }
-  } else {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Error al agregar la fuente')),
-    );
-  }
-}
 
+    dynamic newSource;
+    if (isEditing) {
+      newSource = await api.updatePaymentSource(
+        widget.moneyMaker!.id,
+        name,
+        typeSelected,
+        balance,
+        selectedCurrency!,
+        colorHex,
+      );
+    } else {
+      newSource = await api.addPaymentSource(
+        name,
+        typeSelected,
+        balance,
+        selectedCurrency!,
+        colorHex,
+      );
+    }
+
+    if (mounted) Navigator.of(context).pop(); // Cerrar loading
+
+    if (newSource != null) {
+      final confirmed = await showDialog(
+        context: context,
+        builder: (_) => SuccessDialogWidget(
+          title: isEditing ? 'Fuente Actualizada' : 'Fuente Agregada',
+          message: isEditing
+              ? 'La fuente de dinero se ha actualizado exitosamente.'
+              : 'La fuente de dinero se ha agregado exitosamente.',
+          buttonText: 'Aceptar',
+        ),
+      );
+      if (confirmed && mounted) Navigator.pop(context, newSource);
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Error al guardar la fuente')),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
+    final isEditing = widget.moneyMaker != null;
     return Scaffold(
-      appBar: AppBar(title: const Text('Agregar Fuente')),
+      appBar: AppBar(title:  Text(isEditing ? 'Editar Fuente' : 'Agregar Fuente')),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: _isLoading
@@ -143,10 +156,13 @@ final newSource = await api.addPaymentSource(
                           border: OutlineInputBorder(),
                         ),
                         initialValue: typeSelected,
-                        items: types.map((f) => DropdownMenuItem(
-                              value: f,
-                              child: Text(f),
-                            )).toList(),
+                        items: [
+                          "Efectivo", "Mastercard", "Visa", "Tarjeta de débito", "Ahorros",
+                          "Banco", "Inversión", "Tarjeta de crédito", "Cuenta bancaria", "Criptomoneda",
+                          "Cheque", "Cuenta virtual", "PayPal", "Transferencia", "Préstamo", "Otro"
+                        ]
+                            .map((f) => DropdownMenuItem(value: f, child: Text(f)))
+                            .toList(),
                         onChanged: (value) {
                           if (value != null) setState(() => typeSelected = value);
                         },
@@ -155,7 +171,7 @@ final newSource = await api.addPaymentSource(
 
                       // Tipo de moneda
                       DropdownButtonFormField<Currency>(
-                        value: selectedCurrency,
+                        initialValue: selectedCurrency,
                         decoration: const InputDecoration(
                           labelText: 'Tipo de moneda',
                           border: OutlineInputBorder(),
@@ -235,12 +251,11 @@ final newSource = await api.addPaymentSource(
                       ),
                       const SizedBox(height: 24),
 
-                      // Botón agregar
                       SizedBox(
                         width: double.infinity,
                         child: ElevatedButton(
-                          onPressed: addMoneyMaker,
-                          child: const Text('Agregar'),
+                          onPressed: saveMoneyMaker,
+                          child: Text(isEditing ? 'Guardar Cambios' : 'Agregar'),
                         ),
                       ),
                     ],

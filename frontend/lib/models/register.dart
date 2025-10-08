@@ -1,4 +1,6 @@
 import 'currency.dart';
+import 'category.dart';
+
 class Register {
   final int id;
   final String name;
@@ -6,6 +8,7 @@ class Register {
   final double balance;
   final DateTime created_at;
   final Currency currency; 
+  final Category category; // 
 
   Register({
     required this.id,
@@ -14,6 +17,7 @@ class Register {
     required this.balance,
     required this.created_at,
     required this.currency,
+    required this.category,
   });
 
   factory Register.fromJson(Map<String, dynamic> json) {
@@ -25,7 +29,8 @@ class Register {
           ? (json['balance'] as num).toDouble()
           : double.tryParse(json['balance'].toString()) ?? 0.0,
       created_at: DateTime.parse(json['created_at']),
-      currency: json['currency'] = Currency.fromJson(json['currency']), // 👈 parsea el objeto Currency
+      currency: json['currency'] = Currency.fromJson(json['currency']), // 👈 parsea el objeto Currency 
+      category: json['category'] = Category.fromJson(json['category']), // 👈 parsea el objeto Category
     );
   }
 
@@ -37,6 +42,7 @@ class Register {
       'balance': balance,
       'created_at': created_at.toIso8601String(),
       'currency': currency.toJson(),
+      'category': category.toJson(),
     };
   }
 }

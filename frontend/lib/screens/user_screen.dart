@@ -5,7 +5,7 @@ import '../screens/user_form_screen.dart';
 import '../widgets/confirm_dialog_widget.dart';
 import '../widgets/loading_widget.dart';
 import '../widgets/success_dialog_widget.dart';
-import '../widgets/custom_scaffold.dart'; // 👈 agregado
+import '../widgets/custom_scaffold.dart';
 import 'login_screen.dart';
 
 class UserScreen extends StatefulWidget {
@@ -115,7 +115,12 @@ class _UserScreenState extends State<UserScreen> {
                             );
 
                             if (formResult != null) {
-                              setState(() => userFuture = Future.value(null));
+                              // 🔹 Limpia el estado antes de actualizar
+                              setState(() {
+                                userFuture = Future.value(null);
+                              });
+
+                              // 🔹 Realiza el trabajo asíncrono fuera del setState
                               final res = await api.updateUser(
                                 name: formResult['name'],
                                 email: formResult['email'],

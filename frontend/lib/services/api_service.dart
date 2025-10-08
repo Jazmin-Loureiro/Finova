@@ -1,4 +1,5 @@
 import 'dart:io';
+//import 'package:flutter/material.dart';
 import 'package:path/path.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
@@ -9,8 +10,8 @@ import '../models/currency.dart';
 import '../models/register.dart';
 
 // URLs base
-const String baseUrl = "http://192.168.1.113:8000";
-//const String baseUrl = "http://192.168.0.162:8000";// guardo el mio je
+//const String baseUrl = "http://192.168.1.113:8000";
+const String baseUrl = "http://192.168.0.162:8000";// guardo el mio je
 //const String baseUrl = "http://172.16.89.42:8000"; // IP de la facu
 const String apiUrl = "$baseUrl/api";
 // Instancia de almacenamiento seguro
@@ -395,6 +396,25 @@ Future<MoneyMaker?> addPaymentSource(
   }
 
   return null;
+}
+Future<dynamic> updatePaymentSource(int id, String name, String type, double balance, Currency currency, String color) async {
+  final response = await http.put(
+    Uri.parse('$baseUrl/moneyMakers/$id'),
+    headers: await jsonHeaders(),
+    body: jsonEncode({
+      'name': name,
+      'type': type,
+      'balance': balance,
+      'currency_id': currency.id,
+      'color': color,
+    }),
+  );
+
+  if (response.statusCode == 200) {
+    return MoneyMaker.fromJson(jsonDecode(response.body));
+  } else {
+    return null;
+  }
 }
 
 

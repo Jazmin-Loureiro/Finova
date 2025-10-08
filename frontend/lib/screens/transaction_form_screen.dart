@@ -227,7 +227,7 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
                           labelText: 'Categoría',
                           border: OutlineInputBorder(),
                         ),
-                        value: selectedCategory,
+                        initialValue: selectedCategory,
                         items: categories
                             .map((c) => DropdownMenuItem(value: c, child: Text(c['name'])))
                             .toList(),

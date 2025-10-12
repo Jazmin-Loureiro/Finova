@@ -30,6 +30,8 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  flutter_localizations:
+    sdk: flutter
   http: ^1.1.0
   shared_preferences: ^2.1.1  
   flutter_secure_storage: ^8.0.0   # para guardar token de forma segura
@@ -40,10 +42,17 @@ dependencies:
   fl_chart: ^0.69.0 # para graficos
   flutter_svg: ^2.1.1  # para manejar imagenes SVG
   lottie: ^3.1.2 # para animaciones
-  intl: ^0.18.1 # para formateo de fechas y numeros
+  intl: ^0.20.2 # para formateo de fechas y numeros
   provider: ^6.0.5 # para manejo de estado
   multiavatar: ^0.1.5 # para generar avatares aleatorios
   flutter_launcher_icons: ^0.13.1
+  pdf: ^3.10.7
+  path_provider: ^2.1.2
+  open_filex: ^4.3.2
+  excel: ^4.0.2
+  
+
+
 
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
@@ -92,6 +101,7 @@ flutter:
     - assets/lottie/home_loading1.json
     - assets/lottie/home_loading2.json
     - assets/icon.png
+    - assets/font/Roboto/Roboto-Italic-VariableFont_wdth,wght.ttf
     
   
 

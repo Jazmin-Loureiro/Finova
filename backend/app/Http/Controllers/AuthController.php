@@ -9,62 +9,64 @@ use Illuminate\Validation\ValidationException;
 use Illuminate\Auth\Events\Registered;
 use App\Services\CategoryService;
 
+// 🔹 Importaciones nuevas para el mail personalizado
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\URL;
+use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Config;
+use App\Mail\VerifyEmailMail;
 
-class AuthController extends Controller {
-    // Registro de usuario
-    public function register(Request $request){
+class AuthController extends Controller
+{
+    // 🔹 Registro de usuario
+    public function register(Request $request)
+    {
         $request->validate([
-    'name' => 'required|string|max:255',
-    'email' => 'required|email|unique:users',
-    'password' => 'required|string|min:6|confirmed',
-    'icon' => 'nullable', // 👈 quitamos 'image'
-    //'currencyBase' => ['required', 'string'],
-            'currency_id' => ['required', 'exists:currencies,id'], // CAMBIO: validar que exista en la tabla currencies
-    'balance' => ['nullable', 'numeric', 'min:0'],
-]);
+            'name' => 'required|string|max:255',
+            'email' => 'required|email|unique:users',
+            'password' => 'required|string|min:6|confirmed',
+            'icon' => 'nullable',
+            'currency_id' => ['required', 'exists:currencies,id'],
+            'balance' => ['nullable', 'numeric', 'min:0'],
+        ]);
 
-$path = null;
-if ($request->hasFile('icon')) {
-    // Caso 1: imagen subida
-    $path = $request->file('icon')->store('icons', 'public');
-} elseif ($request->filled('icon')) {
-    // Caso 2: avatar seed
-    $path = $request->icon;
-} else {
-    // Caso 3: ninguno → asignar seed por defecto
-    $path = 'default_seed';
-}
+        $path = null;
+        if ($request->hasFile('icon')) {
+            $path = $request->file('icon')->store('icons', 'public');
+        } elseif ($request->filled('icon')) {
+            $path = $request->icon;
+        } else {
+            $path = 'default_seed';
+        }
 
-$user = User::create([
-    'name' => $request->name,
-    'email'=> $request->email,
-    'password' => Hash::make($request->password),
-    'icon' => $path,
-    //'currencyBase' => $request->currencyBase,
-            'currency_id' => $request->currency_id, // CAMBIO: guardar el ID de la moneda
-    'balance' => $request->balance ?? 0,
-]);
+        $user = User::create([
+            'name' => $request->name,
+            'email'=> $request->email,
+            'password' => Hash::make($request->password),
+            'icon' => $path,
+            'currency_id' => $request->currency_id,
+            'balance' => $request->balance ?? 0,
+        ]);
 
-        
-        // Crear la casa del usuario
+        // Crear casa inicial
         $user->house()->create([
             'unlocked_second_floor' => false,
             'unlocked_garage' => false,
         ]);
 
-        event(new Registered($user));
-        //Crear fuente de pago por defecto efectivo 
-        $moneyMaker= $user->moneyMakers()->create([
+        // Crear fuente de pago "Efectivo"
+        $moneyMaker = $user->moneyMakers()->create([
             'name' => 'Efectivo',
             'type' => 'Efectivo',
             'balance' => $request->balance ?? 0,
-            //'typeMoney' => $request->currencyBase, // Moneda base del usuario
-            'currency_id' => $request->currency_id, // CAMBIO: usar el ID de la moneda
+            'currency_id' => $request->currency_id,
             'color' => '#4CAF50',
-            ]);
-        // Crear categorías por defecto usando el servicio
+        ]);
+
+        // Categorías por defecto
         CategoryService::createDefaultForUser($user);
-          // Crear registro de tipo ingreso por el monto inicial
+
+        // Registro de saldo inicial
         if ($request->balance && $request->balance > 0) {
             $defaultCategory = $user->categories()->where('name', 'General')->first();
             $user->registers()->create([
@@ -73,67 +75,153 @@ $user = User::create([
                 'moneyMaker_id' => $moneyMaker->id,
                 'currency_id' => $request->currency_id,
                 'name' => 'Saldo inicial',
-                'category_id' => $defaultCategory->id, // Usar el ID de la categoría "General"
+                'category_id' => $defaultCategory->id,
             ]);
         }
-        $user->sendEmailVerificationNotification(); 
+
+        // 🔹 Generar URL firmada de verificación
+        $verificationUrl = URL::temporarySignedRoute(
+            'verification.verify',
+            Carbon::now()->addMinutes(Config::get('auth.verification.expire', 60)),
+            ['id' => $user->id, 'hash' => sha1($user->getEmailForVerification())]
+        );
+
+        // 🔹 Enviar email con plantilla personalizada
+        Mail::to($user->email)->send(new VerifyEmailMail($user, $verificationUrl));
+
         return response()->json([
-            'message' => 'Usuario registrado, verifique su email.',
+            'message' => 'Usuario registrado. Verifique su email para activar su cuenta.',
             'user' => $user
         ], 201);
     }
 
-    // Login de usuario
-    public function login(Request $request) {
+    // 🔹 Login
+    public function login(Request $request)
+    {
         $request->validate([
             'email' => 'required|email',
             'password' => 'required'
         ]);
+
+        // 1) Buscar usuario
         $user = User::where('email', $request->email)->first();
-        if (!$user || !Hash::check($request->password, $user->password)) {
-            throw ValidationException::withMessages([
-                'email' => ['Usuario o contraseña incorrectos.'],
-            ]);
+
+        // 1a) Usuario NO existe
+        if (!$user) {
+            return response()->json([
+                'message' => 'No existe una cuenta registrada con ese correo. Podés crear una nueva cuenta en Finova.'
+            ], 404);
         }
-         if (!$user->hasVerifiedEmail()) {
-             return response()->json(['message' => 'Revisa tu cuenta de mail para verificar'], 403);
-         }
+
+        // 2) Password incorrecta (genérico: "correo o contraseña")
+        if (!Hash::check($request->password, $user->password)) {
+            return response()->json([
+                'message' => 'Correo o contraseña incorrectos. Verificá los datos e intentá nuevamente.'
+            ], 401);
+        }
+
+        // 3) Cuenta dada de baja
+        if (!$user->active) {
+            return response()->json([
+                'message' => 'Tu cuenta fue dada de baja. Contactá soporte si querés reactivarla.'
+            ], 403);
+        }
+
+        // 4) Email no verificado
+        if (!$user->hasVerifiedEmail()) {
+            return response()->json([
+                'message' => 'Revisá tu correo para verificar tu cuenta antes de ingresar.'
+            ], 403);
+        }
+
+        // 5) OK → token
         $token = $user->createToken('api-token')->plainTextToken;
+
         return response()->json([
             'user' => $user,
             'token' => $token,
         ], 200);
     }
 
-    // Logout
-    public function logout(Request $request) {
+
+
+    // 🔹 Logout
+    public function logout(Request $request)
+    {
         $request->user()->currentAccessToken()->delete();
-        return response()->json(['message' => 'Logged out'], 200);
+        return response()->json(['message' => 'Sesión cerrada correctamente.'], 200);
     }
 
-    // Obtener datos del usuario autenticado
-    public function user(Request $request) {
+    // 🔹 Obtener usuario autenticado
+    public function user(Request $request)
+    {
         return response()->json($request->user());
     }
 
-    // Verificación de email
-    public function verifyEmail(Request $request, $id, $hash) {
-        $user = User::findOrFail($id); //buscar usuario por id
-        if (!hash_equals((string) $hash, sha1($user->getEmailForVerification()))) { 
-            return response()->json(['message' => 'Enlace inválido.'], 403);
+    // 🔹 Verificación del email
+    public function verifyEmail(Request $request, $id, $hash)
+    {
+        $user = User::findOrFail($id);
+
+        // 🔴 Link inválido
+        if (!hash_equals((string) $hash, sha1($user->getEmailForVerification()))) {
+            return response()->view('email_invalid');
         }
-        if ($user->hasVerifiedEmail()) { //verificar si ya esta verificado 
-            return response()->json(['message' => 'Email ya verificado.']);
+
+        // 📬 Ya verificado
+        if ($user->hasVerifiedEmail()) {
+            return response()->view('email_already_verified');
         }
-        $user->markEmailAsVerified(); //marcar email como verificado esto es de laravel
-        return response()->json(['message' => 'Email verificado correctamente.']);
+
+        // ✅ Verificación correcta
+        $user->markEmailAsVerified();
+
+        return response()->view('email_verified');
     }
-     // Reenviar email de verificación se puede ver a futuro
-    public function resendVerification(Request $request) {
-        if ($request->user()->hasVerifiedEmail()) { //esta funcion es para reenviar el email de verificacion y es de laravel 
+
+    // 🔹 Reenviar email de verificación
+    public function resendVerification(Request $request)
+    {
+        if ($request->user()->hasVerifiedEmail()) {
             return response()->json(['message' => 'El email ya está verificado.']);
         }
-        $request->user()->sendEmailVerificationNotification();
-        return response()->json(['message' => 'Email de verificación reenviado.']);
+
+        // Volver a generar el enlace
+        $verificationUrl = URL::temporarySignedRoute(
+            'verification.verify',
+            Carbon::now()->addMinutes(Config::get('auth.verification.expire', 60)),
+            ['id' => $request->user()->id, 'hash' => sha1($request->user()->getEmailForVerification())]
+        );
+
+        Mail::to($request->user()->email)->send(new VerifyEmailMail($request->user(), $verificationUrl));
+
+        return response()->json(['message' => 'Te enviamos un nuevo correo de verificación. Revisá tu bandeja de entrada.']);
     }
+
+    // 🔹 Reenviar email de verificación sin login (solo con email)
+    public function resendVerificationByEmail(Request $request)
+    {
+        $request->validate(['email' => 'required|email']);
+
+        $user = User::where('email', $request->email)->first();
+
+        if (!$user) {
+            return response()->json(['message' => 'No se encontró un usuario con ese correo.'], 404);
+        }
+
+        if ($user->hasVerifiedEmail()) {
+            return response()->json(['message' => 'El correo ya fue verificado.']);
+        }
+
+        $verificationUrl = URL::temporarySignedRoute(
+            'verification.verify',
+            Carbon::now()->addMinutes(Config::get('auth.verification.expire', 60)),
+            ['id' => $user->id, 'hash' => sha1($user->getEmailForVerification())]
+        );
+
+        Mail::to($user->email)->send(new VerifyEmailMail($user, $verificationUrl));
+
+        return response()->json(['message' => 'Te enviamos un nuevo correo de verificación. Revisá tu bandeja.']);
+    }
+
 }

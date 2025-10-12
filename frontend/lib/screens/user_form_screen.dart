@@ -1,17 +1,14 @@
 import 'dart:io';
-import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:multiavatar/multiavatar.dart';
-
-import '../widgets/confirm_dialog_widget.dart'; 
+import '../widgets/confirm_dialog_widget.dart';
 import '../widgets/success_dialog_widget.dart';
 import '../services/api_service.dart';
 import '../models/currency.dart';
 import '../widgets/user_avatar_widget.dart';
-import '../widgets/custom_app_bar.dart';         // 👈 agregado
-import '../widgets/navigation_bar_widget.dart'; // 👈 agregado
+import '../widgets/custom_scaffold.dart'; // 👈 reemplaza AppBar y NavBar
 
 class UserFormScreen extends StatefulWidget {
   final Map<String, dynamic> user;
@@ -23,13 +20,12 @@ class UserFormScreen extends StatefulWidget {
 
 class _UserFormScreenState extends State<UserFormScreen> {
   final _formKey = GlobalKey<FormState>();
-
   late TextEditingController nameController;
   late TextEditingController emailController;
   late TextEditingController passwordController;
   Currency? selectedCurrency;
   File? newIcon;
-  String? selectedAvatarSeed; // 👈 nuevo
+  String? selectedAvatarSeed;
 
   List<Currency> currencies = [];
   bool isLoadingCurrencies = true;
@@ -66,13 +62,14 @@ class _UserFormScreenState extends State<UserFormScreen> {
     if (result != null && result.files.single.path != null) {
       setState(() {
         newIcon = File(result.files.single.path!);
-        selectedAvatarSeed = null; // 👈 limpiamos avatar si subió foto
+        selectedAvatarSeed = null;
       });
     }
   }
 
   void _showAvatarPicker() async {
-    final base = emailController.text.isNotEmpty ? emailController.text : 'default';
+    final base =
+        emailController.text.isNotEmpty ? emailController.text : 'default';
     final seeds = List.generate(
       6,
       (i) => "$base-${DateTime.now().microsecondsSinceEpoch}-$i",
@@ -107,7 +104,7 @@ class _UserFormScreenState extends State<UserFormScreen> {
     if (selected != null) {
       setState(() {
         selectedAvatarSeed = selected;
-        newIcon = null; // limpiamos si eligió avatar
+        newIcon = null;
       });
     }
   }
@@ -117,18 +114,21 @@ class _UserFormScreenState extends State<UserFormScreen> {
 
     dynamic iconValue;
     if (newIcon != null) {
-      iconValue = newIcon; // File
+      iconValue = newIcon;
     } else if (selectedAvatarSeed != null) {
-      iconValue = selectedAvatarSeed; // String
+      iconValue = selectedAvatarSeed;
     }
 
     Navigator.pop(context, {
       'name': nameController.text,
       'email': emailController.text,
-      'password': passwordController.text.isNotEmpty ? passwordController.text : null,
-      'password_confirmation': passwordController.text.isNotEmpty ? passwordController.text : null,
-      'currencyBase': selectedCurrency?.id, // ✅ ahora devuelve el ID correcto
-      'icon':  iconValue, // 👈 unificado en un solo campo
+      'password':
+          passwordController.text.isNotEmpty ? passwordController.text : null,
+      'password_confirmation': passwordController.text.isNotEmpty
+          ? passwordController.text
+          : null,
+      'currencyBase': selectedCurrency?.id,
+      'icon': iconValue,
     });
   }
 
@@ -136,15 +136,16 @@ class _UserFormScreenState extends State<UserFormScreen> {
     return InputDecoration(
       labelText: label,
       border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      contentPadding:
+          const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: const CustomAppBar(title: "Editar Usuario"), // 👈 usamos tu AppBar
-
+    return CustomScaffold(
+      title: "Editar Usuario",
+      currentRoute: "/user/form",
       body: Padding(
         padding: const EdgeInsets.all(16),
         child: Form(
@@ -188,23 +189,25 @@ class _UserFormScreenState extends State<UserFormScreen> {
                   },
                 ),
                 const SizedBox(height: 16),
-
                 TextFormField(
                   controller: nameController,
                   decoration: _inputDecoration("Nombre"),
-                  validator: (v) => v == null || v.isEmpty ? "Ingrese un nombre" : null,
+                  validator: (v) =>
+                      v == null || v.isEmpty ? "Ingrese un nombre" : null,
                 ),
                 const SizedBox(height: 12),
                 TextFormField(
                   controller: emailController,
                   decoration: _inputDecoration("Email"),
-                  validator: (v) => v == null || !v.contains('@') ? "Email inválido" : null,
+                  validator: (v) =>
+                      v == null || !v.contains('@') ? "Email inválido" : null,
                 ),
                 const SizedBox(height: 12),
                 TextFormField(
                   controller: passwordController,
                   obscureText: true,
-                  decoration: _inputDecoration("Nueva contraseña (opcional)"),
+                  decoration:
+                      _inputDecoration("Nueva contraseña (opcional)"),
                 ),
                 const SizedBox(height: 12),
                 isLoadingCurrencies
@@ -215,13 +218,13 @@ class _UserFormScreenState extends State<UserFormScreen> {
                         items: currencies
                             .map((c) => DropdownMenuItem(
                                   value: c,
-                                  child: Text('${c.symbol} ${c.code} - ${c.name}'),
+                                  child:
+                                      Text('${c.symbol} ${c.code} - ${c.name}'),
                                 ))
                             .toList(),
-                        onChanged: (v) => setState(() => selectedCurrency = v),
+                        onChanged: (v) =>
+                            setState(() => selectedCurrency = v),
                       ),
-                const SizedBox(height: 12),
-
                 const SizedBox(height: 20),
                 SizedBox(
                   width: double.infinity,
@@ -237,7 +240,8 @@ class _UserFormScreenState extends State<UserFormScreen> {
                           message: "¿Querés guardar los cambios del perfil?",
                           confirmText: "Guardar",
                           cancelText: "Revisar",
-                          confirmColor: Theme.of(context).colorScheme.primary,
+                          confirmColor:
+                              Theme.of(context).colorScheme.primary,
                         ),
                       );
 
@@ -247,13 +251,12 @@ class _UserFormScreenState extends State<UserFormScreen> {
                           barrierDismissible: false,
                           builder: (_) => const SuccessDialogWidget(
                             title: "¡Éxito!",
-                            message: "Los cambios se guardaron correctamente.",
+                            message:
+                                "Los cambios se guardaron correctamente.",
                           ),
                         );
 
-                        if (success == true) {
-                          _submitForm();
-                        }
+                        if (success == true) _submitForm();
                       }
                     },
                     child: const Text("Guardar cambios"),
@@ -264,10 +267,6 @@ class _UserFormScreenState extends State<UserFormScreen> {
           ),
         ),
       ),
-
-      bottomNavigationBar: NavigationBarWidget.bottomAppBar(context), // 👈 navegación
-      floatingActionButton: NavigationBarWidget.fab(context),         // 👈 FAB central
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
     );
   }
 }

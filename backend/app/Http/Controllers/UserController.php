@@ -8,6 +8,9 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use App\Services\CurrencyService;
+use Illuminate\Support\Facades\Mail;
+use App\Models\ReactivationRequest;
+
 
 class UserController extends Controller
 {
@@ -94,8 +97,58 @@ class UserController extends Controller
     public function destroy(Request $request)
     {
         $user = $request->user();
-        $user->delete();
+        $user->active = false;
+        $user->save();
 
-        return response()->json(['message' => 'Usuario eliminado']);
+        // Opcional: cerrar sesión actual
+        $request->user()->currentAccessToken()->delete();
+
+        return response()->json(['message' => 'Cuenta dada de baja correctamente.']);
+    }
+
+    public function requestReactivation(Request $request)
+    {
+        $request->validate([
+            'email' => 'required|email',
+        ]);
+
+        $user = User::where('email', $request->email)->first();
+
+        if (!$user) {
+            return response()->json(['message' => 'No existe un usuario con ese email.'], 404);
+        }
+
+        if ($user->active) {
+            return response()->json(['message' => 'La cuenta ya está activa.'], 400);
+        }
+
+        // Guardar en base de datos
+        ReactivationRequest::create([
+            'user_id' => $user->id,
+        ]);
+
+        // Enviar mail al admin
+        Mail::raw("El usuario {$user->email} solicitó reactivar su cuenta.", function ($message) {
+            $message->to('finovaapp.contacto@gmail.com')
+                    ->subject('Solicitud de reactivación de cuenta');
+        });
+
+        return response()->json(['message' => 'Solicitud de reactivación enviada. Nos contactaremos pronto.']);
+    }
+
+
+    // Reactivar cuenta (solo admin)
+    public function activate($id)
+    {
+        $user = User::findOrFail($id);
+
+        if ($user->active) {
+            return response()->json(['message' => 'El usuario ya está activo.'], 400);
+        }
+
+        $user->active = true;
+        $user->save();
+
+        return response()->json(['message' => 'Cuenta reactivada correctamente.']);
     }
 }

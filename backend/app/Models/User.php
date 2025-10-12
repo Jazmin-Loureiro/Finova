@@ -3,8 +3,6 @@
 namespace App\Models;
 
 use Illuminate\Contracts\Auth\MustVerifyEmail; // eliminado
-
-// use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
@@ -26,6 +24,7 @@ class User extends Authenticatable implements MustVerifyEmail // añadido MustVe
         'icon',
         'currency_id', // Esto tiene q se runa relacion con la otra tabla
         'balance',
+        'active', //estado del usuario
     ];
 
     /**
@@ -64,6 +63,12 @@ class User extends Authenticatable implements MustVerifyEmail // añadido MustVe
     public function challenges() {
         return $this->belongsToMany(Challenge::class, 'UserChallenge', 'user_id', 'challenge_id')
                     ->withPivot('balance', 'state');
+    }
+
+    // Scope para usuarios activos
+    public function scopeActive($query)
+    {
+        return $query->where('active', true);
     }
 
     /**

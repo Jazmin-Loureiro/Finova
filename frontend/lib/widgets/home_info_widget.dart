@@ -1,9 +1,53 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/house_provider.dart';
+import '../services/api_service.dart';
+import '../models/currency.dart';
 
-class HomeInfoWidget extends StatelessWidget {
+class HomeInfoWidget extends StatefulWidget {
   const HomeInfoWidget({super.key});
+
+  @override
+  State<HomeInfoWidget> createState() => _HomeInfoWidgetState();
+}
+
+class _HomeInfoWidgetState extends State<HomeInfoWidget> {
+  final ApiService api = ApiService();
+  double? dolarValue;
+  String? userCurrencyCode;
+  bool isLoadingDolar = true;
+
+  @override
+  void initState() {
+    super.initState();
+    fetchDolarValue();
+  }
+
+  Future<void> fetchDolarValue() async {
+    try {
+      final currencies = await api.getCurrencies();
+      final userCurrencyId = await api.getUserCurrency();
+
+      final usd = currencies.firstWhere((c) => c.code == 'USD');
+      final userCurrency =
+          currencies.firstWhere((c) => c.id == userCurrencyId);
+
+      // Calcular el valor de 1 USD en la moneda base del usuario
+      final valor = userCurrency.rate! / usd.rate!;
+
+      setState(() {
+        dolarValue = valor;
+        userCurrencyCode = userCurrency.code;
+        isLoadingDolar = false;
+      });
+    } catch (e) {
+      setState(() {
+        dolarValue = null;
+        userCurrencyCode = null;
+        isLoadingDolar = false;
+      });
+    }
+  }
 
   String getFormattedDate() {
     final now = DateTime.now();
@@ -84,28 +128,54 @@ class HomeInfoWidget extends StatelessWidget {
             const SizedBox(height: 14),
 
             // 🔹 Info extra (fecha + dólar)
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.center,
               children: [
+                // 📅 Fecha
                 Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     const Icon(Icons.calendar_today,
                         size: 16, color: Colors.grey),
                     const SizedBox(width: 4),
                     Text(
                       getFormattedDate(),
-                      style: const TextStyle(fontSize: 13, color: Colors.black54),
+                      style:
+                          const TextStyle(fontSize: 13, color: Colors.black54),
                     ),
                   ],
                 ),
-                Row(
-                  children: const [
-                    Icon(Icons.attach_money, size: 16, color: Colors.grey),
-                    SizedBox(width: 4),
-                    Text("Dólar: -",
-                        style: TextStyle(fontSize: 13, color: Colors.black45)),
-                  ],
-                ),
+
+                // 💵 Dólar (solo si la moneda base no es USD)
+                if (userCurrencyCode != 'USD') ...[
+                  const SizedBox(height: 6),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Icon(Icons.attach_money,
+                          size: 16, color: Colors.grey),
+                      const SizedBox(width: 4),
+                      if (isLoadingDolar)
+                        const Text(
+                          "Cargando dólar...",
+                          style:
+                              TextStyle(fontSize: 13, color: Colors.black45),
+                        )
+                      else if (dolarValue != null && userCurrencyCode != null)
+                        Text(
+                          "1 USD = ${dolarValue!.toStringAsFixed(2)} $userCurrencyCode",
+                          style: const TextStyle(
+                              fontSize: 13, color: Colors.black54),
+                        )
+                      else
+                        const Text(
+                          "Error dólar",
+                          style: TextStyle(
+                              fontSize: 13, color: Colors.redAccent),
+                        ),
+                    ],
+                  ),
+                ],
               ],
             ),
           ],

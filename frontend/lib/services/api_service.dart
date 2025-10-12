@@ -10,8 +10,8 @@ import '../models/currency.dart';
 import '../models/register.dart';
 
 // URLs base
-//const String baseUrl = "http://192.168.1.113:8000";
-const String baseUrl = "http://192.168.0.162:8000";// guardo el mio je
+const String baseUrl = "http://192.168.1.113:8000";
+//const String baseUrl = "http://192.168.0.162:8000";// guardo el mio je
 //const String baseUrl = "http://172.16.89.42:8000"; // IP de la facu
 const String apiUrl = "$baseUrl/api";
 // Instancia de almacenamiento seguro
@@ -79,6 +79,42 @@ class ApiService {
   }
 }
 
+  ///////////////////////////////////////// Reenviar email de verificación
+  Future<Map<String, dynamic>?> resendVerification() async {
+    final token = await storage.read(key: 'token');
+    if (token == null) return {'message': 'No hay sesión activa'};
+
+    final res = await http.post(
+      Uri.parse('$apiUrl/email/resend'),
+      headers: jsonHeaders(token),
+    );
+
+    try {
+      return jsonDecode(res.body);
+    } catch (_) {
+      return {'message': 'No se pudo reenviar el correo'};
+    }
+  }
+
+// ✅ Nuevo: saber si hay token guardado
+  Future<bool> hasToken() async {
+    final token = await storage.read(key: 'token');
+    return token != null;
+  }
+
+// ✅ Nuevo: reenviar correo sin login (solo con email)
+  Future<Map<String, dynamic>?> resendVerificationByEmail(String email) async {
+    final res = await http.post(
+      Uri.parse('$apiUrl/resend-verification'),
+      headers: jsonHeaders(),
+      body: jsonEncode({'email': email}),
+    );
+    try {
+      return jsonDecode(res.body);
+    } catch (_) {
+      return {'message': 'Error al reenviar el correo'};
+    }
+  }
 
   /////////////////////////////////////////////////////////////////// Login
   Future<Map<String, dynamic>?> login(String email, String password) async {
@@ -242,6 +278,22 @@ class ApiService {
     }
     return false;
   }
+
+  ///////////////////////////////////////// Solicitar reactivación de cuenta
+  Future<Map<String, dynamic>> requestReactivation(String email) async {
+  try {
+    final res = await http.post(
+      Uri.parse('$apiUrl/users/request-reactivation'),
+      headers: jsonHeaders(),
+      body: jsonEncode({'email': email}),
+    );
+
+    return jsonDecode(res.body);
+  } catch (e) {
+    return {'error': 'No se pudo conectar con el servidor'};
+  }
+}
+
 
   ///////////////////////////////////////// Obtener estado de la casa
   Future<Map<String, dynamic>> getHouseStatus() async {

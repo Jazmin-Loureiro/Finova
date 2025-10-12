@@ -51,14 +51,18 @@ class CustomDrawer extends StatelessWidget {
               children: [
                 Icon(
                   icon,
-                  color: isSelected ? scheme.primary : Colors.white70,
+                  color: isSelected
+                      ? scheme.primary
+                      : scheme.onSurface.withOpacity(0.7),
                   size: 22,
                 ),
                 const SizedBox(width: 14),
                 Text(
                   title,
                   style: textTheme.bodyLarge?.copyWith(
-                    color: isSelected ? scheme.primary : Colors.white70,
+                    color: isSelected
+                        ? scheme.primary
+                        : scheme.onSurface.withOpacity(0.7),
                     fontWeight:
                         isSelected ? FontWeight.w600 : FontWeight.normal,
                   ),
@@ -74,13 +78,13 @@ class CustomDrawer extends StatelessWidget {
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.horizontal(right: Radius.circular(24)),
       ),
-      backgroundColor: Colors.black,
+      backgroundColor: scheme.surface, // 👈 ahora toma el color del tema activo
       elevation: 8,
       child: SafeArea(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // 🔹 Encabezado violeta con logo blanco encima
+            // 🔹 Encabezado con el color primario del tema
             Container(
               padding:
                   const EdgeInsets.symmetric(horizontal: 20.0, vertical: 28.0),
@@ -90,8 +94,8 @@ class CustomDrawer extends StatelessWidget {
                   Container(
                     width: 50,
                     height: 50,
-                    decoration: const BoxDecoration(
-                      color: Colors.white, // círculo blanco sólido
+                    decoration: BoxDecoration(
+                      color: scheme.onPrimary, // círculo contrastante según tema
                       shape: BoxShape.circle,
                     ),
                     child: Padding(
@@ -156,9 +160,10 @@ class CustomDrawer extends StatelessWidget {
               ),
             ),
 
+            // 🔹 Footer
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              child: Divider(color: Colors.white24),
+              child: Divider(color: scheme.onSurface.withOpacity(0.15)),
             ),
             Padding(
               padding: const EdgeInsets.only(bottom: 20),
@@ -166,7 +171,7 @@ class CustomDrawer extends StatelessWidget {
                 'Versión 1.0.0',
                 textAlign: TextAlign.center,
                 style: textTheme.bodySmall?.copyWith(
-                  color: Colors.white54,
+                  color: scheme.onSurface.withOpacity(0.5),
                 ),
               ),
             ),

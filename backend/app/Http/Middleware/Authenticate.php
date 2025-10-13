@@ -13,9 +13,11 @@ class Authenticate extends Middleware
      * @return string|null
      */
     protected function redirectTo($request)
-    {
-        if (! $request->expectsJson()) {
-            return route('login');
-        }
+{
+    if (! $request->expectsJson()) {
+        // 👇 Devolver null evita la redirección y deja que Sanctum devuelva 401
+        return null;
     }
+}
+
 }

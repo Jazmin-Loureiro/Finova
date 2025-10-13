@@ -46,6 +46,8 @@ class AuthController extends Controller
             'icon' => $path,
             'currency_id' => $request->currency_id,
             'balance' => $request->balance ?? 0,
+            'points' => 0,   // 🆕 inicializa
+            'level' => 1,    // 🆕 inicializa
         ]);
 
         // Crear casa inicial
@@ -138,9 +140,20 @@ class AuthController extends Controller
         $token = $user->createToken('api-token')->plainTextToken;
 
         return response()->json([
-            'user' => $user,
+            'user' => [
+                'id' => $user->id,
+                'name' => $user->name,
+                'email' => $user->email,
+                'icon' => $user->icon,
+                'balance' => $user->balance,
+                'currency_id' => $user->currency_id,
+                'points' => $user->points ?? 0, // 🆕
+                'level' => $user->level ?? 1,   // 🆕
+                'last_challenge_refresh' => optional($user->last_challenge_refresh)?->toIso8601String(),
+            ],
             'token' => $token,
         ], 200);
+
     }
 
 
@@ -155,8 +168,23 @@ class AuthController extends Controller
     // 🔹 Obtener usuario autenticado
     public function user(Request $request)
     {
-        return response()->json($request->user());
+        $user = $request->user();
+        $currency = $user->currency;
+        return response()->json([
+            'id' => $user->id,
+            'name' => $user->name,
+            'email' => $user->email,
+            'icon' => $user->icon,
+            'balance' => $user->balance,
+            'currency_id' => $user->currency_id,
+            'currency_symbol' => $currency->symbol ?? '',
+            'points' => $user->points ?? 0,
+            'level' => $user->level ?? 1,
+            'full_icon_url' => $user->icon ? asset('storage/' . $user->icon) : null,
+            'last_challenge_refresh' => optional($user->last_challenge_refresh)?->toIso8601String(),
+        ]);
     }
+
 
     // 🔹 Verificación del email
     public function verifyEmail(Request $request, $id, $hash)

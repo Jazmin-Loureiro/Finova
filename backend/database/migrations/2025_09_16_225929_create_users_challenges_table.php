@@ -18,7 +18,7 @@ return new class extends Migration
             $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
             $table->foreignId('challenge_id')->constrained('challenges')->onDelete('cascade');
             $table->decimal('balance', 12, 2)->default(0);
-            $table->string('state')->default('in_progress'); // in_progress, completed,
+            $table->string('state')->default('suggested'); // in_progress, completed, SUGGESTED
             $table->timestamps();
         });
     }

@@ -1,4 +1,5 @@
 import 'currency.dart';
+import 'register.dart';
 class MoneyMaker {
   final int id;      
   final String name;
@@ -9,6 +10,7 @@ class MoneyMaker {
   final Currency? currency;
   final String? currencyBase; // moneda base del usuario
   String? currencySymbol; // símbolo de la moneda
+   List<Register> registers ; // Lista de registros asociados
 
   MoneyMaker({
     required this.id,
@@ -20,6 +22,7 @@ class MoneyMaker {
     this.currency ,
     this.currencyBase, // moneda base del usuario
     this.currencySymbol, // símbolo de la moneda
+    this.registers = const [], // Inicializar con lista vacía
   });
 
   factory MoneyMaker.fromJson(Map<String, dynamic> json) {
@@ -33,7 +36,11 @@ class MoneyMaker {
       color: json['color'] ?? 'FFFFFF',
     currencyBase: json['currencyBase']?.toString(), // 🔹 convertir a String
     currencySymbol: json['currencySymbol']?.toString(), // 🔹 convertir a String
-      
+    registers: json['registers'] != null
+        ? (json['registers'] as List)
+            .map((r) => Register.fromJson(r))
+            .toList()
+        : [],
     );
   }
 }

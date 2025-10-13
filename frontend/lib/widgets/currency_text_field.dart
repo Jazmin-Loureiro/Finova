@@ -8,6 +8,7 @@ class CurrencyTextField extends StatelessWidget {
   final List<Currency> currencies;
   final String label;
   final void Function(String)? onChanged;
+  final FormFieldValidator<String>? validator;
 
   const CurrencyTextField({
     super.key,
@@ -16,6 +17,7 @@ class CurrencyTextField extends StatelessWidget {
     this.selectedCurrency,
     required this.label,
     this.onChanged,
+    this.validator,
   });
 
   @override
@@ -26,7 +28,7 @@ class CurrencyTextField extends StatelessWidget {
       decoration: InputDecoration(
         labelText: label,
         border: const OutlineInputBorder(),
-        prefixText: selectedCurrency != null ? '${selectedCurrency!.symbol} ' : '',
+        prefixText: selectedCurrency != null ? '${selectedCurrency!.symbol} ': '',
       ),
       onTap: () {
         if (controller.text.trim() == '0') controller.clear();
@@ -34,25 +36,14 @@ class CurrencyTextField extends StatelessWidget {
       onEditingComplete: () {
         if (controller.text.isNotEmpty) {
           double value = double.tryParse(
-                controller.text.replaceAll(RegExp('[^0-9.]'), ''),
-              ) ??
-              0;
-          String formatted = NumberFormat.currency(
-            symbol: selectedCurrency?.symbol ?? '',
-            decimalDigits: 2,
-          ).format(value);
+            controller.text) ?? 0;
+          String formatted = NumberFormat(
+            '##0.00', 'en_US').format(value);
           controller.text = formatted;
         }
         FocusScope.of(context).unfocus();
       },
-      validator: (val) {
-        if (val == null || val.trim().isEmpty) return null;
-        final parsed = double.tryParse(val.replaceAll(RegExp('[^0-9.]'), ''));
-        if (parsed == null || parsed < 0) {
-          return 'Ingresa un número válido';
-        }
-        return null;
-      },
+      validator: validator,
       onChanged: onChanged,
     );
   }

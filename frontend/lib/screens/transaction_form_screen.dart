@@ -184,12 +184,23 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
                 const SizedBox(height: 16),
 
                 // Monto
-                CurrencyTextField(
-                  controller: amountController,
-                  currencies: currencies,
-                  selectedCurrency: selectedCurrency,
-                  label: 'Monto',
-                ),
+             CurrencyTextField(
+                controller: amountController,
+                currencies: currencies,
+                selectedCurrency: selectedCurrency,
+                label: 'Monto',
+                validator: (val) {
+                  if (val == null || val.trim().isEmpty) return 'Ingrese un monto';
+                  final parsed = double.tryParse(val) ?? 0;
+                  if (parsed <= 0) return 'Ingrese un monto válido';
+                  if (widget.type == 'expense' &&
+                      parsed > selectedMoneyMaker!.balance) {
+                    return 'El gasto supera el monto disponible (${selectedMoneyMaker!.balance.toStringAsFixed(2)})';
+                  }
+                  return null;
+                },
+              ),
+
                 const SizedBox(height: 16),
 
                 // Fuente de dinero

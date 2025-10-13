@@ -5,6 +5,7 @@ import '../screens/dashboard_screen.dart';
 import '../screens/configuration_screen.dart';
 import '../screens/challenge_screen.dart';
 import '../screens/currency_converter_screen.dart';
+import '../screens/export_reports_screen.dart';
 
 class CustomDrawer extends StatelessWidget {
   final String currentRoute;
@@ -148,6 +149,12 @@ class CustomDrawer extends StatelessWidget {
                     title: 'Conversor',
                     routeName: 'currency_converter',
                     screen: const CurrencyConverterScreen(),
+                  ),
+                  buildMenuItem(
+                    icon: Icons.file_download	,
+                    title: 'Exportar Reportes',
+                    routeName: 'report_export',
+                    screen: const ExportReportsScreen(),
                   ),
                 ],
               ),

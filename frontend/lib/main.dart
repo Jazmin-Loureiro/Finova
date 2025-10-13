@@ -5,8 +5,14 @@ import 'screens/home_screen.dart';
 import 'services/api_service.dart';
 import 'providers/house_provider.dart'; // 👈 tu nuevo provider
 
+import 'package:intl/date_symbol_data_local.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 // Punto de entrada de la aplicación
-void main() {
+void main() async {
+    //  Inicializa los datos de localización para español (Argentina o genérico)
+    WidgetsFlutterBinding.ensureInitialized();
+
+  await initializeDateFormatting('es', null);
   runApp(
     ChangeNotifierProvider(
       create: (_) => HouseProvider(), // 👈 se inicializa apenas arranca la app
@@ -54,6 +60,17 @@ class MyApp extends StatelessWidget {
 
       // 👇 Usa el tema según el sistema
       themeMode: ThemeMode.system,
+      //  Esto hace que todo (calendario, fechas, textos) use español
+      locale: const Locale('es', 'ES'),
+      supportedLocales: const [
+        Locale('es', 'ES'), // Español
+        Locale('en', 'US'), // Inglés (por si acaso)
+      ],
+      localizationsDelegates: const [
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
 
       debugShowCheckedModeBanner: false,
       home: const SplashScreen(),

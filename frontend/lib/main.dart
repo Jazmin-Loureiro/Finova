@@ -72,6 +72,14 @@ class MyApp extends StatelessWidget {
         GlobalCupertinoLocalizations.delegate,
       ],
 
+      // 🕐 Fuerza formato 24 horas global
+      builder: (context, child) {
+        return MediaQuery(
+          data: MediaQuery.of(context).copyWith(alwaysUse24HourFormat: true),
+          child: child!,
+        );
+      },
+
       debugShowCheckedModeBanner: false,
       home: const SplashScreen(),
     );

@@ -181,6 +181,7 @@ class AuthController extends Controller
             'points' => $user->points ?? 0,
             'level' => $user->level ?? 1,
             'full_icon_url' => $user->icon ? asset('storage/' . $user->icon) : null,
+            'created_at' => optional($user->created_at)?->toIso8601String(),
             'last_challenge_refresh' => optional($user->last_challenge_refresh)?->toIso8601String(),
         ]);
     }

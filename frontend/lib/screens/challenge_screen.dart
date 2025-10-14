@@ -51,7 +51,7 @@ class _ChallengeScreenState extends State<ChallengeScreen>
     if (user == null) return;
     final last = user['last_challenge_refresh'];
     if (last is String && last.isNotEmpty) {
-      final lastDt = DateTime.tryParse(last);
+      final lastDt = DateTime.tryParse(last)?.toLocal();
       if (lastDt != null) {
         setState(() {
           _cooldownUntil = lastDt.add(const Duration(hours: _cooldownHours));
@@ -63,7 +63,7 @@ class _ChallengeScreenState extends State<ChallengeScreen>
   void _setCooldownFromServerMeta(Map<String, dynamic> meta) {
     final next = meta['next_refresh_at'];
     if (next is String && next.isNotEmpty) {
-      final nextDt = DateTime.tryParse(next);
+      final nextDt = DateTime.tryParse(next)?.toLocal();
       if (nextDt != null) {
         setState(() {
           _cooldownUntil = nextDt;
@@ -168,7 +168,7 @@ class _ChallengeScreenState extends State<ChallengeScreen>
     } catch (e) {
       if (e is CooldownException && e.status == 429) {
         if (e.nextRefreshAt != null) {
-          final dt = DateTime.tryParse(e.nextRefreshAt!);
+          final dt = DateTime.tryParse(e.nextRefreshAt!)?.toLocal();
           if (dt != null) _cooldownUntil = dt;
         }
 
@@ -470,7 +470,7 @@ class _ChallengeScreenState extends State<ChallengeScreen>
                     _buildEmptyState(
                       context,
                       title: "¡No hay desafíos disponibles!",
-                      message: "Parece que completaste todos los desafíos por ahora.\nPodés intentar regenerarlos 🎯",
+                      message: "Parece que completaste todos los desafíos por ahora.\nPodés intentar regenerarlos",
                       icon: Icons.emoji_events_outlined,
                       onRefresh: _refreshChallengesManually,
                     ),
@@ -614,54 +614,54 @@ class _ChallengeScreenState extends State<ChallengeScreen>
         );
 
         if (next is String && next.isNotEmpty) {
-  final dt = DateTime.tryParse(next);
-  if (dt != null) {
-    final formatted = TimeOfDay.fromDateTime(dt).format(context);
+          final dt = DateTime.tryParse(next)?.toLocal();
+          if (dt != null) {
+            final formatted = TimeOfDay.fromDateTime(dt).format(context);
 
-    list = Column(
-      children: [
-        // 🟣 Cartel de regenerar desafíos
-        Container(
-          width: double.infinity,
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-          color: cs.surfaceContainerHighest.withValues(alpha: 0.2),
-          child: Row(
-            children: [
-              Icon(Icons.timer_outlined, size: 18, color: cs.primary),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                  'Podés regenerar desafíos a las $formatted hs.',
-                  style: const TextStyle(fontSize: 13),
+            list = Column(
+              children: [
+                // 🟣 Cartel de regenerar desafíos
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  color: cs.surfaceContainerHighest.withValues(alpha: 0.2),
+                  child: Row(
+                    children: [
+                      Icon(Icons.timer_outlined, size: 18, color: cs.primary),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          'Podés regenerar desafíos a las $formatted hs.',
+                          style: const TextStyle(fontSize: 13),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
+
+                // 🟢 Switch para ocultar bloqueados (siempre visible, debajo del cartel)
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(12, 8, 12, 4),
+                  child: _hideLockedToggle(),
+                ),
+
+                // 🟢 Lista de desafíos (el filtro _hideLocked ya se aplica arriba)
+                Expanded(child: list),
+              ],
+            );
+          }
+        } else {
+          // 🔹 Cuando no hay cartel aún (primera carga), mostrar solo lista + switch arriba
+          list = Column(
+            children: [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(12, 8, 12, 4),
+                child: _hideLockedToggle(),
               ),
+              Expanded(child: list),
             ],
-          ),
-        ),
-
-        // 🟢 Switch para ocultar bloqueados (siempre visible, debajo del cartel)
-        Padding(
-          padding: const EdgeInsets.fromLTRB(12, 8, 12, 4),
-          child: _hideLockedToggle(),
-        ),
-
-        // 🟢 Lista de desafíos (el filtro _hideLocked ya se aplica arriba)
-        Expanded(child: list),
-      ],
-    );
-  }
-} else {
-  // 🔹 Cuando no hay cartel aún (primera carga), mostrar solo lista + switch arriba
-  list = Column(
-    children: [
-      Padding(
-        padding: const EdgeInsets.fromLTRB(12, 8, 12, 4),
-        child: _hideLockedToggle(),
-      ),
-      Expanded(child: list),
-    ],
-  );
-}
+          );
+        }
 
 
         list = Column(
@@ -985,7 +985,7 @@ class _ChallengeScreenState extends State<ChallengeScreen>
                     Text(
                       remaining > 0
                           ? 'Te queda \$${remaining.toStringAsFixed(0)} de \$${maxAllowed.toStringAsFixed(0)}'
-                          : 'Te pasaste del límite 😔',
+                          : 'Te pasaste del límite',
                       style: TextStyle(
                         fontSize: 12,
                         color: color,

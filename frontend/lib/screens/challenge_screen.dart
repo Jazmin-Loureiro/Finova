@@ -372,46 +372,66 @@ class _ChallengeScreenState extends State<ChallengeScreen>
   /// ✅ ACTUALIZADO para evitar overflow
   Widget _metaChips(BuildContext context, Map<String, dynamic> ch) {
   final cs = Theme.of(context).colorScheme;
-  final payload = _decodePayload(ch['payload']);
-  final duration =
-      (payload['duration_days'] as num?)?.toInt() ??
-      (ch['duration_days'] as num?)?.toInt() ??
-      0;
+  final payload = _decodePayload(ch['pivot']?['payload'] ?? ch['payload']);
+  final type = (ch['type'] ?? '') as String;
+
+  int duration;
+  if (type == 'SAVE_AMOUNT') {
+    duration = (payload['duration_days'] as num?)?.toInt() ??
+        (ch['duration_days'] as num?)?.toInt() ??
+        0;
+  } else if (type == 'REDUCE_SPENDING_PERCENT') {
+    duration = (payload['window_days'] as num?)?.toInt() ??
+        (ch['duration_days'] as num?)?.toInt() ??
+        0;
+  } else if (type == 'ADD_TRANSACTIONS') {
+    // 🔹 Duración aleatoria enviada por backend (1–9 días)
+    duration = (payload['duration_days'] as num?)?.toInt() ??
+        (ch['duration_days'] as num?)?.toInt() ??
+        0;
+  } else {
+    duration = (ch['duration_days'] as num?)?.toInt() ?? 0;
+  }
+
   final points = ch['reward_points'] ?? 0;
 
-    Widget chip(IconData icon, String text) => Container(
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-          margin: const EdgeInsets.only(bottom: 4),
-          decoration: BoxDecoration(
-            color: cs.surfaceContainerHighest.withValues(alpha: 0.25),
-            border: Border.all(color: cs.primary.withValues(alpha: 0.25)),
-            borderRadius: BorderRadius.circular(10),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(icon, size: 14, color: cs.primary),
-              const SizedBox(width: 5),
-              Flexible(
-                child: Text(
-                  text,
-                  style: const TextStyle(fontSize: 12),
-                  overflow: TextOverflow.ellipsis,
-                ),
+  Widget chip(IconData icon, String text) => Container(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+        margin: const EdgeInsets.only(bottom: 4),
+        decoration: BoxDecoration(
+          color: cs.surfaceContainerHighest.withValues(alpha: 0.25),
+          border: Border.all(color: cs.primary.withValues(alpha: 0.25)),
+          borderRadius: BorderRadius.circular(10),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 14, color: cs.primary),
+            const SizedBox(width: 5),
+            Flexible(
+              child: Text(
+                text,
+                style: const TextStyle(fontSize: 12),
+                overflow: TextOverflow.ellipsis,
               ),
-            ],
-          ),
-        );
+            ),
+          ],
+        ),
+      );
 
-    return Wrap(
-      spacing: 6,
-      runSpacing: 4,
-      children: [
-        chip(Icons.schedule, 'Duración: $duration días'),
-        chip(Icons.stars, 'Recompensa: $points pts'),
-      ],
-    );
-  }
+  return Wrap(
+    spacing: 6,
+    runSpacing: 4,
+    children: [
+      chip(Icons.schedule,
+          duration > 0 ? 'Duración: $duration días' : 'Duración no definida'),
+      chip(Icons.stars, 'Recompensa: $points pts'),
+    ],
+  );
+}
+
+
+
 
   Widget _buildAvailableTab() {
     final cs = Theme.of(context).colorScheme;
@@ -742,200 +762,294 @@ class _ChallengeScreenState extends State<ChallengeScreen>
 
 
   Widget _challengeCard(BuildContext context, Map<String, dynamic> ch,
-      {bool completed = false}) {
-    final rawProgress = ch['pivot']?['progress'] ?? 0;
-    final progress = rawProgress is String
-        ? double.tryParse(rawProgress) ?? 0.0
-        : (rawProgress as num).toDouble();
-    final state =
-        ch['pivot']?['state'] ?? (completed ? 'completed' : 'in_progress');
+    {bool completed = false}) {
+  final cs = Theme.of(context).colorScheme;
+  final rawProgress = ch['pivot']?['progress'] ?? 0;
+  final progress = rawProgress is String
+      ? double.tryParse(rawProgress) ?? 0.0
+      : (rawProgress as num).toDouble();
+  final state =
+      ch['pivot']?['state'] ?? (completed ? 'completed' : 'in_progress');
 
-    return Card(
-      margin: const EdgeInsets.symmetric(vertical: 8),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      child: ListTile(
-        title: Text(ch['name'] ?? ''),
-        subtitle: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            if ((ch['description'] as String?)?.isNotEmpty == true)
-              Text(ch['description'] ?? ''),
-            Builder(builder: (_) {
-              final merged = {
-                'type': ch['type'],
-                'description': ch['description'],
-                'payload': ch['pivot']?['payload'] ?? ch['payload'],
-                'target_amount': ch['pivot']?['target_amount'] ?? ch['target_amount'],
-                'duration_days': ch['duration_days'],
-                'reward_points': ch['reward_points'],
-                'start_date': ch['pivot']?['start_date'],
-              };
-              final hint = _buildChallengeHint(merged);
-              return Padding(
-                padding: const EdgeInsets.only(top: 6, bottom: 8),
-                child: Text(hint, style: const TextStyle(fontWeight: FontWeight.w700)),
-              );
-            }),
-            _metaChips(context, ch),
-            const SizedBox(height: 8),
-            // 🟣 Mostrar barra violeta solo si NO es el desafío de reducir gastos
-            if (ch['type'] != 'REDUCE_SPENDING_PERCENT') ...[
-              LinearProgressIndicator(
-                value: (progress / 100).clamp(0.0, 1.0),
-                color: state == 'completed'
-                    ? Colors.green
-                    : Theme.of(context).colorScheme.primary,
-                backgroundColor: Colors.grey[300],
-              ),
-              const SizedBox(height: 6),
-            ],
+  return Card(
+    margin: const EdgeInsets.symmetric(vertical: 8),
+    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+    child: ListTile(
+      title: Text(ch['name'] ?? ''),
+      subtitle: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          if ((ch['description'] as String?)?.isNotEmpty == true)
+            Text(ch['description'] ?? ''),
+          Builder(builder: (_) {
+            final merged = {
+              'type': ch['type'],
+              'description': ch['description'],
+              'payload': ch['pivot']?['payload'] ?? ch['payload'],
+              'target_amount':
+                  ch['pivot']?['target_amount'] ?? ch['target_amount'],
+              'duration_days': ch['duration_days'],
+              'reward_points': ch['reward_points'],
+              'start_date': ch['pivot']?['start_date'],
+            };
+            final hint = _buildChallengeHint(merged);
+            return Padding(
+              padding: const EdgeInsets.only(top: 6, bottom: 8),
+              child: Text(hint,
+                  style: const TextStyle(fontWeight: FontWeight.w700)),
+            );
+          }),
 
-            // 🟢 Mostrar detalle adicional para desafíos de ahorro
-            if (ch['type'] == 'SAVE_AMOUNT') ...[
-              Builder(builder: (_) {
-                final p = _decodePayload(ch['pivot']?['payload'] ?? ch['payload']);
-                final num? goal = p['amount'] is num
-                    ? p['amount']
-                    : (ch['pivot']?['target_amount'] ?? ch['target_amount']);
+          // 🧩 Duración y puntos (chips)
+          Builder(builder: (_) {
+            final payload =
+                _decodePayload(ch['pivot']?['payload'] ?? ch['payload']);
+            final type = (ch['type'] ?? '') as String;
 
-                if (goal != null) {
-                  final saved = (progress / 100) * goal;
-                  final remaining = (goal - saved).clamp(0, goal);
-                  return Text(
-                    remaining > 0
-                        ? 'Llevás ahorrado \$${saved.toStringAsFixed(0)} de \$${goal.toStringAsFixed(0)}'
-                        : '',
-                    style: const TextStyle(
-                      fontSize: 12,
-                      color: Colors.white70,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  );
-                }
-                return const SizedBox.shrink();
-              }),
-              const SizedBox(height: 4),
-            ],
+            int duration;
+            if (type == 'SAVE_AMOUNT') {
+              duration = (payload['duration_days'] as num?)?.toInt() ??
+                  (ch['duration_days'] as num?)?.toInt() ??
+                  0;
+            } else if (type == 'REDUCE_SPENDING_PERCENT') {
+              duration = (payload['window_days'] as num?)?.toInt() ??
+                  (ch['duration_days'] as num?)?.toInt() ??
+                  0;
+            } else if (type == 'ADD_TRANSACTIONS') {
+              duration = (payload['duration_days'] as num?)?.toInt() ??
+                  (ch['duration_days'] as num?)?.toInt() ??
+                  0;
+            } else {
+              duration = (ch['duration_days'] as num?)?.toInt() ?? 0;
+            }
 
-            // 🟢 Para REDUCE_SPENDING_PERCENT, mostrar solo la barra de gasto real
-            if (ch['type'] == 'REDUCE_SPENDING_PERCENT') ...[
-              Builder(builder: (_) {
-                // ✅ Leer payload desde pivot (no desde ch['payload'])
-                final p = _decodePayload(ch['pivot']?['payload'] ?? ch['payload']);
+            final points = ch['reward_points'] ?? 0;
 
-                final num? maxAllowed = p['max_allowed'] is num
-                    ? p['max_allowed']
-                    : (p['max_allowed'] is String
-                        ? num.tryParse(p['max_allowed'])
-                        : null);
-
-                final num? currentSpent = p['current_spent'] is num
-                    ? p['current_spent']
-                    : (p['current_spent'] is String
-                        ? num.tryParse(p['current_spent'])
-                        : null);
-
-                if (maxAllowed != null && currentSpent != null) {
-                  final double percent = (currentSpent / maxAllowed).clamp(0.0, 1.0);
-                  Color color;
-                  if (percent < 0.5) {
-                    color = Colors.green;
-                  } else if (percent < 0.8) {
-                    color = Colors.orange;
-                  } else {
-                    color = Colors.red;
-                  }
-
-                  final remaining = (maxAllowed - currentSpent).clamp(0, maxAllowed);
-
-                  return Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+            return Wrap(
+              spacing: 6,
+              runSpacing: 4,
+              children: [
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: cs.surfaceContainerHighest.withValues(alpha: 0.25),
+                    border:
+                        Border.all(color: cs.primary.withValues(alpha: 0.25)),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
                     children: [
-                      LinearProgressIndicator(
-                        value: percent,
-                        color: color,
-                        backgroundColor: Colors.grey[300],
-                      ),
-                      const SizedBox(height: 4),
+                      Icon(Icons.schedule, size: 14, color: cs.primary),
+                      const SizedBox(width: 5),
                       Text(
-                        remaining > 0
-                            ? 'Te queda \$${remaining.toStringAsFixed(0)} de \$${maxAllowed.toStringAsFixed(0)}'
-                            : 'Te pasaste del límite 😔',
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: color,
-                          fontWeight: FontWeight.w600,
-                        ),
+                        duration > 0
+                            ? 'Duración: $duration días'
+                            : 'Duración no definida',
+                        style: const TextStyle(fontSize: 12),
                       ),
                     ],
-                  );
-                }
-                return const SizedBox.shrink();
-              }),
-            ],
+                  ),
+                ),
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: cs.surfaceContainerHighest.withValues(alpha: 0.25),
+                    border:
+                        Border.all(color: cs.primary.withValues(alpha: 0.25)),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.stars, size: 14, color: cs.primary),
+                      const SizedBox(width: 5),
+                      Text('Recompensa: $points pts',
+                          style: const TextStyle(fontSize: 12)),
+                    ],
+                  ),
+                ),
+              ],
+            );
+          }),
 
+          const SizedBox(height: 8),
 
-
-            const SizedBox(height: 4),
-            // 🔹 Mostrar texto diferente si el desafío es de reducción de gastos
+          // 🔹 Barra de progreso (SAVE_AMOUNT usa cálculo real)
+          if (ch['type'] != 'REDUCE_SPENDING_PERCENT') ...[
             Builder(builder: (_) {
-              if (ch['type'] == 'REDUCE_SPENDING_PERCENT') {
-                final p = _decodePayload(ch['pivot']?['payload'] ?? ch['payload']);
-                final num? maxAllowed = p['max_allowed'] is num
-                    ? p['max_allowed']
-                    : (p['max_allowed'] is String
-                        ? num.tryParse(p['max_allowed'])
-                        : null);
-                final num? currentSpent = p['current_spent'] is num
-                    ? p['current_spent']
-                    : (p['current_spent'] is String
-                        ? num.tryParse(p['current_spent'])
-                        : null);
+              final p = _decodePayload(ch['pivot']?['payload'] ?? ch['payload']);
 
-                if (maxAllowed != null && currentSpent != null) {
-                  final double percent = (currentSpent / maxAllowed) * 100;
-                  final remaining = (maxAllowed - currentSpent);
+              if (ch['type'] == 'SAVE_AMOUNT') {
+                final double goal = (p['goal_amount'] ?? p['amount'] ?? 0).toDouble();
+                final double saved = (p['total_ahorro'] ?? 0).toDouble();
+                final double realProgress =
+                    goal > 0 ? (saved / goal).clamp(0.0, 1.0) : 0.0;
 
-                  if (remaining > 0) {
-                    return Text(
-                      'Llevás gastado ${percent.toStringAsFixed(0)}% del límite',
-                      style: const TextStyle(fontSize: 12, color: Colors.white70),
-                    );
-                  } else {
-                    return const Text(
-                      'Te pasaste del gasto permitido',
-                      style: TextStyle(fontSize: 12, color: Colors.redAccent),
-                    );
-                  }
-                }
-              }
-
-              // 🔸 Default para los demás tipos
-              // 🔸 Mostrar estado según tipo y progreso
-              if (state == 'completed') {
-                return const Text(
-                  'Completado 🎉',
-                  style: TextStyle(fontSize: 12, color: Colors.green),
-                );
-              } else if (state == 'failed') {
-                return const Text(
-                  'Fallido ❌',
-                  style: TextStyle(fontSize: 12, color: Colors.redAccent, fontWeight: FontWeight.w700),
-                );
-              } else {
-                return Text(
-                  'Progreso: ${progress.toStringAsFixed(0)}%',
-                  style: const TextStyle(fontSize: 12, color: Colors.white70),
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    LinearProgressIndicator(
+                      value: realProgress,
+                      color: state == 'completed'
+                          ? Colors.green
+                          : Theme.of(context).colorScheme.primary,
+                      backgroundColor: Colors.grey[300],
+                    ),
+                    const SizedBox(height: 6),
+                  ],
                 );
               }
 
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  LinearProgressIndicator(
+                    value: (progress / 100).clamp(0.0, 1.0),
+                    color: state == 'completed'
+                        ? Colors.green
+                        : Theme.of(context).colorScheme.primary,
+                    backgroundColor: Colors.grey[300],
+                  ),
+                  const SizedBox(height: 6),
+                ],
+              );
             }),
-
           ],
-        ),
+
+          // 🔹 Info de ahorro (sin texto duplicado)
+          if (ch['type'] == 'SAVE_AMOUNT') ...[
+            Builder(builder: (_) {
+              final p = _decodePayload(ch['pivot']?['payload'] ?? ch['payload']);
+              final num? goal = p['goal_amount'] ??
+                  p['amount'] ??
+                  (ch['pivot']?['target_amount'] ?? ch['target_amount']);
+              final num? totalAhorro = p['total_ahorro'];
+
+              if (goal != null) {
+                final double saved = (totalAhorro ?? 0).toDouble();
+                return Text(
+                  'Llevás ahorrado \$${saved.toStringAsFixed(0)} de \$${goal.toStringAsFixed(0)}',
+                  style: const TextStyle(
+                    fontSize: 12,
+                    color: Colors.white70,
+                    fontWeight: FontWeight.w600,
+                  ),
+                );
+              }
+              return const SizedBox.shrink();
+            }),
+            const SizedBox(height: 4),
+          ],
+
+          // 🔹 Info de gasto (reduce)
+          if (ch['type'] == 'REDUCE_SPENDING_PERCENT') ...[
+            Builder(builder: (_) {
+              final p = _decodePayload(ch['pivot']?['payload'] ?? ch['payload']);
+              final num? maxAllowed = p['max_allowed'] is num
+                  ? p['max_allowed']
+                  : (p['max_allowed'] is String
+                      ? num.tryParse(p['max_allowed'])
+                      : null);
+              final num? currentSpent = p['current_spent'] is num
+                  ? p['current_spent']
+                  : (p['current_spent'] is String
+                      ? num.tryParse(p['current_spent'])
+                      : null);
+
+              if (maxAllowed != null && currentSpent != null) {
+                final double percent =
+                    (currentSpent / maxAllowed).clamp(0.0, 1.0);
+                Color color;
+                if (percent < 0.5) {
+                  color = Colors.green;
+                } else if (percent < 0.8) {
+                  color = Colors.orange;
+                } else {
+                  color = Colors.red;
+                }
+
+                final remaining = (maxAllowed - currentSpent).clamp(0, maxAllowed);
+
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    LinearProgressIndicator(
+                      value: percent,
+                      color: color,
+                      backgroundColor: Colors.grey[300],
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      remaining > 0
+                          ? 'Te queda \$${remaining.toStringAsFixed(0)} de \$${maxAllowed.toStringAsFixed(0)}'
+                          : 'Te pasaste del límite 😔',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: color,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                );
+              }
+              return const SizedBox.shrink();
+            }),
+          ],
+
+          const SizedBox(height: 4),
+
+          // 🔹 Mensaje final uniforme (para todos los tipos)
+          Builder(builder: (_) {
+            String text;
+            Color color;
+            IconData icon;
+            final points = ch['reward_points'] ?? 0;
+
+            switch (state) {
+              case 'completed':
+                text = points > 0
+                    ? 'Objetivo alcanzado (+$points pts)'
+                    : 'Objetivo alcanzado';
+                color = Colors.green;
+                icon = Icons.check_circle_outline;
+                break;
+              case 'failed':
+                text = 'Desafío fallido';
+                color = Colors.redAccent;
+                icon = Icons.cancel_outlined;
+                break;
+              default:
+                text = 'En progreso (${progress.toStringAsFixed(0)}%)';
+                color = Colors.white70;
+                icon = Icons.timelapse_outlined;
+            }
+
+            return Row(
+              children: [
+                Icon(icon, size: 16, color: color),
+                const SizedBox(width: 6),
+                Text(
+                  text,
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: color,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            );
+          }),
+        ],
       ),
-    );
-  }
+    ),
+  );
+}
+
+
+
 
   Widget _buildEmptyState(
     BuildContext context, {

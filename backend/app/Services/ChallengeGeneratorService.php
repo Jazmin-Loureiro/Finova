@@ -32,13 +32,11 @@ class ChallengeGeneratorService
                 // 🎲 Duración aleatoria: puede ser 7, 14, 21 o 30 días
                 $durationDays = [7, 14, 21, 30][array_rand([7, 14, 21, 30])];
 
-                // Guardamos el payload para mostrar en el frontend
                 $payload = [
                     'amount'        => $target,
                     'duration_days' => $durationDays,
                 ];
 
-                // 🟢 Guardamos el desafío sugerido con duración personalizada
                 $this->upsertUserChallenge(
                     user:         $user,
                     base:         $base,
@@ -50,7 +48,42 @@ class ChallengeGeneratorService
                     payload:      $payload
                 );
 
-                // ✅ Devolvemos al frontend el valor actualizado (con duración random)
+                $out[] = array_merge(
+                    $this->mapForResponse($base, $payload, $target),
+                    ['duration_days' => $durationDays]
+                );
+            }
+
+            // 🧩 Si no tiene ingresos ni balance (usuario nuevo)
+            else {
+                $base = $this->getBase('SAVE_AMOUNT');
+
+                // 🎯 Desafío simbólico inicial
+                $target = 50;
+                $durationDays = 7; // corto para motivar
+
+                $payload = [
+                    'amount'        => $target,
+                    'duration_days' => $durationDays,
+                    'intro'         => true, // indicador opcional
+                ];
+
+                \Log::info("Usuario {$user->id}: desafío inicial simbólico de ahorro creado", [
+                    'target' => $target,
+                    'duration_days' => $durationDays,
+                ]);
+
+                $this->upsertUserChallenge(
+                    user:         $user,
+                    base:         $base,
+                    state:        'suggested',
+                    balance:      0,
+                    start:        null,
+                    end:          null,
+                    targetAmount: $target,
+                    payload:      $payload
+                );
+
                 $out[] = array_merge(
                     $this->mapForResponse($base, $payload, $target),
                     ['duration_days' => $durationDays]
@@ -161,10 +194,18 @@ class ChallengeGeneratorService
 
 
             // 3) ADD_TRANSACTIONS (siempre)
-            $base      = $this->getBase('ADD_TRANSACTIONS');
+            $base = $this->getBase('ADD_TRANSACTIONS');
             $baseCount = min(20, max(5, (int) round($totalRegistros * 0.2)));
-            $count     = rand($baseCount, $baseCount + 5);
-            $payload   = ['count' => $count];
+            $count = rand($baseCount, $baseCount + 5);
+
+            // 🎲 Duración aleatoria entre 1 y 9 días
+            $durationDays = rand(1, 9);
+
+            // Guardamos el payload para mostrar en el frontend
+            $payload = [
+                'count' => $count,
+                'duration_days' => $durationDays, // 👈 agregado
+            ];
 
             $this->upsertUserChallenge(
                 user:         $user,
@@ -172,12 +213,17 @@ class ChallengeGeneratorService
                 state:        'suggested',
                 balance:      $user->balance ?? 0,
                 start:        null,
-                end:          null,                       // 👈 aún no termina
+                end:          null,
                 targetAmount: $count,
                 payload:      $payload
             );
 
-            $out[] = $this->mapForResponse($base, $payload, $count);
+            // ✅ Devolvemos al frontend con duración personalizada
+            $out[] = array_merge(
+                $this->mapForResponse($base, $payload, $count),
+                ['duration_days' => $durationDays]
+            );
+
         });
 
         return $out;

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:frontend/widgets/success_dialog_widget.dart';
 import 'package:intl/intl.dart';
 import '../widgets/loading_widget.dart';
 import '../models/money_maker.dart';
@@ -74,8 +75,13 @@ class _ExportReportsScreenState extends State<ExportReportsScreen> {
   Future<void> handleExport(
       Future<void> Function(List<MoneyMaker>) exportFn) async {
     if (startDate == null || endDate == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Seleccioná ambas fechas')),
+      showDialog(
+        context: context,
+        builder: (context) => SuccessDialogWidget(
+          title: 'Error',
+          message: 'Seleccioná ambas fechas',
+          buttonText: 'Aceptar',
+        ),
       );
       return;
     }
@@ -83,10 +89,14 @@ class _ExportReportsScreenState extends State<ExportReportsScreen> {
     try {
       final allMoneyMakers = await getFilteredMoneyMakers(startDate!, endDate!);
       if (allMoneyMakers.isEmpty) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-              content: Text('No hay movimientos en el rango seleccionado')),
-        );
+        showDialog(
+        context: context,
+        builder: (context) => SuccessDialogWidget(
+          title: 'Advertencia',
+          message: 'No hay movimientos en el rango seleccionado',
+          buttonText: 'Aceptar',
+        ),
+      );
         return;
       }
       setState(() => moneyMakers = allMoneyMakers);

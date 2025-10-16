@@ -87,6 +87,8 @@ class UserController extends Controller
                 'balance_converted' => round($balanceConverted, 2),
                 'currency_symbol' => $symbol,
                 'full_icon_url' => $user->icon ? asset('storage/' . $user->icon) : null,
+                'points' => $user->points ?? 0,   // 🆕
+            'level' => $user->level ?? 1,     // 🆕
             ]
         ),
     ]);

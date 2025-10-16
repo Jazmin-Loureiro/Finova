@@ -9,6 +9,7 @@ import '../models/currency.dart';
 import 'money_maker_form_screen.dart';
 import 'category_form_screen.dart';
 import '../widgets/currency_text_field.dart';
+import '../widgets/success_dialog_widget.dart'; // 👈 usamos tu widget propio
 
 class TransactionFormScreen extends StatefulWidget {
   final String type; // "income" o "expense"
@@ -48,7 +49,6 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
 
   Future<void> loadFormData() async {
     final data = await api.getTransactionFormData(widget.type);
-    // Asegurarse de que el defaultCurrency sea un Currency
     Currency defaultCurrency = data['defaultCurrency'] as Currency;
     setState(() {
       categories = data['categories'];
@@ -57,7 +57,6 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
       selectedMoneyMaker = moneyMakers.isNotEmpty ? moneyMakers.first : null;
       currencies = data['currencies'];
       selectedCurrency = selectedMoneyMaker?.currency ?? defaultCurrency;
-
       isLoading = false;
     });
   }
@@ -69,11 +68,18 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
     }
   }
 
+  /// 💾 Guardar transacción + mostrar recompensas
   void saveTransaction() async {
     if (!_formKey.currentState!.validate()) return;
+
     final amount = double.tryParse(amountController.text);
     final name = nameController.text;
-    if (amount == null || name.isEmpty || selectedMoneyMaker == null || selectedCategory == null || selectedCurrency == null) return;
+
+    if (amount == null ||
+        name.isEmpty ||
+        selectedMoneyMaker == null ||
+        selectedCategory == null ||
+        selectedCurrency == null) return;
 
     final res = await api.createTransaction(
       widget.type,
@@ -81,7 +87,7 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
       name,
       moneyMakerId: selectedMoneyMaker!.id,
       categoryId: selectedCategory!['id'],
-      currencyId: selectedCurrency!.id, // ✅ enviar solo el ID
+      currencyId: selectedCurrency!.id,
       file: attachedFile,
       repetition: repeatEveryNDays != null,
       frequencyRepetition: repeatEveryNDays,
@@ -90,19 +96,49 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
     if (!mounted) return;
 
     if (res != null) {
+      // ✅ Diálogo principal con el texto original tuyo
       await showDialog(
         context: context,
-        builder: (_) => AlertDialog(
-          title: const Text('Éxito'),
-          content: Text('${widget.type == "income" ? "Ingreso" : "Gasto"} creado correctamente'),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('Aceptar'),
-            ),
-          ],
+        builder: (_) => SuccessDialogWidget(
+          title: "Éxito",
+          message:
+              "${widget.type == "income" ? "Ingreso" : "Gasto"} creado correctamente",
         ),
       );
+
+      // ⚡ Mostrar recompensas si existen (un solo pop-up con todo junto)
+      if (res['rewards'] != null && (res['rewards'] as List).isNotEmpty) {
+        final rewards = res['rewards'] as List;
+        String rewardMessage = "";
+
+        for (final reward in rewards) {
+          final points = reward['points_earned'] ?? 0;
+          final newLevel = reward['new_level'];
+          final leveledUp = reward['leveled_up'] == true;
+          final badge = reward['badge_earned'];
+
+          rewardMessage += "🏆 ¡Ganaste $points puntos!\n";
+          if (leveledUp) rewardMessage += "🎉 ¡Subiste al nivel $newLevel!\n";
+          if (badge != null && badge['name'] != null) {
+            rewardMessage += "🏅 Nueva insignia: ${badge['name']}\n";
+          }
+          rewardMessage += "\n";
+        }
+
+        await showDialog(
+          context: context,
+          builder: (_) => SuccessDialogWidget(
+            title: "¡Desafío completado!",
+            message: rewardMessage.trim(),
+          ),
+        );
+      }
+
+      // 🔄 Actualizar desafíos en segundo plano
+      try {
+        await ApiService().getGamificationProfile();
+      } catch (_) {}
+
       Navigator.pop(context);
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -111,14 +147,11 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
     }
   }
 
-
   @override
   Widget build(BuildContext context) {
     if (isLoading) {
       return const Scaffold(
-        body: Center(
-          child: CircularProgressIndicator(),
-          ),
+        body: Center(child: CircularProgressIndicator()),
       );
     }
 
@@ -129,8 +162,8 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text('Nuevo ${typeLabels[widget.type] ?? widget.type}')
-        ),
+        title: Text('Nuevo ${typeLabels[widget.type] ?? widget.type}'),
+      ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Form(
@@ -145,7 +178,8 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
                     labelText: 'Nombre',
                     border: OutlineInputBorder(),
                   ),
-                  validator: (value) => value == null || value.isEmpty ? 'Ingrese un nombre' : null,
+                  validator: (value) =>
+                      value == null || value.isEmpty ? 'Ingrese un nombre' : null,
                 ),
                 const SizedBox(height: 16),
 
@@ -176,12 +210,12 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
                       child: DropdownButtonFormField<MoneyMaker>(
                         decoration: const InputDecoration(
                           labelText: 'Fuente de dinero',
-
                           border: OutlineInputBorder(),
                         ),
                         initialValue: selectedMoneyMaker,
                         items: moneyMakers
-                            .map((m) => DropdownMenuItem(value: m, child: Text(m.name)))
+                            .map((m) =>
+                                DropdownMenuItem(value: m, child: Text(m.name)))
                             .toList(),
                         onChanged: (value) {
                           setState(() {
@@ -197,13 +231,14 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
                       onPressed: () async {
                         final newMaker = await Navigator.push(
                           context,
-                          MaterialPageRoute(builder: (_) => const MoneyMakerFormScreen()),
+                          MaterialPageRoute(
+                              builder: (_) => const MoneyMakerFormScreen()),
                         );
                         if (newMaker != null) {
                           setState(() {
                             moneyMakers.add(newMaker);
                             selectedMoneyMaker = newMaker;
-                            selectedCurrency = newMaker.currency; // ✅ consistente
+                            selectedCurrency = newMaker.currency;
                           });
                         }
                       },
@@ -221,7 +256,7 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
                             child: Text('${c.symbol} ${c.code} - ${c.name}'),
                           ))
                       .toList(),
-                  onChanged: null, // null = deshabilitado
+                  onChanged: null,
                   decoration: const InputDecoration(
                     labelText: 'Tipo de moneda',
                     border: OutlineInputBorder(),
@@ -240,9 +275,11 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
                         ),
                         initialValue: selectedCategory,
                         items: categories
-                            .map((c) => DropdownMenuItem(value: c, child: Text(c['name'])))
+                            .map((c) =>
+                                DropdownMenuItem(value: c, child: Text(c['name'])))
                             .toList(),
-                        onChanged: (value) => setState(() => selectedCategory = value),
+                        onChanged: (value) =>
+                            setState(() => selectedCategory = value),
                       ),
                     ),
                     IconButton(
@@ -252,8 +289,9 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
                         final newCategory = await Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (_) => CategoryFormScreen(type: widget.type)
-                            ),
+                            builder: (_) =>
+                                CategoryFormScreen(type: widget.type),
+                          ),
                         );
                         if (newCategory != null) {
                           setState(() {
@@ -276,8 +314,13 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
                   leading: const Icon(Icons.attach_file, color: Colors.indigo),
                   title: const Text("Adjuntar archivo"),
                   subtitle: attachedFile != null
-                      ? Text(attachedFile!.path.split('/').last, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 12, color: Colors.black54))
-                      : const Text("No se seleccionó archivo", style: TextStyle(fontSize: 12, color: Colors.black45)),
+                      ? Text(attachedFile!.path.split('/').last,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                              fontSize: 12, color: Colors.black54))
+                      : const Text("No se seleccionó archivo",
+                          style: TextStyle(
+                              fontSize: 12, color: Colors.black45)),
                   trailing: IconButton(
                     icon: const Icon(Icons.upload_file, color: Colors.indigo),
                     onPressed: _pickFile,

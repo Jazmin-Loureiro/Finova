@@ -5,6 +5,9 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
+/**
+ * @mixin IdeHelperRegister
+ */
 class Register extends Model
 {
     use HasFactory;
@@ -44,7 +47,7 @@ class Register extends Model
 
     public function moneyMaker()
     {
-        return $this->belongsTo(MoneyMaker::class);
+        return $this->belongsTo(MoneyMaker::class, 'moneyMaker_id');
     }
 
     public function goal()

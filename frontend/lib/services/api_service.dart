@@ -11,11 +11,38 @@ import '../models/register.dart';
 
 // URLs base
 const String baseUrl = "http://192.168.1.113:8000";
+//const String baseUrl = "http://192.168.0.117:8000";
 //const String baseUrl = "http://192.168.0.162:8000";// guardo el mio je
 //const String baseUrl = "http://172.16.89.42:8000"; // IP de la facu
 const String apiUrl = "$baseUrl/api";
 // Instancia de almacenamiento seguro
 final storage = const FlutterSecureStorage();
+
+// Excepción personalizada para manejar el error 429 (Too Many Requests)
+class CooldownException implements Exception {
+  final int status;
+  final String message;
+  final String? nextRefreshAt; // ISO8601
+  final String? serverNow;     // ISO8601
+
+  CooldownException({
+    required this.status,
+    required this.message,
+    this.nextRefreshAt,
+    this.serverNow,
+  });
+
+  @override
+  String toString() => 'CooldownException($status): $message';
+}
+
+class ChallengeBlockedException implements Exception {
+  final String message;
+  ChallengeBlockedException(this.message);
+  @override
+  String toString() => 'ChallengeBlockedException: $message';
+}
+
 
 class ApiService {
   final storage = const FlutterSecureStorage();
@@ -584,6 +611,107 @@ Future<Map<String, dynamic>> getTransactionFormData(String type) async {
     'defaultCurrency': defaultCurrency,
   };
 }
+
+ ////////////////////////////////////////////////////////////////
+  /// 🔹 Desafíos (Challenges)
+  ////////////////////////////////////////////////////////////////
+
+  /// Obtener lista de desafíos disponibles + meta (tipado)
+  Future<Map<String, dynamic>> getAvailableChallenges() async {
+    final token = await storage.read(key: 'token');
+    if (token == null) throw Exception('Usuario no logueado');
+
+    final res = await http.get(
+      Uri.parse('$apiUrl/challenges/available'),
+      headers: jsonHeaders(token),
+    );
+
+    if (res.statusCode == 200) {
+      // Fuerza a Map<String,dynamic>
+      final data = Map<String, dynamic>.from(jsonDecode(res.body));
+      return data;
+    } else {
+      throw Exception('Error al obtener desafíos');
+    }
+  }
+
+
+  /// Aceptar un desafío por su ID
+  Future<bool> acceptChallenge(int id) async {
+  final token = await storage.read(key: 'token');
+  if (token == null) return false;
+
+  final res = await http.post(
+    Uri.parse('$apiUrl/user-challenges/$id/accept'),
+    headers: jsonHeaders(token),
+  );
+
+  if (res.statusCode == 200) {
+    return true;
+  } else if (res.statusCode == 409) {
+    try {
+      final data = jsonDecode(res.body);
+      final msg = (data['message'] as String?) ??
+                  (data['locked_reason'] as String?) ??
+                  'Este desafío está bloqueado por otro en progreso.';
+      throw ChallengeBlockedException(msg);
+    } catch (_) {
+      throw ChallengeBlockedException('Este desafío está bloqueado por otro en progreso.');
+    }
+  } else {
+    return false;
+  }
+}
+
+
+  /// 🔹 Obtener perfil completo de gamificación (nuevo endpoint principal)
+  Future<Map<String, dynamic>> getGamificationProfile() async {
+    final token = await storage.read(key: 'token');
+    if (token == null) throw Exception('Usuario no logueado');
+
+    final res = await http.get(
+      Uri.parse('$apiUrl/gamification/profile'),
+      headers: jsonHeaders(token),
+    );
+
+    if (res.statusCode == 200) {
+      return Map<String, dynamic>.from(jsonDecode(res.body));
+    } else {
+      throw Exception('Error al obtener perfil de gamificación');
+    }
+  }
+
+
+    /// 🔄 Regenerar desafíos disponibles (devuelve lista + meta) con excepción tipada en 429
+  Future<Map<String, dynamic>> refreshChallenges() async {
+    final token = await storage.read(key: 'token');
+    if (token == null) throw Exception('Usuario no logueado');
+
+    final res = await http.post(
+      Uri.parse('$apiUrl/challenges/refresh'),
+      headers: jsonHeaders(token),
+    );
+
+    if (res.statusCode == 200) {
+      final data = Map<String, dynamic>.from(jsonDecode(res.body));
+      return data;
+    } else if (res.statusCode == 429) {
+      Map<String, dynamic> data = {};
+      try {
+        data = Map<String, dynamic>.from(jsonDecode(res.body));
+      } catch (_) {}
+      throw CooldownException(
+        status: 429,
+        message: (data['message'] as String?) ?? 'Tenés que esperar un poco.',
+        nextRefreshAt: data['next_refresh_at'] as String?,
+        serverNow: data['server_now'] as String?,
+      );
+    } else {
+      throw Exception('Error al regenerar desafíos');
+    }
+  }
+ 
+  
 
 
 

@@ -6,31 +6,44 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     *
-     * @return void
-     */
-    public function up()
+    public function up(): void
     {
         Schema::create('challenges', function (Blueprint $table) {
             $table->id();
+
+            // Información básica
             $table->string('name');
-            $table->string('description');
-            $table->string('state')->default('in_progress');
-            $table->decimal('target_amount', 12, 2);
-            $table->integer('duration_days');
+            $table->text('description')->nullable();
+
+            // Estado general
+            $table->boolean('active')->default(true);
+
+            // Tipo de desafío (más largo para evitar truncados)
+            $table->string('type', 50)->nullable(); 
+            // Ej: SAVE_AMOUNT, REDUCE_SPENDING, ADD_TRANSACTIONS
+
+            // Datos dinámicos del desafío
+            $table->json('payload')->nullable(); 
+            // Ej: { "amount": 5000, "category_id": 2, "percent": 20 }
+
+            // Objetivo numérico (por ejemplo monto a alcanzar)
+            $table->decimal('target_amount', 12, 2)->nullable();
+
+            // Duración del desafío
+            $table->integer('duration_days')->default(30);
+
+            // Recompensas
+            $table->unsignedInteger('reward_points')->default(50);
+            $table->foreignId('reward_badge_id')->nullable()
+                  ->constrained('badges')->nullOnDelete();
+
             $table->timestamps();
         });
     }
 
-    /**
-     * Reverse the migrations.
-     *
-     * @return void
-     */
-    public function down()
+    public function down(): void
     {
         Schema::dropIfExists('challenges');
     }
 };
+

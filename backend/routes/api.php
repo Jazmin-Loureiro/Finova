@@ -7,6 +7,10 @@ use App\Http\Controllers\MoneyMakerController; // Importar el controlador
 use App\Http\Controllers\CategoryController; // Importar el controlador
 use App\Http\Controllers\RegisterController;
 use App\Http\Controllers\UserController;
+use App\Http\Controllers\ChallengeController;
+use App\Http\Controllers\UserChallengeController;
+use App\Http\Controllers\GamificationController;
+
 
 
 use App\Http\Controllers\CurrencyController;
@@ -73,4 +77,15 @@ Route::middleware('auth:sanctum')->group(function () {
     // Obtener estado de la casa
     Route::get('/house-status', [HouseController::class, 'getHouseStatus']);
 
-});
+    // 💪 Desafíos
+    // 🔹 Desafíos base
+    Route::get('/challenges/available', [ChallengeController::class, 'available']);
+    Route::post('/challenges/refresh', [ChallengeController::class, 'refresh']);
+
+    // 🔹 Desafíos del usuario
+    Route::post('/user-challenges/{id}/accept', [UserChallengeController::class, 'accept']);
+
+    // 🔹 Perfil de gamificación (nuevo endpoint principal)
+    Route::get('/gamification/profile', [GamificationController::class, 'profile']);
+
+    });

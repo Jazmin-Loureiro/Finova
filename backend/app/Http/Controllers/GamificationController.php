@@ -13,26 +13,25 @@ class GamificationController extends Controller
      * - Devuelve badges y desafíos agrupados por estado
      */
     public function profile(Request $request)
-{
-    /** @var \App\Models\User $user */
-    $user = Auth::user();
+    {
+        /** @var \App\Models\User $user */
+        $user = Auth::user();
 
-    // 🔄 Recalcular progreso y cerrar automáticamente (failed/completed + recompensas)
-    app(\App\Services\ChallengeProgressService::class)->recomputeForUserWithRewards($user);
+        // 🔄 Recalcular progreso y cerrar automáticamente (failed/completed + recompensas)
+        app(\App\Services\ChallengeProgressService::class)->recomputeForUserWithRewards($user);
 
-    // 🏅 Insignias
-    $badges = $user->badges()->get([
-    'badges.id as badge_id',
-    'badges.name',
-    'badges.slug',
-    'badges.icon',
-    'badges.tier',
-    'badges.description',
-]);
+        // 🏅 Insignias
+        $badges = $user->badges()->get([
+            'badges.id as badge_id',
+            'badges.name',
+            'badges.slug',
+            'badges.icon',
+            'badges.tier',
+            'badges.description',
+        ]);
 
-
-    // Helper general
-    $map = function ($q) {
+        // Helper general
+        $map = function ($q) {
     return $q->withPivot([
             'state','progress','start_date','end_date','target_amount','balance','payload'
         ])
@@ -50,6 +49,13 @@ class GamificationController extends Controller
                 $payload = json_decode($ch->pivot->payload, true) ?: [];
             } elseif (is_array($ch->pivot->payload)) {
                 $payload = $ch->pivot->payload;
+            }
+
+            // 🪙 FORZAR actualización del símbolo y código de moneda del usuario
+            $user = Auth::user();
+            if ($user && $user->currency) {
+                $payload['currency_symbol'] = $user->currency->symbol;
+                $payload['currency_code'] = $user->currency->code;
             }
 
             return [
@@ -74,24 +80,35 @@ class GamificationController extends Controller
 };
 
 
-    // 🔎 Agrupar por estado (incluye failed)
-    $inProgress = $map($user->challenges()->wherePivot('state', 'in_progress'));
-    $completed  = $map($user->challenges()->wherePivot('state', 'completed'));
-    $failed     = $map($user->challenges()->wherePivot('state', 'failed'));
+        // 🔎 Agrupar por estado (incluye failed)
+        $inProgress = $map($user->challenges()->wherePivot('state', 'in_progress'));
+        $completed  = $map($user->challenges()->wherePivot('state', 'completed'));
+        $failed     = $map($user->challenges()->wherePivot('state', 'failed'));
 
-    return response()->json([
-        'user' => [
-            'name'   => $user->name,
-            'points' => $user->points,
-            'level'  => $user->level,
-        ],
-        'badges' => $badges,
-        'challenges' => [
-            'in_progress' => $inProgress,
-            'completed'   => $completed,
-            'failed'      => $failed,
-        ],
-    ]);
-}
+        // 🪙 Añadir símbolo y código de moneda del usuario a cada desafío
+        $currency = $user->currency;
+        $symbol = $currency ? $currency->symbol : '$';
+        $code   = $currency ? $currency->code : 'USD';
 
+        foreach (['inProgress', 'completed', 'failed'] as $state) {
+            foreach (${$state} as &$ch) {
+                $ch['currency_symbol'] = $symbol;
+                $ch['currency_code'] = $code;
+            }
+        }
+
+        return response()->json([
+            'user' => [
+                'name'   => $user->name,
+                'points' => $user->points,
+                'level'  => $user->level,
+            ],
+            'badges' => $badges,
+            'challenges' => [
+                'in_progress' => $inProgress,
+                'completed'   => $completed,
+                'failed'      => $failed,
+            ],
+        ]);
+    }
 }

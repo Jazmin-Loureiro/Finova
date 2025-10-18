@@ -10,10 +10,11 @@ import '../models/currency.dart';
 import '../models/register.dart';
 
 // URLs base
-const String baseUrl = "http://192.168.1.113:8000";
+//const String baseUrl = "http://192.168.1.113:8000";
 //const String baseUrl = "http://192.168.0.117:8000";
+const String baseUrl = "http://192.168.1.45:8000";
 //const String baseUrl = "http://192.168.0.162:8000";// guardo el mio je
-//const String baseUrl = "http://172.16.89.42:8000"; // IP de la facu
+//const String baseUrl = "http://172.16.132.6:8000"; // IP de la facu
 const String apiUrl = "$baseUrl/api";
 // Instancia de almacenamiento seguro
 final storage = const FlutterSecureStorage();
@@ -629,6 +630,7 @@ Future<Map<String, dynamic>> getTransactionFormData(String type) async {
     if (res.statusCode == 200) {
       // Fuerza a Map<String,dynamic>
       final data = Map<String, dynamic>.from(jsonDecode(res.body));
+       print('🔍 gamification/profile: ${jsonEncode(data)}'); // Revisa que devuelve el json
       return data;
     } else {
       throw Exception('Error al obtener desafíos');

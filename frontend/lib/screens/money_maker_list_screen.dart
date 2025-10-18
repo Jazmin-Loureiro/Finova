@@ -255,7 +255,7 @@ Widget build(BuildContext context) {
                           style: TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.bold,
-                            color: Colors.grey[700],
+                            color: const Color.fromARGB(255, 248, 248, 248), //COLOR DEL MAIN TIENE QUE SER, 
                           ),
                         ),
                         TextButton(
@@ -336,7 +336,7 @@ Widget build(BuildContext context) {
                                         '$tipo - ${r.currency.code} ${r.currency.symbol}${r.balance.toStringAsFixed(2)}',
                                         style: const TextStyle(
                                             fontSize: 14,
-                                            color: Colors.black87),
+                                            color: Color.fromARGB(221, 255, 255, 255)), //COLOR DEL MAIN TIENE QUE SER, 
                                       ),
                                     ],
                                   ),
@@ -345,7 +345,7 @@ Widget build(BuildContext context) {
                                     style: const TextStyle(
                                       fontSize: 14,
                                       color:
-                                          Color.fromARGB(255, 51, 50, 50),
+                                          Color.fromARGB(255, 255, 255, 255),//COLOR DEL MAIN TIENE QUE SER, 
                                     ),
                                   ),
                                   isThreeLine: true,

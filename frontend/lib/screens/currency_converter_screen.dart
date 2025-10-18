@@ -113,7 +113,7 @@ class _CurrencyConverterScreenState extends State<CurrencyConverterScreen> {
                     const SizedBox(height: 20),
                     Center(
                       child: Text(
-                        'Converzor de monedas',
+                        'Conversor de monedas',
                         style: theme.textTheme.headlineSmall?.copyWith(
                           color: textColor,
                           fontWeight: FontWeight.bold,

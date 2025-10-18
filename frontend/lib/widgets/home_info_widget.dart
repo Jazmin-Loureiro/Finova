@@ -71,6 +71,9 @@ class _HomeInfoWidgetState extends State<HomeInfoWidget> {
 
     final balance = double.tryParse(houseData['balance'].toString()) ?? 0;
     final balanceColor = balance > 0 ? Colors.green[700] : Colors.red[700];
+    final currencySymbol = houseData['currency_symbol'] ?? '\$';
+    final currencyCode = houseData['currency_code'] ?? 'ARS';
+
 
     return Center(
       child: Container(
@@ -114,13 +117,25 @@ class _HomeInfoWidgetState extends State<HomeInfoWidget> {
               duration: const Duration(milliseconds: 600),
               transitionBuilder: (child, anim) =>
                   FadeTransition(opacity: anim, child: child),
-              child: Text(
-                "\$${balance.toStringAsFixed(2)}",
+              child: RichText(
                 key: ValueKey(balance),
-                style: TextStyle(
-                  fontSize: 28,
-                  fontWeight: FontWeight.bold,
-                  color: balanceColor,
+                text: TextSpan(
+                  style: TextStyle(
+                    fontSize: 28,
+                    fontWeight: FontWeight.bold,
+                    color: balanceColor,
+                  ),
+                  children: [
+                    TextSpan(text: "$currencySymbol${balance.toStringAsFixed(2)} "),
+                    TextSpan(
+                      text: currencyCode,
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w400,
+                        color: Colors.black54,
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ),

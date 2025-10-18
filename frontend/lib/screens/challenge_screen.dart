@@ -10,6 +10,7 @@ import '../widgets/empty_state_widget.dart';
 import '../widgets/challenge_card_widget.dart';
 import '../widgets/meta_chips_widget.dart';
 import '../widgets/challenge_header_widget.dart';
+import '../helpers/challenge_utils.dart';
 
 class ChallengeScreen extends StatefulWidget {
   const ChallengeScreen({super.key});
@@ -203,7 +204,7 @@ class _ChallengeScreenState extends State<ChallengeScreen>
       currentRoute: 'challenge',
       body: Column(
         children: [
-          // 🔹 Header con nivel y puntos
+          // 🔹 Header con nivel y puntos (igual que tenías)
           FutureBuilder<Map<String, dynamic>?>(
             future: _profileFuture,
             builder: (context, snap) {
@@ -219,23 +220,23 @@ class _ChallengeScreenState extends State<ChallengeScreen>
             },
           ),
 
-          // 🔹 Tabs
+          // 🔹 Tabs (respetando theme)
           Container(
-  color: cs.surfaceContainerHighest.withOpacity(0.2),
-  child: TabBar(
-    controller: _tabController,
-    labelColor: cs.primary,
-    unselectedLabelColor: cs.onSurface.withOpacity(0.7),
-    indicatorColor: cs.primary,
-    indicatorWeight: 3,
-    labelStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
-    tabs: const [
-      Tab(text: 'Disponibles'),
-      Tab(text: 'Mis desafíos'),
-    ],
-  ),
-),
-
+            color: cs.surfaceContainerHighest.withOpacity(0.2),
+            child: TabBar(
+              controller: _tabController,
+              labelColor: cs.primary,
+              unselectedLabelColor: cs.onSurface.withOpacity(0.7),
+              indicatorColor: cs.primary,
+              indicatorWeight: 3,
+              labelStyle:
+                  const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+              tabs: const [
+                Tab(text: 'Disponibles'),
+                Tab(text: 'Mis desafíos'),
+              ],
+            ),
+          ),
 
           // 🔹 Contenido
           Expanded(
@@ -253,7 +254,7 @@ class _ChallengeScreenState extends State<ChallengeScreen>
     );
   }
 
-  // 🔸 Toggle de ocultar bloqueados
+  // 🔸 Toggle de ocultar bloqueados (igual)
   Widget _hideLockedToggle() {
     return Row(
       mainAxisAlignment: MainAxisAlignment.end,
@@ -285,7 +286,47 @@ class _ChallengeScreenState extends State<ChallengeScreen>
     return aName.toLowerCase().compareTo(bName.toLowerCase());
   }
 
-  // 🔹 TAB 1: Disponibles
+  // 🔎 Texto explicativo numérico (como tenías antes)
+  String _buildChallengeHint(Map<String, dynamic> ch) {
+    final type = (ch['type'] ?? '') as String;
+    final payload = ChallengeUtils.decodePayload(ch['payload']);
+    final target = ch['target_amount'];
+    final symbol = ChallengeUtils.symbolOf(ch);
+
+    String fmtNum(num n) =>
+        n % 1 == 0 ? n.toInt().toString() : n.toStringAsFixed(0);
+
+    switch (type) {
+      case 'SAVE_AMOUNT': {
+        final num? amount = (target is num) ? target : (payload['amount'] as num?);
+        return amount != null
+            ? 'Ahorrá $symbol${fmtNum(amount)}'
+            : 'Ahorrá un monto personalizado';
+      }
+      case 'REDUCE_SPENDING_PERCENT': {
+        final int windowDays = (payload['window_days'] as num?)?.toInt() ?? 30;
+        final num? maxAllowed = payload['max_allowed'] is num
+            ? payload['max_allowed']
+            : (payload['max_allowed'] is String ? num.tryParse(payload['max_allowed']) : null);
+        if (maxAllowed != null) {
+          return 'No superes ${symbol}${maxAllowed.toStringAsFixed(0)} en gastos.\n'
+                 'Se evaluará durante $windowDays días.';
+        }
+        return 'Se evaluará durante $windowDays días.';
+      }
+      case 'ADD_TRANSACTIONS': {
+        final int? count = (payload['count'] as num?)?.toInt() ??
+            (target is num ? target.toInt() : null);
+        return count != null
+            ? 'Registrá $count movimientos'
+            : 'Registrá tus movimientos esta semana';
+      }
+      default:
+        return (ch['description'] as String?) ?? '';
+    }
+  }
+
+  // 🔹 TAB 1: Disponibles — Card táctil + hint numérico + cartel + switch (todo restaurado)
   Widget _buildAvailableTab() {
     final cs = Theme.of(context).colorScheme;
 
@@ -303,15 +344,16 @@ class _ChallengeScreenState extends State<ChallengeScreen>
         WidgetsBinding.instance.addPostFrameCallback((_) => _setCooldownFromServerMeta(data));
 
         final List<dynamic> rawList = (data['available_challenges'] as List?) ?? const [];
-        final List<dynamic> challenges = _hideLocked
+        final List<dynamic> filtered = _hideLocked
             ? rawList.where((c) => !(c['locked'] == true)).toList()
             : rawList;
 
+        // sort (igual)
         final List<Map<String, dynamic>> sorted =
-            challenges.map<Map<String, dynamic>>((e) => Map<String, dynamic>.from(e as Map)).toList();
+            filtered.map<Map<String, dynamic>>((e) => Map<String, dynamic>.from(e as Map)).toList();
         sorted.sort(_compareChallenges);
 
-        final next = data['next_refresh_at'];
+        // Lista principal (con INFO + cards táctiles)
         Widget list = RefreshIndicator(
           color: cs.primary,
           backgroundColor: cs.surfaceContainerHighest,
@@ -334,16 +376,11 @@ class _ChallengeScreenState extends State<ChallengeScreen>
                   itemCount: sorted.length,
                   itemBuilder: (context, index) {
                     final ch = sorted[index];
-                    final bool locked = ch['locked'] == true;
-                    final String lockedReason = (ch['locked_reason'] as String?) ??
-                        'Ya tenés un desafío de este tipo en progreso. Completalo para aceptar uno nuevo.';
-                    final hint = (ch['type'] ?? '') == 'INFO'
-                        ? null
-                        : ch['description'] ?? '';
 
+                    // 🟣 Mensajes informativos del backend (type: INFO) — se mantiene
                     if ((ch['type'] ?? '') == 'INFO') {
                       return Card(
-                        color: cs.surfaceContainerHighest.withValues(alpha: 0.2),
+                        color: cs.surfaceContainerHighest.withOpacity(0.2),
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                         margin: const EdgeInsets.symmetric(vertical: 8),
                         child: Padding(
@@ -357,7 +394,7 @@ class _ChallengeScreenState extends State<ChallengeScreen>
                                 child: Text(
                                   ch['message'] ?? 'Mensaje informativo',
                                   style: TextStyle(
-                                    color: cs.onSurface.withValues(alpha: 0.9),
+                                    color: cs.onSurface.withOpacity(0.9),
                                     fontSize: 14,
                                     height: 1.3,
                                   ),
@@ -369,103 +406,135 @@ class _ChallengeScreenState extends State<ChallengeScreen>
                       );
                     }
 
+                    final bool locked = ch['locked'] == true;
+                    final String lockedReason = (ch['locked_reason'] as String?) ??
+                        'Ya tenés un desafío de este tipo en progreso. Completalo para aceptar uno nuevo.';
+
+                    final String hint = _buildChallengeHint(ch);
+
                     final card = Card(
                       margin: const EdgeInsets.symmetric(vertical: 8),
+                      color: cs.surface,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(16),
-                        side: BorderSide(color: cs.primary.withOpacity(0.15), width: 1),
+                        side: BorderSide(
+                          color: cs.outlineVariant.withOpacity(0.3),
+                          width: 1,
+                        ),
                       ),
                       child: Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 6),
-                        child: ListTile(
-                          title: Row(
-                            children: [
-                              Expanded(child: Text(ch['name'] ?? '')),
-                              if (locked)
-                                Tooltip(
-                                  message: lockedReason,
-                                  child: Icon(
-                                    Icons.lock,
-                                    size: 18,
-                                    color: Theme.of(context).colorScheme.onSurfaceVariant, // 🔹 color dinámico
+                        padding: const EdgeInsets.all(14),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            // 🔹 Título + candado
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: Text(
+                                    ch['name'] ?? '',
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 16,
+                                      color: cs.onSurface,
+                                    ),
                                   ),
                                 ),
-                            ],
-                          ),
-                          subtitle: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              if ((ch['description'] as String?)?.isNotEmpty == true)
-                                Text(ch['description']),
-                              const SizedBox(height: 6),
-                              Text(hint ?? '', style: const TextStyle(fontWeight: FontWeight.w700)),
-                              const SizedBox(height: 8),
-                              MetaChipsWidget(challenge: ch),
-                              if (locked) ...[
-  const SizedBox(height: 8),
-  Row(
-    crossAxisAlignment: CrossAxisAlignment.start,
-    children: [
-      Icon(
-        Icons.info_outline,
-        size: 16,
-        color: Theme.of(context).colorScheme.onSurfaceVariant, // 🔹 color adaptable
-      ),
-      const SizedBox(width: 6),
-      Expanded(
-        child: Text(
-          lockedReason,
-          style: TextStyle(
-            fontSize: 12,
-            color: Theme.of(context).colorScheme.onSurface.withOpacity(0.85), // 🔹 texto adaptable
-            fontWeight: FontWeight.w500,
-            height: 1.3,
-          ),
-        ),
-      ),
-    ],
-  ),
-],
-
-                            ],
-                          ),
-                          trailing: Tooltip(
-                            message: locked ? lockedReason : 'Aceptar',
-                            child: ElevatedButton(
-                              onPressed: locked ? null : () => _acceptChallenge(ch['id'], ch['name']),
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: locked
-                                    ? cs.surfaceContainerHighest.withOpacity(0.35)
-                                    : cs.primary,
-                                foregroundColor: Colors.white,
-                              ),
-                              child: Text(locked ? "Bloqueado" : "Aceptar"),
+                                if (locked)
+                                  Tooltip(
+                                    message: lockedReason,
+                                    child: Icon(
+                                      Icons.lock_outline,
+                                      size: 18,
+                                      color: cs.onSurfaceVariant,
+                                    ),
+                                  ),
+                              ],
                             ),
-                          ),
+
+                            const SizedBox(height: 6),
+
+                            // 🔹 Descripción (si existe)
+                            if ((ch['description'] as String?)?.isNotEmpty == true)
+                              Text(
+                                ch['description'],
+                                style: TextStyle(
+                                  color: cs.onSurfaceVariant,
+                                  fontSize: 13,
+                                ),
+                              ),
+
+                            // 🔹 Hint numérico (restaurado)
+                            if (hint.isNotEmpty) ...[
+                              const SizedBox(height: 8),
+                              Text(
+                                hint,
+                                style: TextStyle(
+                                  fontWeight: FontWeight.w700,
+                                  color: cs.primary,
+                                ),
+                              ),
+                            ],
+
+                            const SizedBox(height: 10),
+
+                            // 🔹 Chips de meta/duración/puntos (tu widget)
+                            MetaChipsWidget(challenge: ch),
+
+                            // 🔹 Mensaje de bloqueado (si aplica)
+                            if (locked) ...[
+                              const SizedBox(height: 10),
+                              Row(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Icon(Icons.info_outline, size: 16, color: cs.onSurfaceVariant),
+                                  const SizedBox(width: 6),
+                                  Expanded(
+                                    child: Text(
+                                      lockedReason,
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        color: cs.onSurface.withOpacity(0.85),
+                                        height: 1.3,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ],
                         ),
                       ),
                     );
 
+                    // 🔹 Card táctil (abre confirm) + opacidad si está bloqueado
                     return AnimatedOpacity(
                       duration: const Duration(milliseconds: 200),
                       opacity: locked ? 0.55 : 1.0,
-                      child: card,
+                      child: InkWell(
+                        borderRadius: BorderRadius.circular(16),
+                        onTap: locked ? null : () => _acceptChallenge(ch['id'], ch['name']),
+                        child: card,
+                      ),
                     );
                   },
                 ),
         );
 
-        // Cartel de regenerar + switch
+        // 🔹 Cartel de "podés regenerar a las ..." + switch de ocultar (restaurado)
+        final next = data['next_refresh_at'];
         if (next is String && next.isNotEmpty) {
           final dt = DateTime.tryParse(next)?.toLocal();
           if (dt != null) {
             final formatted = TimeOfDay.fromDateTime(dt).format(context);
+
             list = Column(
               children: [
+                // 🟣 Cartel de regenerar desafíos
                 Container(
                   width: double.infinity,
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                  color: cs.surfaceContainerHighest.withValues(alpha: 0.2),
+                  color: cs.surfaceContainerHighest.withOpacity(0.2),
                   child: Row(
                     children: [
                       Icon(Icons.timer_outlined, size: 18, color: cs.primary),
@@ -479,15 +548,18 @@ class _ChallengeScreenState extends State<ChallengeScreen>
                     ],
                   ),
                 ),
+                // 🟢 Switch ocultar bloqueados
                 Padding(
                   padding: const EdgeInsets.fromLTRB(12, 8, 12, 4),
                   child: _hideLockedToggle(),
                 ),
+                // 🟢 Lista
                 Expanded(child: list),
               ],
             );
           }
         } else {
+          // Cuando no hay cartel, mostrar solo switch + lista (como tenías)
           list = Column(
             children: [
               Padding(
@@ -504,7 +576,7 @@ class _ChallengeScreenState extends State<ChallengeScreen>
     );
   }
 
-  // 🔹 TAB 2: Mis desafíos
+  // 🔹 TAB 2: Mis desafíos (no se toca la lógica)
   Widget _buildUserChallengesTab() {
     return FutureBuilder<Map<String, dynamic>>(
       future: _profileFuture,
@@ -548,19 +620,24 @@ class _ChallengeScreenState extends State<ChallengeScreen>
                 const Padding(
                   padding: EdgeInsets.only(bottom: 8),
                   child: Text("En progreso",
-                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                      style:
+                          TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
                 ),
-                ...inProgress.map((ch) => ChallengeCardWidget(challenge: ch)).toList(),
+                ...inProgress
+                    .map((ch) => ChallengeCardWidget(challenge: ch))
+                    .toList(),
                 const SizedBox(height: 16),
               ],
               if (completed.isNotEmpty) ...[
                 const Padding(
                   padding: EdgeInsets.only(bottom: 8),
                   child: Text("Completados",
-                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                      style:
+                          TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
                 ),
                 ...completed
-                    .map((ch) => ChallengeCardWidget(challenge: ch, completed: true))
+                    .map((ch) =>
+                        ChallengeCardWidget(challenge: ch, completed: true))
                     .toList(),
                 const SizedBox(height: 16),
               ],
@@ -573,7 +650,9 @@ class _ChallengeScreenState extends State<ChallengeScreen>
                           fontSize: 16,
                           color: Colors.white)),
                 ),
-                ...failed.map((ch) => ChallengeCardWidget(challenge: ch)).toList(),
+                ...failed
+                    .map((ch) => ChallengeCardWidget(challenge: ch))
+                    .toList(),
               ],
             ],
           ),

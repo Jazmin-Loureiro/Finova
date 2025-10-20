@@ -18,32 +18,46 @@ class GamificationService
         $pointsEarned = $challenge->reward_points ?? 0;
         $user->points = ($user->points ?? 0) + $pointsEarned;
 
-        // 2️⃣ Subida de nivel automática (cada 100 pts por nivel)
-        $levelUpThreshold = 100; // 🔸 Podés ajustar el valor si querés que suba más rápido o más lento
-        $initialLevel = $user->level ?? 1;
+        // 2️⃣ Subida de nivel automática con curva progresiva
+        $baseThreshold = 150; // puntos base para pasar de nivel 1 a 2
+        $growthFactor = 1.5;  // cada nivel requiere 50% más puntos que el anterior
 
-        // Mientras tenga puntos suficientes para el siguiente nivel, sube
-        while ($user->points >= $levelUpThreshold * $user->level) {
-            $user->level++;
+        $initialLevel = $user->level ?? 1;
+        $currentLevel = $initialLevel;
+        $totalPoints = $user->points ?? 0;
+
+        // Bucle que permite subir varios niveles si tiene muchos puntos
+        while (true) {
+            // Calculamos cuántos puntos requiere el nivel actual → siguiente
+            $required = (int) round($baseThreshold * pow($growthFactor, $currentLevel - 1));
+
+            if ($totalPoints >= $required) {
+                $totalPoints -= $required; // opcional: se “gasta” para subir de nivel
+                $currentLevel++;
+            } else {
+                break;
+            }
         }
 
+        $user->points = $totalPoints;
+        $user->level = $currentLevel;
         $leveledUp = $user->level > $initialLevel;
         $user->save();
 
         // 3️⃣ Marcar SOLO el desafío en progreso como completado en la tabla pivote
-$activePivot = \App\Models\UserChallenge::where('user_id', $user->id)
-    ->where('challenge_id', $challenge->id)
-    ->where('state', 'in_progress')   // ✅ solo el activo
-    ->orderByDesc('id')               // por si hay duplicados
-    ->first();
+        $activePivot = \App\Models\UserChallenge::where('user_id', $user->id)
+            ->where('challenge_id', $challenge->id)
+            ->where('state', 'in_progress')   // ✅ solo el activo
+            ->orderByDesc('id')               // por si hay duplicados
+            ->first();
 
-if ($activePivot) {
-    $activePivot->update([
-        'state'    => 'completed',
-        'end_date' => now(),
-        'progress' => 100,
-    ]);
-}
+        if ($activePivot) {
+            $activePivot->update([
+                'state'    => 'completed',
+                'end_date' => now(),
+                'progress' => 100,
+            ]);
+        }
 
 
         // 4️⃣ Asignar insignia si el desafío tiene recompensa

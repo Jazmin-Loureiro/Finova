@@ -18,7 +18,10 @@ class ChallengeGeneratorService
         $now = now();
         $out = [];
 
-        DB::transaction(function () use ($user, $balance, $totalIngresos, $totalGastos, $totalRegistros, $now, &$out) {
+        $toCode   = optional($user->currency)->code ?? 'ARS';
+        $toSymbol = optional($user->currency)->symbol ?? '$';
+
+        DB::transaction(function () use ($user, $balance, $totalIngresos, $totalGastos, $totalRegistros, $now, &$out, $toCode, $toSymbol) {
 
             // 1) SAVE_AMOUNT (si hay ingresos o hay balance inicial)
             if ($totalIngresos > 0 || $balance > 0) {
@@ -35,6 +38,8 @@ class ChallengeGeneratorService
                 $payload = [
                     'amount'        => $target,
                     'duration_days' => $durationDays,
+                    'currency_code'   => $toCode,
+                    'currency_symbol' => $toSymbol,
                 ];
 
                 $this->upsertUserChallenge(
@@ -49,7 +54,7 @@ class ChallengeGeneratorService
                 );
 
                 $out[] = array_merge(
-                    $this->mapForResponse($base, $payload, $target),
+                    $this->mapForResponse($base, $payload, $target, $user),
                     ['duration_days' => $durationDays]
                 );
             }
@@ -65,7 +70,9 @@ class ChallengeGeneratorService
                 $payload = [
                     'amount'        => $target,
                     'duration_days' => $durationDays,
-                    'intro'         => true, // indicador opcional
+                    'intro'         => true, 
+                    'currency_code'   => $toCode,
+                    'currency_symbol' => $toSymbol,
                 ];
 
                 \Log::info("Usuario {$user->id}: desafío inicial simbólico de ahorro creado", [
@@ -85,7 +92,7 @@ class ChallengeGeneratorService
                 );
 
                 $out[] = array_merge(
-                    $this->mapForResponse($base, $payload, $target),
+                    $this->mapForResponse($base, $payload, $target, $user),
                     ['duration_days' => $durationDays]
                 );
             }
@@ -166,6 +173,8 @@ class ChallengeGeneratorService
                                 'window_days' => $windowDays,
                                 'max_allowed' => round($baseline, 2),
                                 'current_spent' => round($currentSpent, 2),
+                                'currency_code'   => $toCode,
+                                'currency_symbol' => $toSymbol,
                             ];
 
                             $this->upsertUserChallenge(
@@ -179,7 +188,7 @@ class ChallengeGeneratorService
                                 payload: $payload
                             );
 
-                            $out[] = $this->mapForResponse($base, $payload, $baseline);
+                            $out[] = $this->mapForResponse($base, $payload, $baseline, $user);
                         } else {
                             $out[] = [
                                 'type' => 'INFO',
@@ -204,7 +213,9 @@ class ChallengeGeneratorService
             // Guardamos el payload para mostrar en el frontend
             $payload = [
                 'count' => $count,
-                'duration_days' => $durationDays, // 👈 agregado
+                'duration_days' => $durationDays,
+                'currency_code'   => $toCode,
+                'currency_symbol' => $toSymbol,
             ];
 
             $this->upsertUserChallenge(
@@ -220,7 +231,7 @@ class ChallengeGeneratorService
 
             // ✅ Devolvemos al frontend con duración personalizada
             $out[] = array_merge(
-                $this->mapForResponse($base, $payload, $count),
+                $this->mapForResponse($base, $payload, $count, $user),
                 ['duration_days' => $durationDays]
             );
 
@@ -316,17 +327,27 @@ class ChallengeGeneratorService
 
 
 
-    private function mapForResponse(Challenge $base, array $payload, float|int|null $target): array
+    private function mapForResponse(Challenge $base, array $payload, float|int|null $target, ?User $user = null): array
     {
+        $userLevel = $user?->level ?? 1;
+
+        // 🎯 Escala de recompensa: +15% por nivel
+        $levelMultiplier = 1 + (($userLevel - 1) * 0.15);
+        $scaledPoints = (int) round($base->reward_points * $levelMultiplier);
+
+        // 🔹 Limitamos un máximo razonable (por ejemplo, no más del triple del valor base)
+        $scaledPoints = min($scaledPoints, $base->reward_points * 3);
+
         return [
             'id'             => $base->id,
             'name'           => $base->name,
             'description'    => $base->description,
             'type'           => $base->type,
-            'payload'        => $payload,               // listo para UI
+            'payload'        => $payload,
             'target_amount'  => $target,
             'duration_days'  => (int) $base->duration_days,
-            'reward_points'  => (int) $base->reward_points,
+            'reward_points'  => $scaledPoints,
         ];
     }
+
 }

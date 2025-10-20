@@ -114,7 +114,7 @@ class ChallengeController extends Controller
                 'challenges.duration_days',
                 'challenges.reward_points',
             ])
-            ->map(function ($ch) use ($inProgressTypes) {
+            ->map(function ($ch) use ($inProgressTypes, $user) {
                 $pivotPayload = $ch->pivot->payload;
 
                 if (is_string($pivotPayload)) {
@@ -129,6 +129,14 @@ class ChallengeController extends Controller
 
                 $locked = in_array($ch->type, $inProgressTypes, true);
 
+                // Moneda base del usuario (informativa para front)
+                $code   = optional($user->currency)->code ?? 'ARS';
+                $symbol = optional($user->currency)->symbol ?? '$';
+
+                // Sobrescribimos por si el payload viene de antes
+                $decoded['currency_code']   = $code;
+                $decoded['currency_symbol'] = $symbol;
+
                 return [
                     'id'             => $ch->id,
                     'name'           => $ch->name,
@@ -142,6 +150,9 @@ class ChallengeController extends Controller
                     'locked_reason'  => $locked
                         ? 'Ya tenés un desafío de este tipo en progreso. Completalo para aceptar uno nuevo.'
                         : null,
+                    // Atajo para UI (además de payload)
+                    'currency_code'   => $code,
+                    'currency_symbol' => $symbol,
                 ];
             })
             ->values();
@@ -218,7 +229,7 @@ class ChallengeController extends Controller
                 'challenges.duration_days',
                 'challenges.reward_points',
             ])
-            ->map(function ($ch) use ($inProgressTypes) {
+            ->map(function ($ch) use ($inProgressTypes, $user) {
                 $pivotPayload = $ch->pivot->payload;
 
                 if (is_string($pivotPayload)) {
@@ -233,6 +244,14 @@ class ChallengeController extends Controller
 
                 $locked = in_array($ch->type, $inProgressTypes, true);
 
+                // Moneda base del usuario (informativa para front)
+                $code   = optional($user->currency)->code ?? 'ARS';
+                $symbol = optional($user->currency)->symbol ?? '$';
+
+                // Sobrescribimos por si el payload viene de antes
+                $decoded['currency_code']   = $code;
+                $decoded['currency_symbol'] = $symbol;
+
                 return [
                     'id'             => $ch->id,
                     'name'           => $ch->name,
@@ -246,8 +265,12 @@ class ChallengeController extends Controller
                     'locked_reason'  => $locked
                         ? 'Ya tenés un desafío de este tipo en progreso. Completalo para aceptar uno nuevo.'
                         : null,
+                    // Atajo para UI (además de payload)
+                    'currency_code'   => $code,
+                    'currency_symbol' => $symbol,
                 ];
             })
+
             ->values();
 
         // 🟢 Agregamos también los mensajes INFO del generator (si hay)

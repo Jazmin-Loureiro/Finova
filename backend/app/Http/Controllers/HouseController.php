@@ -37,8 +37,14 @@ class HouseController extends Controller
             'garage'       => $house->unlocked_garage,
         ];
 
+        $currency = $user->currency;
+        $symbol = $currency->symbol ?? '$';
+        $code = $currency->code ?? 'ARS';
+
         return response()->json([
             'balance' => number_format($balance, 2, '.', ''), // NUEVO → convertido + decimales
+            'currency_symbol' => $symbol,   
+            'currency_code' => $code, 
             'casa'    => [
                 'base'      => $this->getBase($desbloqueado),
                 'modulos'   => $this->getModulos($desbloqueado, $balance),

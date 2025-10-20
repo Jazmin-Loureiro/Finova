@@ -29,6 +29,7 @@ class _MoneyMakerFormScreenState extends State<MoneyMakerFormScreen> {
   Color? selectedColor;
   String typeSelected = "Efectivo";
   bool _isLoading = true;
+  bool isSaving = false;
   List<Currency> currencies = [];
   Currency? selectedCurrency;
 
@@ -68,16 +69,7 @@ class _MoneyMakerFormScreenState extends State<MoneyMakerFormScreen> {
     final colorHex =
         '#${selectedColor!.toARGB32().toRadixString(16).substring(2)}';
 
-    // Mostrar el loading
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (_) => const Dialog(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        child: LoadingWidget(message: 'Guardando fuente...'),
-      ),
-    );
+    setState(() => isSaving = true);
 
     dynamic newSource;
     if (isEditing) {
@@ -99,7 +91,7 @@ class _MoneyMakerFormScreenState extends State<MoneyMakerFormScreen> {
       );
     }
 
-    if (mounted) Navigator.of(context).pop(); // Cerrar loading
+    setState(() => isSaving = false);
 
     if (newSource != null) {
       final confirmed = await showDialog(
@@ -107,8 +99,8 @@ class _MoneyMakerFormScreenState extends State<MoneyMakerFormScreen> {
         builder: (_) => SuccessDialogWidget(
           title: isEditing ? 'Fuente Actualizada' : 'Fuente Agregada',
           message: isEditing
-              ? 'La fuente de dinero se ha actualizado exitosamente.'
-              : 'La fuente de dinero se ha agregado exitosamente.',
+              ? 'La fuente se actualizó exitosamente.'
+              : 'La fuente se agregó exitosamente.',
           buttonText: 'Aceptar',
         ),
       );
@@ -123,15 +115,16 @@ class _MoneyMakerFormScreenState extends State<MoneyMakerFormScreen> {
   @override
   Widget build(BuildContext context) {
     final isEditing = widget.moneyMaker != null;
+    if (_isLoading) return const Scaffold(body: Center(child: LoadingWidget()));
     return Scaffold(
       appBar: AppBar(title:  Text(isEditing ? 'Editar Fuente' : 'Agregar Fuente')),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: _isLoading
-            ? const LoadingWidget(message: 'Cargando...')
-            : Form(
+      body: Stack(
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(16),
+            child: Form(
                 key: _formKey,
-                child: SingleChildScrollView(     // ✅ Se agregó esto
+                child: SingleChildScrollView(
                   child: Column(
                     children: [
                       // Nombre
@@ -143,7 +136,7 @@ class _MoneyMakerFormScreenState extends State<MoneyMakerFormScreen> {
                         ),
                         validator: (val) {
                           if (val == null || val.trim().isEmpty) return 'El nombre no puede estar vacío';
-                          if (val.trim().length < 3) return 'El nombre debe tener al menos 3 caracteres';
+                          if (val.trim().length < 3) return 'Debe tener al menos 3 caracteres';
                           return null;
                         },
                       ),
@@ -163,9 +156,7 @@ class _MoneyMakerFormScreenState extends State<MoneyMakerFormScreen> {
                         ]
                             .map((f) => DropdownMenuItem(value: f, child: Text(f)))
                             .toList(),
-                        onChanged: (value) {
-                          if (value != null) setState(() => typeSelected = value);
-                        },
+                        onChanged: (value) => setState(() => typeSelected = value!),
                       ),
                       const SizedBox(height: 16),
 
@@ -262,6 +253,16 @@ class _MoneyMakerFormScreenState extends State<MoneyMakerFormScreen> {
                   ),
                 ),
               ),
+            ),
+          // Overlay de guardado
+          if (isSaving)
+            Container(
+              color: Theme.of(context).colorScheme.onPrimary,
+              child: const Center(
+                child: LoadingWidget(message: 'Guardando fuente...'),
+              ),
+            ),
+        ],
       ),
     );
   }

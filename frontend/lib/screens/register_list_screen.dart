@@ -3,10 +3,12 @@ import '../services/api_service.dart';
 import '../models/register.dart';
 import 'package:intl/intl.dart';
 import 'package:fl_chart/fl_chart.dart';
+import '../widgets/custom_scaffold.dart';
 
 class RegisterListScreen extends StatefulWidget {
   final int moneyMakerId;
-  const RegisterListScreen({super.key, required this.moneyMakerId});
+  final String moneyMakerName;
+  const RegisterListScreen({super.key, required this.moneyMakerId, required this.moneyMakerName});
 
   @override
   State<RegisterListScreen> createState() => _RegisterListScreenState();
@@ -38,7 +40,7 @@ class _RegisterListScreenState extends State<RegisterListScreen> {
   Map<String, double> getTotalsByCategory() {
     final Map<String, double> totals = {};
     for (var r in registers) {
-      final category = r.category?.name ?? 'Sin categoría';
+      final category = r.category.name;
       totals[category] = (totals[category] ?? 0) + r.balance;
     }
     return totals;
@@ -48,10 +50,8 @@ class _RegisterListScreenState extends State<RegisterListScreen> {
   Map<String, Color> getCategoryColors() {
     final Map<String, Color> map = {};
     for (var r in registers) {
-      if (r.category != null) {
-        map[r.category!.name] =
-            Color(int.parse('0xff${r.category!.color.substring(1)}'));
-      } 
+        map[r.category.name] =
+            Color(int.parse('0xff${r.category.color.substring(1)}'));
     }
     return map;
   }
@@ -64,8 +64,9 @@ class _RegisterListScreenState extends State<RegisterListScreen> {
     final hasData = totals.values.any((v) => v > 0);
 
 
-    return Scaffold(
-      appBar: AppBar(title: const Text('Registros')),
+    return CustomScaffold(
+      title: 'Registros de ${widget.moneyMakerName}',
+      currentRoute: '/registers',
       body: isLoading
           ? const Center(child: CircularProgressIndicator())
           : registers.isEmpty
@@ -127,7 +128,7 @@ final percentage = totalValue == 0
                           final tipo =
                               r.type == "income" ? "Ingreso" : "Gasto";
                           final category =
-                              totals == 0 ? 'Sin categoría' : r.category?.name ?? 'Sin categoría';
+                              totals == 0 ? 'Sin categoría' : r.category.name;
                           return Card(
                             margin: const EdgeInsets.symmetric(
                                 horizontal: 12, vertical: 6),

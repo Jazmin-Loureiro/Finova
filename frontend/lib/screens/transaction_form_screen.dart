@@ -10,6 +10,11 @@ import 'money_maker_form_screen.dart';
 import 'category_form_screen.dart';
 import '../widgets/currency_text_field.dart';
 import '../widgets/success_dialog_widget.dart'; // 👈 usamos tu widget propio
+import '../widgets/loading_widget.dart';
+
+import 'package:provider/provider.dart';
+import '../providers/register_provider.dart';
+import 'register_list_screen.dart';
 
 class TransactionFormScreen extends StatefulWidget {
   final String type; // "income" o "expense"
@@ -27,6 +32,7 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
   final TextEditingController nameController = TextEditingController();
 
   bool isLoading = true; // Loader general
+  bool isSaving = false; // Loader al guardar
 
   List<MoneyMaker> moneyMakers = [];
   MoneyMaker? selectedMoneyMaker;
@@ -68,35 +74,20 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
     }
   }
 
-  /// 💾 Guardar transacción + mostrar recompensas
+  /// Guardar transacción + mostrar recompensas
   void saveTransaction() async {
     if (!_formKey.currentState!.validate()) return;
 
     final amount = double.tryParse(amountController.text);
     final name = nameController.text;
+    setState(() => isSaving = true);
 
-    if (amount == null ||
-        name.isEmpty ||
-        selectedMoneyMaker == null ||
-        selectedCategory == null ||
-        selectedCurrency == null) return;
-
-    final res = await api.createTransaction(
-      widget.type,
-      amount,
-      name,
-      moneyMakerId: selectedMoneyMaker!.id,
-      categoryId: selectedCategory!['id'],
-      currencyId: selectedCurrency!.id,
-      file: attachedFile,
-      repetition: repeatEveryNDays != null,
-      frequencyRepetition: repeatEveryNDays,
-    );
-
+    final res = await api.createTransaction( widget.type,amount!, name, moneyMakerId: selectedMoneyMaker!.id,categoryId: selectedCategory!['id'],currencyId: selectedCurrency!.id,
+      file: attachedFile,repetition: repeatEveryNDays != null,frequencyRepetition: repeatEveryNDays,);
+    setState(() => isSaving = false);
     if (!mounted) return;
 
     if (res != null) {
-      // ✅ Diálogo principal con el texto original tuyo
       await showDialog(
         context: context,
         builder: (_) => SuccessDialogWidget(
@@ -105,6 +96,9 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
               "${widget.type == "income" ? "Ingreso" : "Gasto"} creado correctamente",
         ),
       );
+      //  Recargar registros del MoneyMaker en el provider
+      await context.read<RegisterProvider>().loadRegisters(selectedMoneyMaker!.id);
+      await context.read<RegisterProvider>().loadMoneyMakers();
 
       // ⚡ Mostrar recompensas si existen (un solo pop-up con todo junto)
       if (res['rewards'] != null && (res['rewards'] as List).isNotEmpty) {
@@ -134,38 +128,44 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
         );
       }
 
-      // 🔄 Actualizar desafíos en segundo plano
+      //  Actualizar desafíos en segundo plano
       try {
         await ApiService().getGamificationProfile();
       } catch (_) {}
 
-      Navigator.pop(context);
+    Navigator.pop(context);
+    // Vamos directo a RegisterListScreen
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(
+        builder: (_) => RegisterListScreen(
+          moneyMakerId: selectedMoneyMaker!.id,
+          moneyMakerName: selectedMoneyMaker!.name,
+        ),
+      ),
+    );
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Error al crear la transacción')),
+       showDialog( context: context,
+        builder: (_) => SuccessDialogWidget(
+          title: "Error",
+          message:
+              "Error al crear ${widget.type == "income" ? "ingreso" : "gasto"}. Intente nuevamente.",
+        ),
       );
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    if (isLoading) {
-      return const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
-      );
-    }
-
-    const Map<String, String> typeLabels = {
-      "income": "Ingreso",
-      "expense": "Gasto",
-    };
-
+    const Map<String, String> typeLabels = { "income": "Ingreso", "expense": "Gasto",};
+    if (isLoading) return const Scaffold( body: Center(child: LoadingWidget()));
     return Scaffold(
       appBar: AppBar(
-        title: Text('Nuevo ${typeLabels[widget.type] ?? widget.type}'),
-      ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
+        title: Text('Nuevo ${typeLabels[widget.type] ?? widget.type}')),
+      body: Stack(
+        children: [
+        Padding(
+        padding: const EdgeInsets.all(16),
         child: Form(
           key: _formKey,
           child: SingleChildScrollView(
@@ -207,9 +207,11 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
                 Row(
                   children: [
                     Expanded(
-                      child: DropdownButtonFormField<MoneyMaker>(
-                        decoration: const InputDecoration(
-                          labelText: 'Fuente de dinero',
+                      child: moneyMakers.isEmpty
+                          ? const SizedBox()
+                          : DropdownButtonFormField<MoneyMaker>(
+                              decoration: const InputDecoration(
+                                labelText: 'Fuente de dinero',
                           border: OutlineInputBorder(),
                         ),
                         initialValue: selectedMoneyMaker,
@@ -311,32 +313,45 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
                     borderRadius: BorderRadius.circular(12),
                     side: BorderSide(color: Colors.grey.shade300),
                   ),
-                  leading: const Icon(Icons.attach_file, color: Colors.indigo),
+                  leading: Icon(Icons.attach_file,color: Theme.of(context).colorScheme.primary) ,
                   title: const Text("Adjuntar archivo"),
                   subtitle: attachedFile != null
                       ? Text(attachedFile!.path.split('/').last,
                           overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
-                              fontSize: 12, color: Colors.black54))
-                      : const Text("No se seleccionó archivo",
                           style: TextStyle(
-                              fontSize: 12, color: Colors.black45)),
+                              fontSize: 12, color: Theme.of(context).colorScheme.onSurface))
+                      :  Text("No se seleccionó archivo",
+                          style: TextStyle(
+                              fontSize: 12, color: Theme.of(context).colorScheme.onSurface)),
                   trailing: IconButton(
-                    icon: const Icon(Icons.upload_file, color: Colors.indigo),
+                    icon:  Icon(Icons.upload_file, color: Theme.of(context).colorScheme.primary) ,
                     onPressed: _pickFile,
                   ),
                 ),
                 const SizedBox(height: 20),
 
                 // Guardar
-                ElevatedButton(
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
                   onPressed: saveTransaction,
                   child: const Text('Guardar'),
+                ),
                 ),
               ],
             ),
           ),
         ),
+      ),
+          //  cargando al guardar
+          if (isSaving)
+            Container(
+              color: Theme.of(context).colorScheme.onPrimary,
+              child: const Center(
+                child: LoadingWidget(message: 'Guardando registro...'),
+              ),
+            ),
+        ],
       ),
     );
   }

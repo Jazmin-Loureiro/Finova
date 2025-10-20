@@ -9,6 +9,7 @@ class Register {
   final DateTime created_at;
   final Currency currency; 
   final Category category; // 
+  final int moneyMakerId;
 
   Register({
     required this.id,
@@ -18,6 +19,7 @@ class Register {
     required this.created_at,
     required this.currency,
     required this.category,
+    required this.moneyMakerId,
   });
 
   factory Register.fromJson(Map<String, dynamic> json) {
@@ -29,8 +31,11 @@ class Register {
           ? (json['balance'] as num).toDouble()
           : double.tryParse(json['balance'].toString()) ?? 0.0,
       created_at: DateTime.parse(json['created_at']),
-      currency: json['currency'] = Currency.fromJson(json['currency']), // 👈 parsea el objeto Currency 
-      category: json['category'] = Category.fromJson(json['category']), // 👈 parsea el objeto Category
+      currency: Currency.fromJson(json['currency']),   // 
+      category: Category.fromJson(json['category']),   // 
+      moneyMakerId: json['moneyMakerId'] is int
+          ? json['moneyMakerId']
+          : int.tryParse(json['moneyMakerId'].toString()) ?? 0,
     );
   }
 
@@ -43,6 +48,7 @@ class Register {
       'created_at': created_at.toIso8601String(),
       'currency': currency.toJson(),
       'category': category.toJson(),
+      'moneyMakerId': moneyMakerId,
     };
   }
 }

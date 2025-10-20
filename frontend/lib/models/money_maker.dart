@@ -8,7 +8,7 @@ class MoneyMaker {
   final double balanceConverted; // saldo convertido a moneda base
   final String color; 
   final Currency? currency;
-  final String? currencyBase; // moneda base del usuario
+ // final String? currencyBase; // moneda base del usuario
   String? currencySymbol; // símbolo de la moneda
    List<Register> registers ; // Lista de registros asociados
 
@@ -20,7 +20,7 @@ class MoneyMaker {
     required this.balanceConverted, // saldo convertido a moneda base
     required this.color,
     this.currency ,
-    this.currencyBase, // moneda base del usuario
+   // this.currencyBase, // moneda base del usuario
     this.currencySymbol, // símbolo de la moneda
     this.registers = const [], // Inicializar con lista vacía
   });
@@ -34,7 +34,7 @@ class MoneyMaker {
       balance: double.tryParse(json['balance'].toString()) ?? 0.0,
       balanceConverted: double.tryParse(json['balanceConverted'].toString()) ?? 0.0,
       color: json['color'] ?? 'FFFFFF',
-    currencyBase: json['currencyBase']?.toString(), // 🔹 convertir a String
+    //currencyBase: json['currencyBase']?.toString(), // 🔹 convertir a String
     currencySymbol: json['currencySymbol']?.toString(), // 🔹 convertir a String
     registers: json['registers'] != null
         ? (json['registers'] as List)
@@ -43,4 +43,15 @@ class MoneyMaker {
         : [],
     );
   }
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is MoneyMaker &&
+          runtimeType == other.runtimeType &&
+          id == other.id;
+
+  @override
+  int get hashCode => id.hashCode;
+
+
 }

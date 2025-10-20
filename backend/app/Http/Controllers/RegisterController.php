@@ -82,7 +82,8 @@ class RegisterController extends Controller {
             ? $amountInBaseCurrency
             : -$amountInBaseCurrency;
         $user->save();
-
+        // Cargar relaciones necesarias
+        $register->load(['currency', 'category']);
         
         // --- 🔹 Recalcular progreso y obtener recompensas (si se completó algo)
         $rewards = app(\App\Services\ChallengeProgressService::class)

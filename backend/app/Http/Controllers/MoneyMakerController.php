@@ -101,6 +101,8 @@ class MoneyMakerController extends Controller
         // actualizar el balance del usuario
         $user->balance=(float) $user->balance + (float)$convertedBalance; // actualizar saldo del usuario
         $user->save();
+        // obtener datos de la moneda del MoneyMaker para el response
+        $currency = Currency::find($moneyMaker->currency_id);
 
         return response()->json([
             'message' => 'Fuente de pago creada con éxito',
@@ -109,7 +111,13 @@ class MoneyMakerController extends Controller
                 'name' => $moneyMaker->name,
                 'type' => $moneyMaker->type,
                 'balance' => $moneyMaker->balance,
-                'currency_id' => $moneyMaker->currency_id,
+                //'currency_id' => $moneyMaker->currency_id,
+                'currency' => [
+                    'id' => $currency->id,
+                    'code' => $currency->code,
+                    'symbol' => $currency->symbol,
+                    'name' => $currency->name,
+                ],
                 'balance_converted' => $convertedBalance, // saldo convertido a moneda base 
                 'currencyBase' => $toCurrency, // moneda base del usuario
                 'color' => $moneyMaker->color,

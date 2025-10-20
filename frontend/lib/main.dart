@@ -4,6 +4,7 @@ import 'screens/login_screen.dart';
 import 'screens/home_screen.dart';
 import 'services/api_service.dart';
 import 'providers/house_provider.dart'; // 👈 tu nuevo provider
+import 'providers/register_provider.dart'; 
 
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
@@ -14,9 +15,16 @@ void main() async {
 
   await initializeDateFormatting('es', null);
   runApp(
-    ChangeNotifierProvider(
-      create: (_) => HouseProvider(), // 👈 se inicializa apenas arranca la app
-      child: const MyApp(),
+    MultiProvider(
+      providers:[
+        ChangeNotifierProvider(
+          create: (_) => RegisterProvider(), 
+        ),
+        ChangeNotifierProvider(
+          create: (_) => HouseProvider(), // 👈 se inicializa apenas arranca la app
+        ),
+      ],
+       child: const MyApp(),
     ),
   );
 }

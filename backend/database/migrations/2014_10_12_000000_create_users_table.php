@@ -22,7 +22,7 @@ return new class extends Migration
             $table->string('icon')->nullable(); // nuevo campo
             //$table->string('currencyBase');      
             $table->foreignId('currency_id') ->constrained('currencies'); // nuevo campo como llave foránea
-            $table->decimal('balance', 12, 2)->default(0); // nuevo campo
+            $table->decimal('balance', 20, 2)->default(0); // nuevo campo
             $table->rememberToken();
             $table->boolean('active')->default(true);
             $table->timestamps();

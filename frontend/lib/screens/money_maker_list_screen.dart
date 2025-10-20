@@ -2,28 +2,24 @@ import 'package:flutter/material.dart';
 import 'package:frontend/screens/register_list_screen.dart';
 import 'package:intl/intl.dart';
 import '../widgets/custom_scaffold.dart';
-import '../services/api_service.dart';
 import '../models/money_maker.dart';
-import '../models/register.dart';
 import 'money_maker_form_screen.dart';
 import '../widgets/loading_widget.dart';
+import 'package:provider/provider.dart';
+import '../providers/register_provider.dart';
 
 class MoneyMakerListScreen extends StatefulWidget {
-  const MoneyMakerListScreen({super.key});
+  final int? initialMoneyMakerId; // <-- ID del MoneyMaker a enfocar cuando se crea uno
+  const MoneyMakerListScreen({super.key, this.initialMoneyMakerId});
 
   @override
   State<MoneyMakerListScreen> createState() => _MoneyMakerListScreenState();
 }
 
 class _MoneyMakerListScreenState extends State<MoneyMakerListScreen> {
-  final ApiService api = ApiService();
   bool isLoading = true;
   int selectedIndex = 0;
   PageController? pageController;
-  List<MoneyMaker> moneyMakers = [];
-  List<Register> registers = [];
-  String currencyBase = '';
-  String currencySymbol = '';
 
   Color fromHex(String hexColor) {
     hexColor = hexColor.toUpperCase().replaceAll("#", "");
@@ -35,7 +31,7 @@ class _MoneyMakerListScreenState extends State<MoneyMakerListScreen> {
   void initState() {
     super.initState();
     pageController = PageController(viewportFraction: 0.85);
-    fetchMoneyMakers();
+    _loadMoneyMakers(); // usa el provider para cargar las fuentes de dinero
   }
 
   @override
@@ -43,37 +39,27 @@ class _MoneyMakerListScreenState extends State<MoneyMakerListScreen> {
     pageController?.dispose();
     super.dispose();
   }
-
-  Future<void> fetchMoneyMakers() async {
+ /// Cargar fuentes de dinero y enfocar si es necesario
+  Future<void> _loadMoneyMakers() async {
     setState(() => isLoading = true);
-    try {
-      final response = await api.getMoneyMakersFull();
-      moneyMakers = response['moneyMakers'];
-      currencyBase = response['currency_base'] ?? '';
-      currencySymbol = response['currency_symbol'] ?? '';
-      if (moneyMakers.isNotEmpty) {
-        await fetchRegisters(moneyMakers[0].id);
-      }
-    } catch (e) {
-      moneyMakers = [];
-    } finally {
-      setState(() => isLoading = false);
+    final provider = context.read<RegisterProvider>();
+    await provider.loadMoneyMakers();
+    if (provider.moneyMakers.isNotEmpty) {
+      setState(() => selectedIndex = 0);
+      await provider.loadRegisters(provider.moneyMakers[0].id);
     }
-  }
-
-  Future<void> fetchRegisters(int moneyMakerId) async {
-    try {
-      registers = await api.getRegistersByMoneyMaker(moneyMakerId);
-    } catch (e) {
-      registers = [];
-    } finally {
-      if (mounted) setState(() {});
-    }
+    setState(() => isLoading = false);
   }
  @override
 Widget build(BuildContext context) {
   final dateFormat = DateFormat('dd/MM/yyyy');
   final scheme = Theme.of(context).colorScheme;
+  //  Obtener datos del provider
+  final registerProvider = context.watch<RegisterProvider>();
+  final moneyMakers = registerProvider.moneyMakers;
+  final registers = registerProvider.registers;
+  final currencyBase = registerProvider.currencyBase;
+  final currencySymbol = registerProvider.currencyBaseSymbol;
 
   return CustomScaffold(
     title: 'Fuentes de Dinero',
@@ -84,67 +70,85 @@ Widget build(BuildContext context) {
           Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (context) => const MoneyMakerFormScreen(),
-            ),
-          ).then((_) async {
-            await fetchMoneyMakers();
-            if (moneyMakers.isNotEmpty) {
-              await fetchRegisters(moneyMakers[selectedIndex].id);
-            }
-          });
-        },
-        child: Container(
-          margin: const EdgeInsets.only(right: 16),
-          padding: const EdgeInsets.all(8),
-          decoration: BoxDecoration(
-            color: scheme.primary, 
-            shape: BoxShape.circle,
-          ),
-          child: const Icon(Icons.add, color: Colors.white),
-        ),
-      ),
-    ],
-    body: isLoading
-        ? const LoadingWidget(message: "Cargando fuentes de dinero...")
-        : moneyMakers.isEmpty
-            ? const Center(child: Text("No hay fuentes de dinero"))
-            : Column(
-                children: [
-                  const SizedBox(height: 10),
-                  if (pageController != null)
-                    SizedBox(
-                      height: 180,
-                      child: PageView.builder(
-                        controller: pageController,
-                        itemCount: moneyMakers.length,
-                        onPageChanged: (index) async {
-                          setState(() => selectedIndex = index);
-                          await fetchRegisters(moneyMakers[index].id);
-                        },
-                        itemBuilder: (context, index) {
-                          final m = moneyMakers[index];
-                          final isSelected = selectedIndex == index;
+              builder: (context) => const MoneyMakerFormScreen()),).then((newMaker) async {
+              if (newMaker != null && newMaker is MoneyMaker) {
+                // Recargar lista desde el servidor
+                await _loadMoneyMakers();
+                // Enfocar el nuevo MoneyMaker
+                final provider = context.read<RegisterProvider>();
+                final updatedMoneyMakers = provider.moneyMakers;
+              //  Buscar por ID si existe 
+                int newIndex = updatedMoneyMakers.indexWhere((m) => m.id == newMaker.id);
+                if (newIndex == -1) {
+                  newIndex = updatedMoneyMakers.indexWhere((m) => m.name == newMaker.name);
+                }
+                if (newIndex == -1) newIndex = updatedMoneyMakers.length - 1;
 
-                          return AnimatedContainer(
-                            duration: const Duration(milliseconds: 300),
-                            margin: EdgeInsets.symmetric(
-                              horizontal: isSelected ? 8 : 12,
-                              vertical: isSelected ? 0 : 10,
-                            ),
-                            decoration: BoxDecoration(
-                              gradient: LinearGradient(
-                                colors: [
-                                  fromHex(m.color),
-                                  fromHex(m.color),
-                                ],
-                                begin: Alignment.topLeft,
-                                end: Alignment.bottomRight,
+                if (!mounted) return;
+                setState(() => selectedIndex = newIndex);
+
+                WidgetsBinding.instance.addPostFrameCallback((_) {
+                  if (pageController!.hasClients) {
+                    pageController!.animateToPage(
+                      newIndex,
+                      duration: const Duration(milliseconds: 300),
+                      curve: Curves.easeInOut,
+                    );
+                  }
+                });
+                await provider.loadRegisters(updatedMoneyMakers[newIndex].id);
+              }
+            });
+          },
+          /**Esto podria ser un widget */
+          child: Container(
+            margin: const EdgeInsets.only(right: 16),
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: scheme.primary,
+              shape: BoxShape.circle,
+            ),
+            child:  Icon(Icons.add, color: Theme.of(context).colorScheme.onPrimary,),
+          ),
+        ),
+      ],
+      body: isLoading
+          ? const LoadingWidget(message: "Cargando fuentes de dinero...")
+          : moneyMakers.isEmpty
+              ? const Center(child: Text("No hay fuentes de dinero"))
+              : Column(
+                  children: [
+                    const SizedBox(height: 10),
+                    if (pageController != null)
+                      SizedBox(
+                        height: 180,
+                        child: PageView.builder(
+                          controller: pageController,
+                          itemCount: moneyMakers.length,
+                          onPageChanged: (index) async {
+                            setState(() => selectedIndex = index);
+                            await context.read<RegisterProvider>().loadRegisters(moneyMakers[index].id);
+                          },
+                          itemBuilder: (context, index) {
+                            final m = moneyMakers[index];
+                            final isSelected = selectedIndex == index;
+
+                            return AnimatedContainer(
+                              duration: const Duration(milliseconds: 300),
+                              margin: EdgeInsets.symmetric(
+                                horizontal: isSelected ? 8 : 12,
+                                vertical: isSelected ? 0 : 10,
                               ),
-                              borderRadius: BorderRadius.circular(22),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: fromHex(m.color).withValues(
-                                      alpha: 0.4), // sombra coherente con el color
+                              decoration: BoxDecoration(
+                                gradient: LinearGradient(
+                                  colors: [fromHex(m.color), fromHex(m.color)],
+                                  begin: Alignment.topLeft,
+                                  end: Alignment.bottomRight,
+                                ),
+                                borderRadius: BorderRadius.circular(22),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: fromHex(m.color).withAlpha(100),
                                   blurRadius: 10,
                                   offset: const Offset(0, 6),
                                 )
@@ -162,32 +166,32 @@ Widget build(BuildContext context) {
                                     children: [
                                       Text(
                                         m.name,
-                                        style: const TextStyle(
-                                          color: Colors.white,
+                                        style: TextStyle(
+                                           color: Theme.of(context).colorScheme.onPrimary,
                                           fontSize: 18,
                                           fontWeight: FontWeight.bold,
                                         ),
                                       ),
                                       Text(
                                         m.currency?.name ?? '',
-                                        style: const TextStyle(
-                                          color: Colors.white,
+                                        style: TextStyle(
+                                           color: Theme.of(context).colorScheme.onPrimary,
                                           fontSize: 18,
                                           fontWeight: FontWeight.bold,
                                         ),
                                       ),
                                       Text(
                                         '${m.currency?.symbol}${m.balance.toStringAsFixed(2)}',
-                                        style: const TextStyle(
-                                          color: Colors.white,
+                                        style: TextStyle(
+                                           color: Theme.of(context).colorScheme.onPrimary,
                                           fontSize: 26,
                                         ),
                                       ),
                                       if (currencyBase != m.currency?.code)
                                         Text(
                                           '≈ $currencySymbol${m.balanceConverted.toStringAsFixed(2)}',
-                                          style: const TextStyle(
-                                            color: Colors.white70,
+                                          style: TextStyle(
+                                             color: Theme.of(context).colorScheme.onPrimary,
                                             fontSize: 20,
                                           ),
                                         ),
@@ -208,10 +212,9 @@ Widget build(BuildContext context) {
                                           ),
                                         ),
                                       ).then((_) async {
-                                        await fetchMoneyMakers();
+                                        await _loadMoneyMakers();
                                         if (moneyMakers.isNotEmpty) {
-                                          await fetchRegisters(
-                                              moneyMakers[selectedIndex].id);
+                                          await context.read<RegisterProvider>().loadRegisters(moneyMakers[selectedIndex].id);
                                         }
                                       });
                                     },
@@ -222,17 +225,17 @@ Widget build(BuildContext context) {
                                         boxShadow: [
                                           BoxShadow(
                                             color: scheme.primary
-                                                .withValues(alpha: 0.4),
+                                            .withAlpha(100),
                                             blurRadius: 4,
                                             offset: const Offset(0, 2),
                                           ),
                                         ],
                                       ),
                                       padding: const EdgeInsets.all(6),
-                                      child: const Icon(
+                                      child:  Icon(
                                         Icons.edit,
                                         size: 20,
-                                        color: Colors.white,
+                                         color: Theme.of(context).colorScheme.onPrimary,
                                       ),
                                     ),
                                   ),
@@ -255,7 +258,7 @@ Widget build(BuildContext context) {
                           style: TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.bold,
-                            color: Colors.grey[700],
+                            // color: Theme.of(context).colorScheme.onPrimary,
                           ),
                         ),
                         TextButton(
@@ -265,12 +268,13 @@ Widget build(BuildContext context) {
                               MaterialPageRoute(
                                 builder: (context) => RegisterListScreen(
                                   moneyMakerId: moneyMakers[selectedIndex].id,
+                                  moneyMakerName: moneyMakers[selectedIndex].name,
                                 ),
                               ),
                             );
                             if(updated == true || updated == null) {
                               pageController?.jumpToPage(selectedIndex);
-                              await fetchRegisters(moneyMakers[selectedIndex].id);
+                              await context.read<RegisterProvider>().loadRegisters(moneyMakers[selectedIndex].id);
                             }
                           },
                           child: Text(
@@ -334,9 +338,10 @@ Widget build(BuildContext context) {
                                       const SizedBox(height: 2),
                                       Text(
                                         '$tipo - ${r.currency.code} ${r.currency.symbol}${r.balance.toStringAsFixed(2)}',
-                                        style: const TextStyle(
+                                        style: TextStyle(
                                             fontSize: 14,
-                                            color: Colors.black87),
+                                            // color: Theme.of(context).colorScheme.onPrimary
+                                             ),
                                       ),
                                     ],
                                   ),
@@ -344,8 +349,7 @@ Widget build(BuildContext context) {
                                     dateFormat.format(r.created_at),
                                     style: const TextStyle(
                                       fontSize: 14,
-                                      color:
-                                          Color.fromARGB(255, 51, 50, 50),
+                                      //color: Color.fromARGB(255, 51, 50, 50),
                                     ),
                                   ),
                                   isThreeLine: true,

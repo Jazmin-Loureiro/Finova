@@ -349,8 +349,7 @@ Widget build(BuildContext context) {
                                     dateFormat.format(r.created_at),
                                     style: const TextStyle(
                                       fontSize: 14,
-                                      color:
-                                          Color.fromARGB(255, 51, 50, 50),
+                                      //color: Color.fromARGB(255, 51, 50, 50),
                                     ),
                                   ),
                                   isThreeLine: true,

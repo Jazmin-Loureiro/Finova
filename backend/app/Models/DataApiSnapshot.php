@@ -4,7 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
-class DataApi extends Model
+class DataApiSnapshot extends Model
 {
     protected $fillable = [
         'name',
@@ -13,13 +13,18 @@ class DataApi extends Model
         'data',
         'params',
         'fuente',
+        'fetched_at',
+        'version',
+        'is_current',
+        'raw_response',
         'status',
-        'last_fetched_at',
     ];
 
     protected $casts = [
         'data' => 'array',
         'params' => 'array',
-        'last_fetched_at' => 'datetime',
+        'raw_response' => 'array',
+        'fetched_at' => 'datetime',
+        'is_current' => 'boolean',
     ];
 }

@@ -6,7 +6,8 @@ import '../screens/configuration_screen.dart';
 import '../screens/challenge_screen.dart';
 import '../screens/currency_converter_screen.dart';
 import '../screens/export_reports_screen.dart';
-
+import '../screens/loan_simulator_screen.dart';
+import '../screens/investment_simulator_screen.dart';
 class CustomDrawer extends StatelessWidget {
   final String currentRoute;
 
@@ -151,10 +152,22 @@ class CustomDrawer extends StatelessWidget {
                     screen: const CurrencyConverterScreen(),
                   ),
                   buildMenuItem(
-                    icon: Icons.file_download	,
+                    icon: Icons.file_download_rounded	,
                     title: 'Exportar Reportes',
-                    routeName: 'report_export',
+                    routeName: 'export',
                     screen: const ExportReportsScreen(),
+                  ),
+                  buildMenuItem(
+                    icon: Icons.request_quote_rounded,
+                    title: 'Simular préstamos',
+                    routeName: 'loan_simulation',
+                    screen: const LoanSimulatorScreen(),
+                  ),
+                  buildMenuItem(
+                    icon: Icons.trending_up_rounded,
+                    title: 'Simular inversiones',
+                    routeName: 'investment_simulation',
+                    screen: const InvestmentSimulatorScreen(),
                   ),
                 ],
               ),

@@ -8,25 +8,47 @@ use Illuminate\Foundation\Console\Kernel as ConsoleKernel;
 class Kernel extends ConsoleKernel
 {
     /**
-     * Define the application's command schedule.
-     *
-     * @param  \Illuminate\Console\Scheduling\Schedule  $schedule
-     * @return void
+     * Define el schedule (tareas automáticas)
      */
     protected function schedule(Schedule $schedule)
     {
-        // $schedule->command('inspire')->hourly();
+        /**
+         * 💸 Actualizaciones diarias
+         * (tasas de préstamo, plazos fijos, UVA)
+         * -> todos los días a las 08:00
+         */
+        $schedule->command('dataapi:refresh --group=daily')
+            ->dailyAt('08:00')
+            ->runInBackground()
+            ->withoutOverlapping();
+
+        /**
+         * 💱 Actualizaciones frecuentes
+         * (divisas, cripto)
+         * -> cada 3 horas
+         */
+        $schedule->command('dataapi:refresh --group=frequent')
+            ->everyThreeHours()
+            ->runInBackground()
+            ->withoutOverlapping();
+
+        /**
+         * 📊 Actualizaciones semanales
+         * (indicadores macroeconómicos)
+         * -> todos los lunes a las 07:30
+         */
+        $schedule->command('dataapi:refresh --group=weekly')
+            ->weeklyOn(1, '07:30')
+            ->runInBackground()
+            ->withoutOverlapping();
     }
 
     /**
-     * Register the commands for the application.
-     *
-     * @return void
+     * Registra los comandos en app/Console/Commands
      */
     protected function commands()
     {
         $this->load(__DIR__.'/Commands');
-
         require base_path('routes/console.php');
     }
 }

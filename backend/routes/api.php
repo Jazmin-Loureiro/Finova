@@ -10,7 +10,9 @@ use App\Http\Controllers\UserController;
 use App\Http\Controllers\ChallengeController;
 use App\Http\Controllers\UserChallengeController;
 use App\Http\Controllers\GamificationController;
-
+use App\Http\Controllers\SimulationController;
+use App\Http\Controllers\DataApiReadController;
+use App\Http\Controllers\InvestmentController;
 
 
 use App\Http\Controllers\CurrencyController;
@@ -89,3 +91,20 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/gamification/profile', [GamificationController::class, 'profile']);
 
     });
+
+    // 📊 Rutas para simulaciones de préstamos e inversiones
+    Route::prefix('/simulate')->group(function () {
+
+        // 💳 Préstamos personales
+        Route::post('/loan', [SimulationController::class, 'simulateLoan']);
+
+        // 💰 Plazo fijo tradicional (en pesos)
+        Route::get('/plazo-fijo', [SimulationController::class, 'simulatePlazoFijo']);
+
+        // 📈 Comparativa Plazo Fijo vs Inflación
+        Route::get('/comparativa', [SimulationController::class, 'comparePlazoFijoVsInflacion']);
+    });
+
+    Route::get('/dataapi/current/{name}', [DataApiReadController::class, 'current']);
+    Route::get('/dataapi/history/{name}', [DataApiReadController::class, 'history']);
+    Route::get('/dataapi/by-type/{type}', [DataApiReadController::class, 'byType']);

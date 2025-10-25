@@ -11,10 +11,10 @@ import '../models/register.dart';
 import '../models/goal.dart';
 
 // URLs base
-//const String baseUrl = "http://192.168.1.113:8000";
-//const String baseUrl = "http://192.168.0.117:8000";
-//const String baseUrl = "http://192.168.1.45:8000";
-const String baseUrl = "http://192.168.0.162:8000";// guardo el mio je
+const String baseUrl = "http://192.168.1.113:8000"; //Jaz
+//const String baseUrl = "http://192.168.0.117:8000"; // Jaz 2
+//const String baseUrl = "http://192.168.1.45:8000"; //Jaz 3
+//const String baseUrl = "http://192.168.0.162:8000";// guardo el mio je
 //const String baseUrl = "http://172.16.132.6:8000"; // IP de la facu
 const String apiUrl = "$baseUrl/api";
 // Instancia de almacenamiento seguro
@@ -806,4 +806,73 @@ Future<Map<String, dynamic>> getTransactionFormData(String type) async {
       }
   }
 
+//////////////////////////////////////////////////////////////// Simulaciones financieras
+
+  // 🔹 Simular préstamo personal
+  Future<Map<String, dynamic>?> simulateLoan({
+    required double capital,
+    required int cuotas,
+  }) async {
+    try {
+      final res = await http.post(
+        Uri.parse('$apiUrl/simulate/loan'),
+        headers: jsonHeaders(),
+        body: jsonEncode({
+          'capital': capital,
+          'cuotas': cuotas,
+        }),
+      );
+
+      if (res.statusCode == 200) {
+        return jsonDecode(res.body);
+      } else {
+        return {'error': 'No se pudo realizar la simulación'};
+      }
+    } catch (e) {
+      return {'error': 'Error de conexión con el servidor'};
+    }
+  }
+
+  // 🔹 Simular plazo fijo (ya incluye comparativa desde el backend)
+  Future<Map<String, dynamic>?> simulatePlazoFijo({
+    required double monto,
+    required int dias,
+  }) async {
+    try {
+      final res = await http.get(
+        Uri.parse('$apiUrl/simulate/plazo-fijo?monto=$monto&dias=$dias'),
+        headers: jsonHeaders(),
+      );
+
+      if (res.statusCode == 200) {
+        return jsonDecode(res.body);
+      } else {
+        return {'error': 'No se pudo realizar la simulación'};
+      }
+    } catch (e) {
+      return {'error': 'Error de conexión con el servidor'};
+    }
+  }
+
+  // 🔹 Obtener comparativa Plazo Fijo vs Inflación (si la necesitás por separado)
+  Future<Map<String, dynamic>?> simulateComparativa() async {
+    try {
+      final res = await http.get(
+        Uri.parse('$apiUrl/simulate/comparativa'),
+        headers: jsonHeaders(),
+      );
+
+      if (res.statusCode == 200) {
+        return jsonDecode(res.body);
+      } else {
+        return {'error': 'No se pudo obtener la comparativa'};
+      }
+    } catch (e) {
+      return {'error': 'Error de conexión con el servidor'};
+    }
+  }
 }
+
+
+
+

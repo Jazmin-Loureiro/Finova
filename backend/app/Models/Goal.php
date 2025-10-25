@@ -14,9 +14,9 @@ class Goal extends Model
 
     protected $fillable = [
         'user_id',
-        'category_id',
         'name',
         'target_amount',
+        'currency_id',
         'date_limit',
         'balance',
         'state',
@@ -30,9 +30,13 @@ class Goal extends Model
         return $this->belongsTo(User::class);
     }
 
-    public function categories()
+    public function currency()
     {
-        return $this->belongsTo(Category::class);
+        return $this->belongsTo(Currency::class); // Relación con la tabla Currency 
+    }
+
+    public function registers() {
+    return $this->hasMany(Register::class);
     }
 
 }

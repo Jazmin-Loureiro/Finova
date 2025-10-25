@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:frontend/screens/register_list_screen.dart';
+import 'package:frontend/screens/registers/register_list_screen.dart';
 import 'package:intl/intl.dart';
 import '../widgets/custom_scaffold.dart';
 import '../models/money_maker.dart';
@@ -65,52 +65,39 @@ Widget build(BuildContext context) {
     title: 'Fuentes de Dinero',
     currentRoute: 'money_makers',
     actions: [
-      GestureDetector(
-        onTap: () {
+       IconButton(
+        icon: const Icon(Icons.add),
+        onPressed: () {
           Navigator.push(
             context,
-            MaterialPageRoute(
-              builder: (context) => const MoneyMakerFormScreen()),).then((newMaker) async {
-              if (newMaker != null && newMaker is MoneyMaker) {
-                // Recargar lista desde el servidor
-                await _loadMoneyMakers();
-                // Enfocar el nuevo MoneyMaker
-                final provider = context.read<RegisterProvider>();
-                final updatedMoneyMakers = provider.moneyMakers;
-              //  Buscar por ID si existe 
-                int newIndex = updatedMoneyMakers.indexWhere((m) => m.id == newMaker.id);
-                if (newIndex == -1) {
-                  newIndex = updatedMoneyMakers.indexWhere((m) => m.name == newMaker.name);
+            MaterialPageRoute(builder: (context) => const MoneyMakerFormScreen()),
+          ).then((value) async {
+            if (value != null && value is MoneyMaker) {
+              await _loadMoneyMakers();
+
+              final provider = context.read<RegisterProvider>();
+              final updatedMoneyMakers = provider.moneyMakers;
+
+              int newIndex = updatedMoneyMakers.indexWhere((m) => m.id == value.id);
+              if (newIndex == -1) newIndex = updatedMoneyMakers.length - 1;
+
+              if (!mounted) return;
+              setState(() => selectedIndex = newIndex);
+
+              // ⚡ Esperar a que se monte el PageView
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                if (pageController != null && pageController!.hasClients) {
+                  pageController!.animateToPage(
+                    newIndex,
+                    duration: const Duration(milliseconds: 300),
+                    curve: Curves.easeInOut,
+                  );
                 }
-                if (newIndex == -1) newIndex = updatedMoneyMakers.length - 1;
-
-                if (!mounted) return;
-                setState(() => selectedIndex = newIndex);
-
-                WidgetsBinding.instance.addPostFrameCallback((_) {
-                  if (pageController!.hasClients) {
-                    pageController!.animateToPage(
-                      newIndex,
-                      duration: const Duration(milliseconds: 300),
-                      curve: Curves.easeInOut,
-                    );
-                  }
-                });
-                await provider.loadRegisters(updatedMoneyMakers[newIndex].id);
-              }
-            });
-          },
-          /**Esto podria ser un widget */
-          child: Container(
-            margin: const EdgeInsets.only(right: 16),
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: scheme.primary,
-              shape: BoxShape.circle,
-            ),
-            child:  Icon(Icons.add, color: Theme.of(context).colorScheme.onPrimary,),
-          ),
-        ),
+              });
+            }
+          });
+        },
+      ),
       ],
       body: isLoading
           ? const LoadingWidget(message: "Cargando fuentes de dinero...")
@@ -156,48 +143,73 @@ Widget build(BuildContext context) {
                             ),
                             child: Stack(
                               children: [
-                                Padding(
-                                  padding: const EdgeInsets.all(20),
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    mainAxisAlignment:
-                                        MainAxisAlignment.spaceBetween,
-                                    children: [
-                                      Text(
-                                        m.name,
-                                        style: TextStyle(
-                                           color: Theme.of(context).colorScheme.onPrimary,
-                                          fontSize: 18,
-                                          fontWeight: FontWeight.bold,
-                                        ),
+                              Padding(
+                                padding: const EdgeInsets.all(16),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  mainAxisAlignment: MainAxisAlignment.start,
+                                  children: [
+                                    // Nombre de la fuente
+                                    Text(
+                                      m.name,
+                                      style: TextStyle(
+                                        color: Theme.of(context).colorScheme.onPrimary,
+                                        fontSize: 20,
+                                        fontWeight: FontWeight.bold,
                                       ),
-                                      Text(
-                                        m.currency?.name ?? '',
-                                        style: TextStyle(
-                                           color: Theme.of(context).colorScheme.onPrimary,
-                                          fontSize: 18,
-                                          fontWeight: FontWeight.bold,
-                                        ),
+                                    ),
+                                    const SizedBox(height: 4),
+
+                                    // Nombre de la moneda
+                                    Text(
+                                      m.currency?.name ?? '',
+                                      style: TextStyle(
+                                        color: Theme.of(context).colorScheme.onPrimary,
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.w500,
                                       ),
-                                      Text(
-                                        '${m.currency?.symbol}${m.balance.toStringAsFixed(2)}',
-                                        style: TextStyle(
-                                           color: Theme.of(context).colorScheme.onPrimary,
-                                          fontSize: 26,
-                                        ),
-                                      ),
-                                      if (currencyBase != m.currency?.code)
+                                    ),
+                                    const SizedBox(height: 4),
+
+                                    // Balance principal con balance convertido al lado
+                                    Row(
+                                      crossAxisAlignment: CrossAxisAlignment.end,
+                                      children: [
                                         Text(
-                                          '≈ $currencySymbol${m.balanceConverted.toStringAsFixed(2)}',
+                                          '${m.currency?.symbol}${m.balance.toStringAsFixed(2)}',
                                           style: TextStyle(
-                                             color: Theme.of(context).colorScheme.onPrimary,
-                                            fontSize: 20,
+                                            color: Theme.of(context).colorScheme.onPrimary,
+                                            fontSize: 22,
+                                            fontWeight: FontWeight.bold,
                                           ),
                                         ),
-                                    ],
-                                  ),
+                                        const SizedBox(width: 8),
+                                        if (currencyBase != m.currency?.code)
+                                          Text(
+                                            '≈ $currencySymbol${m.balanceConverted.toStringAsFixed(2)}',
+                                            style: TextStyle(
+                                              color: Theme.of(context).colorScheme.onPrimary,
+                                              fontSize: 22,
+                                            ),
+                                          ),
+                                      ],
+                                    ),
+
+                                    // Balance reservado
+                                    const SizedBox(height: 6),
+                                    if (m.balance_reserved > 0)
+                                      Text(
+                                        'Reservado: ${m.currency?.symbol}${m.balance_reserved.toStringAsFixed(2)}',
+                                        style: TextStyle(
+                                          fontSize: 18,
+                                          color: Theme.of(context).colorScheme.onPrimary,
+                                          fontWeight: FontWeight.w500,
+                                        ),
+                                      ),
+                                  ],
                                 ),
+                              ),
+
                                 Positioned(
                                   top: 10,
                                   right: 10,
@@ -220,14 +232,10 @@ Widget build(BuildContext context) {
                                     },
                                     child: Container(
                                       decoration: BoxDecoration(
-                                        color: scheme.primary, 
                                         shape: BoxShape.circle,
                                         boxShadow: [
                                           BoxShadow(
-                                            color: scheme.primary
-                                            .withAlpha(100),
-                                            blurRadius: 4,
-                                            offset: const Offset(0, 2),
+                                            color: scheme.primary,
                                           ),
                                         ],
                                       ),
@@ -235,7 +243,7 @@ Widget build(BuildContext context) {
                                       child:  Icon(
                                         Icons.edit,
                                         size: 20,
-                                         color: Theme.of(context).colorScheme.onPrimary,
+                                         color: Theme.of(context).colorScheme.onSecondary,
                                       ),
                                     ),
                                   ),
@@ -258,7 +266,6 @@ Widget build(BuildContext context) {
                           style: TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.bold,
-                            // color: Theme.of(context).colorScheme.onPrimary,
                           ),
                         ),
                         TextButton(
@@ -289,14 +296,14 @@ Widget build(BuildContext context) {
                       ],
                     ),
                   ),
-                  const SizedBox(height: 10),
-                  // 🔹 Lista de registros
+        
+                  // Lista de registros
                   Expanded(
                     child: registers.isEmpty
                         ? const Center(child: Text("Sin registros"))
                         : ListView.builder(
                             padding:
-                                const EdgeInsets.symmetric(horizontal: 16),
+                                const EdgeInsets.symmetric(horizontal: 10),
                             //itemCount: registers.length,
                             itemCount: registers.length > 4 ? 4 : registers.length,
                             itemBuilder: (context, index) {
@@ -304,57 +311,105 @@ Widget build(BuildContext context) {
                               final tipo =
                                   r.type == "income" ? "Ingreso" : "Gasto";
                               return Card(
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
                                 elevation: 3,
-                                margin:
-                                    const EdgeInsets.symmetric(vertical: 8),
-                                child: ListTile(
-                                  leading: Icon(
-                                    r.type == "income"
-                                        ? Icons.arrow_downward
-                                        : Icons.arrow_upward,
-                                    color: r.type == "income"
-                                        ? Colors.green
-                                        : Colors.red,
-                                  ),
-                                  title: Text(
-                                    r.name,
-                                    style: const TextStyle(
-                                        fontWeight: FontWeight.bold),
-                                  ),
-                                  subtitle: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(16),
+                                ),
+                                child: Padding(
+                                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                                  child: Row(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
-                                      Text(
-                                        "Categoria: ${r.category.name}",
-                                        style: const TextStyle(
-                                          fontWeight: FontWeight.bold,
-                                          fontSize: 16,
+                                      // Icono principal
+                                      Container(
+                                        padding: const EdgeInsets.all(10),
+                                        decoration: BoxDecoration(
+                                          color: r.type == "income"
+                                              ? Colors.green.withOpacity(0.15)
+                                              : Colors.red.withOpacity(0.15),
+                                          shape: BoxShape.circle,
+                                        ),
+                                        child: Icon(
+                                          r.type == "income" ? Icons.arrow_downward : Icons.arrow_upward,
+                                          color: r.type == "income" ? Colors.green : Colors.red,
+                                          size: 22,
                                         ),
                                       ),
-                                      const SizedBox(height: 2),
-                                      Text(
-                                        '$tipo - ${r.currency.code} ${r.currency.symbol}${r.balance.toStringAsFixed(2)}',
-                                        style: TextStyle(
-                                            fontSize: 14,
-                                            // color: Theme.of(context).colorScheme.onPrimary
-                                             ),
+                                      const SizedBox(width: 12),
+
+                                      // Contenido principal
+                                      Expanded(
+                                        child: Column(
+                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          children: [
+                                            // Fila: Nombre + Tipo/Categoría a la izquierda, Fecha a la derecha
+                                            Row(
+                                              crossAxisAlignment: CrossAxisAlignment.start,
+                                              children: [
+                                                // Nombre + Tipo/Categoría
+                                                Expanded(
+                                                  child: Column(
+                                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                                    children: [
+                                                      Text(
+                                                        r.name,
+                                                        style: const TextStyle(
+                                                          fontWeight: FontWeight.bold,
+                                                          fontSize: 16,
+                                                        ),
+                                                        overflow: TextOverflow.ellipsis,
+                                                      ),
+                                                      const SizedBox(height: 2),
+                                                      Text(
+                                                        '$tipo • ${r.category.name}',
+                                                        style: TextStyle(
+                                                          fontSize: 12,
+                                                          color: Theme.of(context).colorScheme.onSurface,
+                                                        ),
+                                                      ),
+                                                    ],
+                                                  ),
+                                                ),
+
+                                                // Fecha a la derecha
+                                                Text(
+                                                  dateFormat.format(r.created_at),
+                                                  style: TextStyle(
+                                                    fontSize: 12,
+                                                    color: Colors.grey[500],
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+
+                                            const SizedBox(height: 4),
+
+                                            // Meta asociada (opcional)
+                                            if (r.goal != null)
+                                              Text(
+                                                'Meta: ${r.goal!.name} - Reservado: ${r.currency.symbol}${r.reserved_for_goal}',
+                                                style: TextStyle(
+                                                  fontSize: 12,
+                                                  color: Theme.of(context).colorScheme.primary,
+                                                  fontWeight: FontWeight.w600,
+                                                ),
+                                              ),
+
+                                            const SizedBox(height: 4),
+
+                                            // Monto
+                                            Text(
+                                              '${r.currency.symbol}${r.balance.toStringAsFixed(2)} ${r.currency.code}',
+                                              style: TextStyle(fontSize: 14),
+                                            ),
+                                          ],
+                                        ),
                                       ),
                                     ],
                                   ),
-                                  trailing: Text(
-                                    dateFormat.format(r.created_at),
-                                    style: const TextStyle(
-                                      fontSize: 14,
-                                      //color: Color.fromARGB(255, 51, 50, 50),
-                                    ),
-                                  ),
-                                  isThreeLine: true,
                                 ),
                               );
+
                             },
                           ),
                   ),

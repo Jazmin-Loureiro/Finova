@@ -16,12 +16,13 @@ return new class extends Migration
         Schema::create('goals', function (Blueprint $table) {
             $table->id();
             $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
-            $table->foreignId('category_id')->constrained('categories')->onDelete('cascade');
+            $table->foreignId('currency_id')->constrained('currencies')->onDelete('cascade'); // clave foránea a la tabla currencies
             $table->string('name');
             $table->decimal('target_amount', 12, 2);
             $table->date('date_limit');
             $table->decimal('balance', 12, 2)->default(0);
             $table->string('state')->default('in_progress'); // in_progress, completed,
+            $table->boolean('active')->default(true); 
             $table->timestamps();
         });
     }

@@ -18,6 +18,7 @@ class Register extends Model
         'moneyMaker_id',
         'name',
         'balance',
+        'reserved_for_goal',
         'currency_id',
         'type',
         'file',

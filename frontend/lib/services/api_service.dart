@@ -8,12 +8,13 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../models/money_maker.dart';
 import '../models/currency.dart';
 import '../models/register.dart';
+import '../models/goal.dart';
 
 // URLs base
 //const String baseUrl = "http://192.168.1.113:8000";
 //const String baseUrl = "http://192.168.0.117:8000";
-const String baseUrl = "http://192.168.1.45:8000";
-//const String baseUrl = "http://192.168.0.162:8000";// guardo el mio je
+//const String baseUrl = "http://192.168.1.45:8000";
+const String baseUrl = "http://192.168.0.162:8000";// guardo el mio je
 //const String baseUrl = "http://172.16.132.6:8000"; // IP de la facu
 const String apiUrl = "$baseUrl/api";
 // Instancia de almacenamiento seguro
@@ -349,6 +350,7 @@ Future<Map<String, dynamic>?> createTransaction(
   int? moneyMakerId,
   int? categoryId,
   int? currencyId,
+  int? goalId,
   File? file,
   bool? repetition,
   int? frequencyRepetition,
@@ -371,6 +373,9 @@ Future<Map<String, dynamic>?> createTransaction(
       ..fields['currency_id'] = currencyId?.toString() ?? ''
       ..fields['repetition'] = (repetition ?? false) ? '1' : '0';
 
+    if (goalId != null) {
+      request.fields['goal_id'] = goalId.toString();
+    }
     if (frequencyRepetition != null) {
       request.fields['frequency_repetition'] = frequencyRepetition.toString();
     }
@@ -398,7 +403,28 @@ Future<Map<String, dynamic>?> createTransaction(
     return {'error': 'No se pudo conectar con el servidor'};
   }
 }
-//////////////////////////////////////////////////////////////////
+
+///////////////////////////////////////////////////////////// Asignar dinero reservado a fuentes de dinero
+Future<Map<String, dynamic>> assignReservedToMoneyMakers(int goalId) async {
+  final token = await storage.read(key: 'token');
+  if (token == null) throw Exception('Usuario no logueado');
+
+  final url = Uri.parse('$apiUrl/goals/assign-reserved');
+  final response = await http.post(
+    url,
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': 'Bearer $token', // << token agregado
+    },
+    body: jsonEncode({'goal_id': goalId}),
+  );
+
+  if (response.statusCode == 200) {
+    return jsonDecode(response.body);
+  } else {
+    throw Exception('Error al asignar dinero reservado: ${response.body}');
+  }
+}
 
 Future<List<Register>> getRegistersByMoneyMaker(int moneyMakerId) async {
   final token = await storage.read(key: 'token');
@@ -498,6 +524,10 @@ Future<dynamic> updatePaymentSource(int id, String name, String type, double bal
 }
 
 
+//////////////////////////////////////////////////////
+//// Categorías
+/////////////////////////////////////////////////////
+
    ///////////////////////////////////////////////// // Agregar nueva categoría
     Future<bool> addCategory({
       required String name,
@@ -519,40 +549,43 @@ Future<dynamic> updatePaymentSource(int id, String name, String type, double bal
     }
 
 //////////////////////////////////////////// Obtener lista de categorías por tipo (ingreso/gasto)
-  Future<List<Map<String, dynamic>>> getCategories(String type) async {
-    final token = await storage.read(key: 'token');
-    if (token == null) return [];
-     final typeLower = type.toLowerCase(); // Convertir a minúsculas para consistencia
-    final res = await http.get(
-      Uri.parse('$apiUrl/categories?type=$typeLower'), // 
-      headers: jsonHeaders(token),
-    );
-    if (res.statusCode == 200) {
-      final data = jsonDecode(res.body);
-      return List<Map<String, dynamic>>.from(data['categories'] ?? []);
-    }
-    return [];
-  }
+  Future<List<Map<String, dynamic>>> getCategories({String? type}) async {
+  final token = await storage.read(key: 'token');
+  if (token == null) return [];
+  // Si tiene tipo, agregamos el parámetro; si no, pedimos todas
+  final url = type != null
+      ? '$apiUrl/categories?type=${type.toLowerCase()}'
+      : '$apiUrl/categories';
 
+  final res = await http.get(
+    Uri.parse(url),
+    headers: jsonHeaders(token),
+  );
+
+  if (res.statusCode == 200) {
+    final data = jsonDecode(res.body);
+    return List<Map<String, dynamic>>.from(data['categories'] ?? []);
+  } else {
+    throw Exception('Error al obtener categorías: ${res.statusCode}');
+  }
+}
+
+/////////////Editar categoria
+Future<bool> updateCategory({required int id, required Map<String, dynamic> data}) async {
+  final token = await storage.read(key: 'token');
+  if (token == null) return false;
+  final response = await http.put(
+    Uri.parse('$apiUrl/categories/$id'),
+    headers: jsonHeaders(token),
+    body: jsonEncode(data),
+  );
+  return response.statusCode == 200;
+}
+
+////////////////////////////////////////////////////
+/// Monedas
+/// ///////////////////////////////////////////////
   ////////////////////////////////////////  Obtener lista de monedas no necesita token
-    /*Future<List<dynamic>> getCurrencies() async {
-    final response = await http.get(Uri.parse('$baseUrl/api/currencies'),
-    headers: {
-      'Accept': 'application/json',
-    },);
-    if (response.statusCode == 200) {
-      return jsonDecode(response.body);
-    } else {
-      throw Exception('Error al cargar las monedas');
-    }
-  }
-
-  ///////////////////////////////////////// Método que ya devuelve la lista de monedas parseadas
-  Future<List<Currency>> getCurrenciesList() async {
-    final List<dynamic> data = await getCurrencies();
-    return data.map((e) => Currency.fromJson(e)).toList();
-  }
-  */
   Future<List<Currency>> getCurrencies() async {
   final response = await http.get(
     Uri.parse('$baseUrl/api/currencies'),
@@ -586,9 +619,10 @@ Future<dynamic> updatePaymentSource(int id, String name, String type, double bal
 Future<Map<String, dynamic>> getTransactionFormData(String type) async {
   // Traer categorías y fuentes de dinero + moneda base
   final results = await Future.wait([
-    getCategories(type),       // List<Map<String, dynamic>>
+    getCategories(type: type),       // List<Map<String, dynamic>>
     getMoneyMakersFull(),      // Map con moneyMakers y currency_base
     getCurrencies(),       // List<Currency>
+    getGoals()
   ]);
 
   final categories = results[0] as List<Map<String, dynamic>>;
@@ -596,6 +630,7 @@ Future<Map<String, dynamic>> getTransactionFormData(String type) async {
   final moneyMakers = moneyMakersData['moneyMakers'] as List<MoneyMaker>;
   final currencyCode = moneyMakersData['currency_base'] as String?;
   final currencies = results[2] as List<Currency>;
+  final goals = results[3] as List<Goal>;
 
   // Moneda por defecto
   final defaultCurrency = currencyCode != null
@@ -610,6 +645,7 @@ Future<Map<String, dynamic>> getTransactionFormData(String type) async {
     'moneyMakers': moneyMakers,
     'currencies': currencies,
     'defaultCurrency': defaultCurrency,
+    'goals': goals,
   };
 }
 
@@ -713,8 +749,61 @@ Future<Map<String, dynamic>> getTransactionFormData(String type) async {
     }
   }
  
-  
+  /////////////////////////////////////////////////////////////
+  ///Metas
+  /////////////////////////////////////////////////////////////
+  Future<List<Goal>> getGoals() async {
+    final token = await storage.read(key: 'token');
+    if (token == null) return [];
+    final res = await http.get(
+      Uri.parse('$apiUrl/goals'),
+      headers: jsonHeaders(token),
+    );
+    if (res.statusCode == 200) {
+      final data = jsonDecode(res.body);
+      return List<Goal>.from(data['goals']?.map((g) => Goal.fromJson(g)) ?? []);
+    }
+    throw Exception('Error al cargar metas (${res.statusCode})');
+  }
+////////////////////////////////////////////////////////// Crear nueva meta
+  Future <void> createGoal(Map<String, dynamic> goalData) async {
+      final token = await storage.read(key: 'token');
+      if (token == null) throw Exception('Usuario no logueado');
+      final res = await http.post(
+        Uri.parse('$apiUrl/goals'),
+        headers: jsonHeaders(token),
+        body: jsonEncode(goalData),
+      );
+      if (res.statusCode != 200 && res.statusCode != 201) {
+        throw Exception('Error al crear la meta: ${res.statusCode}');
+      }
+  }
 
+///////////////////////////////////////////////////////// Editar meta existente
+  Future <void> editGoal(int goalId, Map<String, dynamic> goalData) async {
+      final token = await storage.read(key: 'token');
+      if (token == null) throw Exception('Usuario no logueado');
+      final res = await http.put(
+        Uri.parse('$apiUrl/goals/$goalId'),
+        headers: jsonHeaders(token),
+        body: jsonEncode(goalData),
+      );
+      if (res.statusCode != 200) {
+        throw Exception('Error al editar la meta: ${res.statusCode}');
+      }
+  }
 
+///////////////////////////////////////////////////////// Desactivar meta existente // BorradoLogico 
+  Future <void> deleteGoal(int goalId) async {
+      final token = await storage.read(key: 'token'); 
+      if (token == null) throw Exception('Usuario no logueado');
+      final res = await http.delete(
+        Uri.parse('$apiUrl/goals/$goalId'),
+        headers: jsonHeaders(token),
+      );
+      if (res.statusCode != 200) {
+        throw Exception('Error al eliminar la meta: ${res.statusCode}');
+      }
+  }
 
 }

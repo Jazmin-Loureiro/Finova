@@ -6,6 +6,7 @@ import '../screens/configuration_screen.dart';
 import '../screens/challenge_screen.dart';
 import '../screens/currency_converter_screen.dart';
 import '../screens/export_reports_screen.dart';
+import '../screens/category/category_list.dart';
 
 class CustomDrawer extends StatelessWidget {
   final String currentRoute;
@@ -155,6 +156,12 @@ class CustomDrawer extends StatelessWidget {
                     title: 'Exportar Reportes',
                     routeName: 'report_export',
                     screen: const ExportReportsScreen(),
+                  ),
+                  buildMenuItem(
+                    icon: Icons.category_rounded	,
+                    title: 'Categorias',
+                    routeName: 'category_management',
+                    screen: const CategoryListScreen(),
                   ),
                 ],
               ),

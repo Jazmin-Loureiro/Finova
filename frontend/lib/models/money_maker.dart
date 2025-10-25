@@ -6,6 +6,7 @@ class MoneyMaker {
   final String type;
   final double balance;
   final double balanceConverted; // saldo convertido a moneda base
+  final double balance_reserved; // saldo reservado
   final String color; 
   final Currency? currency;
  // final String? currencyBase; // moneda base del usuario
@@ -18,6 +19,7 @@ class MoneyMaker {
     required this.type,
     required this.balance,
     required this.balanceConverted, // saldo convertido a moneda base
+    required this.balance_reserved,
     required this.color,
     this.currency ,
    // this.currencyBase, // moneda base del usuario
@@ -33,6 +35,7 @@ class MoneyMaker {
       currency: json['currency'] != null ? Currency.fromJson(json['currency']) : null,
       balance: double.tryParse(json['balance'].toString()) ?? 0.0,
       balanceConverted: double.tryParse(json['balanceConverted'].toString()) ?? 0.0,
+      balance_reserved: double.tryParse(json['balance_reserved'].toString()) ?? 0.0,
       color: json['color'] ?? 'FFFFFF',
     //currencyBase: json['currencyBase']?.toString(), // 🔹 convertir a String
     currencySymbol: json['currencySymbol']?.toString(), // 🔹 convertir a String

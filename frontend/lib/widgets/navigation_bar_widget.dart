@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import '../screens/money_maker_list_screen.dart';
-import '../screens/transaction_form_screen.dart';
+import '../screens/registers/transaction_form_screen.dart';
 import '../screens/home_screen.dart';
 import '../screens/user_screen.dart';
+import '../screens/goals/goals_list_screen.dart';
 
 /// Notch circular liso y simétrico (como un cuenco derretido)
 class SmoothCircularNotchedShape extends NotchedShape {
@@ -64,7 +65,14 @@ class NavigationBarWidget {
               ),
               IconButton(
                 icon: Icon(Icons.flag, color: scheme.primary),
-                onPressed: () {},
+                onPressed: () {
+                  Navigator.pushReplacement(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const GoalsListScreen(),
+                    ),
+                  );
+                },
               ),
               const SizedBox(width: 70),
               IconButton(

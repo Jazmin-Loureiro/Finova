@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_colorpicker/flutter_colorpicker.dart';
-import '../services/api_service.dart';
+import '../../services/api_service.dart';
+import 'package:frontend/models/category.dart';
 
 class CategoryFormScreen extends StatefulWidget {
   final String type; 
-  const CategoryFormScreen({super.key, required this.type});
+  final Category? category; // Categoría opcional para edición
+  const CategoryFormScreen({super.key, required this.type, this.category});
 
   @override
   State<CategoryFormScreen> createState() => _CategoryFormScreenState();
@@ -18,24 +20,36 @@ class _CategoryFormScreenState extends State<CategoryFormScreen> {
 
   final _formKey = GlobalKey<FormState>();
 
+  @override 
+  void initState() {
+    super.initState();
+    if (widget.category != null) {
+      nameController.text = widget.category!.name;
+      colorSelected = Color(int.parse(widget.category!.color.substring(1), radix: 16) + 0xFF000000);
+    }
+  }
+
 // Función para guardar la categoría
   void saveCategory() async {
     if (!_formKey.currentState!.validate()) return;
     final name = nameController.text.trim();
     final colorHex = '#${colorSelected!.toARGB32().toRadixString(16).substring(2)}';
-    final success = await api.addCategory(
-      name: name,
-      type: widget.type,
-      color: colorHex,
-    );
-    if (!mounted) return;
-    if (success) {
-      final newCategory = {
-        'name': name,
-        'type': widget.type,
-        'color': colorHex,
-      };
-      Navigator.pop(context, newCategory);
+    final data = {
+      'name': name,
+      'type': widget.type,
+      'color': colorHex,
+    };
+    bool success = false;
+    if (widget.category != null) {
+    // Actualizar categoría existente
+    success = await api.updateCategory(id: widget.category!.id, data: data);
+  } else {
+    // Crear nueva categoría
+    success = await api.addCategory(name: name, type: widget.type, color: colorHex );
+  }
+  if (!mounted) return;
+  if (success) {
+    Navigator.pop(context, data); // devolvemos la categoría recién guardada
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Error al guardar la categoría')),
@@ -73,10 +87,7 @@ class _CategoryFormScreenState extends State<CategoryFormScreen> {
 
               // Selector de color
               FormField<Color>(
-                validator: (value) {
-                  if (colorSelected == null) return 'Seleccione un color';
-                  return null;
-                },
+                validator: (value) { if (colorSelected == null) return 'Seleccione un color'; return null;},
                 builder: (state) {
                   return InputDecorator(
                     decoration: InputDecoration(
@@ -92,7 +103,7 @@ class _CategoryFormScreenState extends State<CategoryFormScreen> {
                             title: const Text('Elige un color'),
                             content: SingleChildScrollView(
                               child: BlockPicker(
-                                pickerColor: colorSelected ?? Colors.blue,
+                                pickerColor: colorSelected,
                                 onColorChanged: (color) {
                                   setState(() {
                                     colorSelected = color;

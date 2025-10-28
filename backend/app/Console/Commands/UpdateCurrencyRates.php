@@ -5,6 +5,7 @@ namespace App\Console\Commands;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Http;
 use App\Models\Currency;
+use App\Models\CurrencyRatesSnapshot;
 
 class UpdateCurrencyRates extends Command {
     /**
@@ -45,6 +46,12 @@ class UpdateCurrencyRates extends Command {
                 $currency->rate = $rate;
                 $currency->updated_at = $now;
                 $currency->save();
+
+                // Guardo un snapshot histórico solo si la moneda existe
+                CurrencyRatesSnapshot::create([
+                    'currency_id' => $currency->id,
+                    'rate' => $rate,
+                ]);
             }
         }
 

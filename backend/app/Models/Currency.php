@@ -38,7 +38,9 @@ class Currency extends Model
         return $this->hasMany(Register::class);
     }
 
-
+    public function snapshots() {
+            return $this->hasMany(CurrencyRateSnapshot::class);
+        }
 
     public function scopeCode($query, $code)
 {

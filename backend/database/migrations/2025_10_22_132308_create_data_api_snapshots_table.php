@@ -39,7 +39,18 @@ return new class extends Migration {
             if (!Schema::hasColumn('data_apis', 'status')) {
                 $table->string('status')->nullable()->after('fuente');
             }
-            $table->unique('name', 'data_apis_name_unique');
+            //$table->unique('name', 'data_apis_name_unique');
+            if (!Schema::hasColumn('data_apis', 'name')) {
+                $table->string('name')->unique('data_apis_name_unique');
+            } else {
+                // Evitar duplicar el índice si ya existe
+                $sm = Schema::getConnection()->getDoctrineSchemaManager();
+                $indexes = $sm->listTableIndexes('data_apis');
+                if (!array_key_exists('data_apis_name_unique', $indexes)) {
+                    $table->unique('name', 'data_apis_name_unique');
+                }
+            }
+
         });
     }
 

@@ -41,6 +41,12 @@ class Kernel extends ConsoleKernel
             ->weeklyOn(1, '07:30')
             ->runInBackground()
             ->withoutOverlapping();
+            
+        /** 
+         * Actualización de tasas de cambio
+         * Ejecuta cada 12 horas (a las 00:00 y 12:00) 
+        */
+        $schedule->command('currencies:update')->twiceDaily(0, 12);
     }
 
     /**

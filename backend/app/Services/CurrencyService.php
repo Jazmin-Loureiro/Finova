@@ -10,7 +10,6 @@ class CurrencyService
     /**
      * Obtiene la tasa de conversión desde $from a $to.
      * Actualiza la tabla currencies si es necesario.
-     */
     public static function getRate(string $from, string $to): float {
         $from = strtoupper(trim($from));
         $to   = strtoupper(trim($to));
@@ -66,6 +65,28 @@ class CurrencyService
 
         return round($rateTo / $rateFrom, 6);
     }
+    */
+    /**
+     * Obtiene la tasa de conversión desde $from a $to.
+     * Asume que la tabla currencies está actualizada.
+     */
+
+    public static function getRate(string $from, string $to): float
+{
+    $from = strtoupper(trim($from));
+    $to   = strtoupper(trim($to));
+
+    if ($from === $to) return 1.0;
+
+    $currencyFrom = Currency::where('code', $from)->first();
+    $currencyTo   = Currency::where('code', $to)->first();
+
+    if (!$currencyFrom || !$currencyTo) {
+        throw new \Exception("No se encontraron monedas $from o $to en la base.");
+    }
+
+    return round($currencyTo->rate / $currencyFrom->rate, 6);
+}
 
 
     /**

@@ -63,6 +63,11 @@ class RefreshDataApiCommand extends Command
     protected function refreshFrequent()
     {
         $this->warn("💱 Aún no se han definido servicios de divisas/cripto.");
+
+    // Llamamos a el comando existente para actualizar las monedas
+    $this->call('currencies:update');
+    $this->line("✅ Tasas de cambio actualizadas correctamente (grupo: frequent).");
+
     }
 
     /**

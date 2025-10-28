@@ -15,6 +15,7 @@ import '../models/goal.dart';
 //const String baseUrl = "http://192.168.0.117:8000"; // Jaz 2
 //const String baseUrl = "http://192.168.1.45:8000"; //Jaz 3
 const String baseUrl = "http://192.168.0.162:8000";// guardo el mio je
+//const String baseUrl = "http://127.0.0.1:8000"; //compu local
 //const String baseUrl = "http://172.16.132.6:8000"; // IP de la facu
 const String apiUrl = "$baseUrl/api";
 // Instancia de almacenamiento seguro

@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use App\Services\DataApi\BcraService;
 use App\Services\DataApi\CacheService;
 use App\Services\DataApi\InvestmentService;
+use App\Services\DataApi\MarketService;
 use App\Domain\Simulations\LoanSimulator;
 
 class SimulationController extends Controller
@@ -13,17 +14,17 @@ class SimulationController extends Controller
     protected BcraService $bcra;
     protected CacheService $cache;
     protected InvestmentService $investment;
+    protected MarketService $market;
 
-    public function __construct(BcraService $bcra, CacheService $cache, InvestmentService $investment)
+    public function __construct(BcraService $bcra, CacheService $cache, InvestmentService $investment, MarketService $market)
     {
         $this->bcra = $bcra;
         $this->cache = $cache;
         $this->investment = $investment;
+        $this->market = $market;
     }
 
-    /**
-     * 💳 Simula un préstamo personal usando la TNA del BCRA
-     */
+    /** 💳 Simulación de préstamo (BCRA TNA) */
     public function simulateLoan(Request $request)
     {
         $request->validate([
@@ -31,98 +32,83 @@ class SimulationController extends Controller
             'cuotas'  => 'required|integer|min:6|max:60',
         ]);
 
-        // 🔹 Obtenemos o refrescamos la tasa del BCRA (guardada en cache)
-        $tnaRecord = $this->cache->rememberOrRefresh(
-            'tasa_prestamos_personales',
-            'prestamo',
-            24,
-            fn() => [
-                'balance' => $this->bcra->getLoanRate(),
-                'fuente'  => 'BCRA',
-                'params'  => ['endpoint' => '/tasa_prestamos_personales'],
-            ]
-        );
-
-        $tna = (float) $tnaRecord->balance;
-
+        $tna = \App\Models\DataApi::where('name', 'tasa_prestamos_personales')->first()?->balance;
+        $ultimaActualizacion = \App\Models\DataApi::where('name', 'tasa_prestamos_personales')->first()?->updated_at;
         if (!$tna) {
-            return response()->json([
-                'error' => 'No se pudo obtener la tasa del BCRA. Intente más tarde.'
-            ], 503);
+            return response()->json(['error' => 'No se pudo obtener la tasa del BCRA'], 503);
         }
 
-        // 🔹 Ejecutar simulación (cálculo financiero)
-        $result = LoanSimulator::simulate(
-            (float) $request->capital,
-            (int) $request->cuotas,
-            $tna
-        );
-
-        // 🔹 Agregamos metadatos
-        $result['fuente'] = $tnaRecord->fuente;
-        $result['ultima_actualizacion'] = $tnaRecord->updated_at;
-        $result['endpoint'] = $tnaRecord->params['endpoint'] ?? null;
-
+        $result = LoanSimulator::simulate((float) $request->capital, (int) $request->cuotas, $tna);
+        $result['tna'] = $tna;
+        $result['ultima_actualizacion'] = $ultimaActualizacion;
+        $result['fuente'] = 'BCRA';
         return response()->json($result);
     }
 
-    /**
-     * 💰 Simula un plazo fijo tradicional (en pesos)
-     * usando la TNA promedio del BCRA y comparándola con la inflación.
-     */
+    /** 💰 Plazo fijo */
     public function simulatePlazoFijo(Request $request)
     {
-        $request->validate([
-            'monto' => 'nullable|numeric|min:1000|max:100000000',
-            'dias'  => 'nullable|integer|min:30|max:365',
-        ]);
+        $monto = (float) $request->input('monto', 100000);
+        $dias  = (int) $request->input('dias', 30);
 
-        $monto = $request->input('monto', 100000);
-        $dias  = $request->input('dias', 30);
-
-        // 🔹 Ejecutar simulación principal
+        // 👉 Simulación base
         $data = $this->investment->simulatePlazoFijo($monto, $dias);
 
         if (!$data) {
-            return response()->json([
-                'error' => 'No se pudo obtener la tasa de plazo fijo del BCRA.'
-            ], 503);
+            return response()->json(['error' => 'No se pudo calcular el plazo fijo'], 503);
         }
 
-        // 🔹 Comparativa coherente con la TNA usada en la simulación
+        // 🧮 Comparativa con inflación (usa la TNA del cálculo anterior)
         $comparativa = $this->investment->comparePlazoFijoVsInflacion($data['tna'] ?? null);
         $data['comparativa'] = $comparativa;
 
-        // 🔹 Obtener timestamp de actualización BCRA
-        $tnaRecord = $this->cache->rememberOrRefresh(
-            'tasa_plazo_fijo',
-            'plazo_fijo',
-            24,
-            fn() => [
-                'balance' => $this->bcra->getPlazoFijoRate(),
-                'fuente'  => 'BCRA',
-                'params'  => ['endpoint' => '/tasa_plazo_fijo'],
-            ]
-        );
-
-        // 🔹 Adjuntar última actualización al resultado
-        $data['ultima_actualizacion'] = $tnaRecord->updated_at ?? now();
+        // 📅 Incluimos fecha de actualización de BCRA si existe
+        $tnaRow = \App\Models\DataApi::where('name', 'tasa_plazo_fijo')->first();
+        if ($tnaRow && $tnaRow->updated_at) {
+            $data['ultima_actualizacion'] = $tnaRow->updated_at->toIso8601String();
+        }
 
         return response()->json($data);
     }
 
-    /**
-     * 📈 Comparativa Plazo Fijo vs Inflación (uso independiente)
-     * Mantiene compatibilidad con endpoints antiguos.
-     */
-    public function comparePlazoFijoVsInflacion()
-    {
-        $data = $this->investment->comparePlazoFijoVsInflacion();
 
-        return $data
-            ? response()->json($data)
-            : response()->json([
-                'error' => 'No se pudieron obtener los datos de inflación o tasa de plazo fijo.'
-            ], 503);
+    /** 📈 Cripto */
+    public function simulateCrypto(Request $request)
+    {
+        $data = $this->investment->simulateCrypto(
+            $request->input('monto', 1000),
+            $request->input('coin', 'bitcoin'),
+            $request->input('dias', 30)
+        );
+        return $data ? response()->json($data) : response()->json(['error' => 'No se pudo calcular la simulación cripto'], 503);
+    }
+
+    /** 📊 Acciones */
+    public function simulateStock(Request $request)
+    {
+        $data = $this->investment->simulateStock(
+            $request->input('monto', 1000),
+            $request->input('symbol', 'AAPL'),
+            $request->input('dias', 30)
+        );
+        return $data ? response()->json($data) : response()->json(['error' => 'No se pudo calcular la simulación de acción'], 503);
+    }
+
+    /** 💵 Bonos */
+    public function simulateBond(Request $request)
+    {
+        $data = $this->investment->simulateBond(
+            $request->input('monto', 1000),
+            $request->input('bono', 'TLT'),
+            $request->input('dias', 30)
+        );
+        return $data ? response()->json($data) : response()->json(['error' => 'No se pudo calcular la simulación de bono'], 503);
+    }
+
+    /** 🔍 Cotización directa en vivo */
+    public function marketQuote(string $type, string $symbol)
+    {
+        $data = $this->market->getQuote($type, $symbol);
+        return $data ? response()->json($data) : response()->json(['error' => 'No se encontró el activo'], 404);
     }
 }

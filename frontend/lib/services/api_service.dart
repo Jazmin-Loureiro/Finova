@@ -724,23 +724,17 @@ Future<Map<String, dynamic>> getTransactionFormData(String type) async {
       final res = await http.post(
         Uri.parse('$apiUrl/simulate/loan'),
         headers: jsonHeaders(),
-        body: jsonEncode({
-          'capital': capital,
-          'cuotas': cuotas,
-        }),
+        body: jsonEncode({'capital': capital, 'cuotas': cuotas}),
       );
-
-      if (res.statusCode == 200) {
-        return jsonDecode(res.body);
-      } else {
-        return {'error': 'No se pudo realizar la simulación'};
-      }
+      return res.statusCode == 200
+          ? jsonDecode(res.body)
+          : {'error': 'No se pudo realizar la simulación'};
     } catch (e) {
       return {'error': 'Error de conexión con el servidor'};
     }
   }
 
-  // 🔹 Simular plazo fijo (ya incluye comparativa desde el backend)
+  // 🔹 Plazo fijo (GET, tal como tu backend)
   Future<Map<String, dynamic>?> simulatePlazoFijo({
     required double monto,
     required int dias,
@@ -750,35 +744,95 @@ Future<Map<String, dynamic>> getTransactionFormData(String type) async {
         Uri.parse('$apiUrl/simulate/plazo-fijo?monto=$monto&dias=$dias'),
         headers: jsonHeaders(),
       );
-
-      if (res.statusCode == 200) {
-        return jsonDecode(res.body);
-      } else {
-        return {'error': 'No se pudo realizar la simulación'};
-      }
+      return res.statusCode == 200
+          ? jsonDecode(res.body)
+          : {'error': 'No se pudo realizar la simulación'};
     } catch (e) {
       return {'error': 'Error de conexión con el servidor'};
     }
   }
 
-  // 🔹 Obtener comparativa Plazo Fijo vs Inflación (si la necesitás por separado)
-  Future<Map<String, dynamic>?> simulateComparativa() async {
+  // 🔹 Cripto (POST con body JSON)
+  Future<Map<String, dynamic>?> simulateCrypto({
+    required double monto,
+    required int dias,
+    String coin = 'bitcoin',
+  }) async {
+    try {
+      final res = await http.post(
+        Uri.parse('$apiUrl/simulate/crypto'),
+        headers: jsonHeaders(),
+        body: jsonEncode({'monto': monto, 'dias': dias, 'coin': coin}),
+      );
+      return res.statusCode == 200
+          ? jsonDecode(res.body)
+          : {'error': 'No se pudo realizar la simulación'};
+    } catch (_) {
+      return {'error': 'Error de conexión con el servidor'};
+    }
+  }
+
+  // 🔹 Acciones (POST con body JSON)
+  Future<Map<String, dynamic>?> simulateStock({
+    required double monto,
+    required int dias,
+    String symbol = 'AAPL',
+  }) async {
+    try {
+      final res = await http.post(
+        Uri.parse('$apiUrl/simulate/stock'),
+        headers: jsonHeaders(),
+        body: jsonEncode({'monto': monto, 'dias': dias, 'symbol': symbol}),
+      );
+      return res.statusCode == 200
+          ? jsonDecode(res.body)
+          : {'error': 'No se pudo realizar la simulación'};
+    } catch (_) {
+      return {'error': 'Error de conexión con el servidor'};
+    }
+  }
+
+  // 🔹 Bonos (POST con body JSON)
+  Future<Map<String, dynamic>?> simulateBond({
+    required double monto,
+    required int dias,
+    String bono = 'TLT',
+  }) async {
+    try {
+      final res = await http.post(
+        Uri.parse('$apiUrl/simulate/bond'),
+        headers: jsonHeaders(),
+        body: jsonEncode({'monto': monto, 'dias': dias, 'bono': bono}),
+      );
+      return res.statusCode == 200
+          ? jsonDecode(res.body)
+          : {'error': 'No se pudo realizar la simulación'};
+    } catch (_) {
+      return {'error': 'Error de conexión con el servidor'};
+    }
+  }
+
+  // 🔹 Cotización actual (GET, correcto)
+  Future<Map<String, dynamic>?> marketQuote({
+    required String type,
+    required String symbol,
+  }) async {
     try {
       final res = await http.get(
-        Uri.parse('$apiUrl/simulate/comparativa'),
+        Uri.parse('$apiUrl/market/$type/$symbol'),
         headers: jsonHeaders(),
       );
-
-      if (res.statusCode == 200) {
-        return jsonDecode(res.body);
-      } else {
-        return {'error': 'No se pudo obtener la comparativa'};
-      }
+      return res.statusCode == 200
+          ? jsonDecode(res.body)
+          : {'error': 'No se pudo obtener la cotización'};
     } catch (e) {
       return {'error': 'Error de conexión con el servidor'};
     }
   }
+
+
 }
+
 
 
 

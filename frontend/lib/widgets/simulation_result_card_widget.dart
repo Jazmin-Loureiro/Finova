@@ -35,23 +35,23 @@ class _SimulationResultCardState extends State<SimulationResultCard>
   late Animation<double> _animation;
   late double porcentajeInteres;
 
+  double _asDouble(dynamic v, [double fallback = 0]) {
+    if (v == null) return fallback;
+    if (v is num) return v.toDouble();
+    if (v is String) return double.tryParse(v) ?? fallback;
+    return fallback;
+  }
+
+
   @override
   void initState() {
     super.initState();
 
-    final tipo = widget.resultado['tipo']?.toString();
-    double monto = 0;
-    double montoFinal = 0;
+    // ✅ cálculo unificado para todos los tipos
+    final monto = (widget.resultado['monto_inicial'] ?? 0).toDouble();
+    final montoFinal = (widget.resultado['monto_final_estimado'] ?? monto).toDouble();
 
-    if (tipo == 'plazo_fijo') {
-      monto = (widget.resultado['monto'] ?? 0).toDouble();
-      montoFinal = (widget.resultado['monto_final'] ?? monto).toDouble();
-    } else {
-      monto = (widget.resultado['capital'] ?? 0).toDouble();
-      montoFinal = (widget.resultado['total_a_pagar'] ?? monto).toDouble();
-    }
-
-    final interes = (montoFinal - monto).clamp(0, double.infinity).toDouble();
+    final interes = (montoFinal - monto).clamp(0, double.infinity);
     porcentajeInteres = monto > 0 ? (interes / monto) : 0;
 
     _controller = AnimationController(
@@ -65,6 +65,7 @@ class _SimulationResultCardState extends State<SimulationResultCard>
     _controller.forward();
   }
 
+
   @override
   void dispose() {
     _controller.dispose();
@@ -77,96 +78,318 @@ class _SimulationResultCardState extends State<SimulationResultCard>
 
     // 🔸 BLOQUE PLAZO FIJO (sin cambios)
     if (tipo == 'plazo_fijo') {
-      final comp = r['comparativa'] ?? {};
-      final estado = comp['estado'] ?? 'neutral';
+    final formatter = NumberFormat.currency(locale: 'es_AR', symbol: '\$');
 
-      String estadoTexto;
-      Color estadoColor;
-      IconData estadoIcon;
+    final double montoInicial = (r['monto_inicial'] ?? 0).toDouble();
+    final double montoFinal   = (r['monto_final_estimado'] ?? 0).toDouble();
+    final double interes      = (montoFinal - montoInicial).clamp(0, double.infinity);
+    final double rendimiento  = (r['rendimiento_estimado_%'] ?? 0).toDouble();
 
-      if (estado == 'positivo') {
-        estadoTexto = 'El plazo fijo le gana a la inflación';
-        estadoColor = Colors.greenAccent.shade400;
-        estadoIcon = Icons.trending_up;
-      } else if (estado == 'negativo') {
-        estadoTexto = 'La inflación supera al plazo fijo';
-        estadoColor = Colors.redAccent.shade200;
-        estadoIcon = Icons.trending_down;
-      } else {
-        estadoTexto = 'Plazo fijo e inflación están equilibrados';
-        estadoColor = Colors.grey;
-        estadoIcon = Icons.drag_handle;
-      }
+    // 👇 Comparativa (se mantiene)
+    final comp   = r['comparativa'] ?? {};
+    final estado = comp['estado'] ?? 'neutral';
 
-      final double monto = (r['monto'] ?? 0).toDouble();
-      final double montoFinal = (r['monto_final'] ?? 0).toDouble();
-      final double interes = (montoFinal - monto).clamp(0, double.infinity);
-      final double porcentaje = monto > 0 ? (interes / monto) * 100 : 0;
+    String estadoTexto;
+    Color estadoColor;
+    IconData estadoIcon;
 
-      return Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _infoLine('Monto invertido', formatter.format(monto), textColor),
-          _infoLine('Interés generado', formatter.format(interes), textColor),
-          _infoLine('Monto total a recibir', formatter.format(montoFinal), textColor),
-          _infoLine('Porcentaje de intereses', '${porcentaje.toStringAsFixed(2)}%', textColor),
-          const SizedBox(height: 10),
-          _infoLine('TNA aplicada', '${r['tna']}%', textColor),
-          _infoLine('Días de inversión', '${r['dias']}', textColor),
-          const Divider(height: 25),
-          Text(
-            'Comparativa con inflación',
-            style: TextStyle(
-              color: primary,
-              fontWeight: FontWeight.bold,
-              fontSize: 16,
-            ),
+    if (estado == 'positivo') {
+      estadoTexto = 'El plazo fijo le gana a la inflación';
+      estadoColor = Colors.greenAccent.shade400;
+      estadoIcon  = Icons.trending_up;
+    } else if (estado == 'negativo') {
+      estadoTexto = 'La inflación supera al plazo fijo';
+      estadoColor = Colors.redAccent.shade200;
+      estadoIcon  = Icons.trending_down;
+    } else {
+      estadoTexto = 'Plazo fijo e inflación están equilibrados';
+      estadoColor = Colors.grey;
+      estadoIcon  = Icons.drag_handle;
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _infoLine('Monto invertido', formatter.format(montoInicial), textColor),
+        _infoLine('Interés generado', formatter.format(interes), textColor),
+        _infoLine('Monto total a recibir', formatter.format(montoFinal), textColor),
+        _infoLine('Rendimiento estimado', '${rendimiento.toStringAsFixed(2)}%', textColor),
+
+        const SizedBox(height: 10),
+        _infoLine('TNA aplicada', '${r['tna']}%', textColor),
+        _infoLine('Días de inversión', '${r['dias']}', textColor),
+
+        const Divider(height: 25),
+        Text(
+          'Comparativa con inflación',
+          style: TextStyle(
+            color: primary,
+            fontWeight: FontWeight.bold,
+            fontSize: 16,
           ),
-          const SizedBox(height: 10),
-          _infoLine('TNA utilizada', '${r['tna']}%', textColor),
-          _infoLine('Inflación mensual', '${comp['inflacion'] ?? 'N/D'}%', textColor),
-          _infoLine('Diferencia', '${comp['resultado'] ?? 'N/D'}%', textColor),
-          const SizedBox(height: 12),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-            decoration: BoxDecoration(
-              color: estadoColor.withOpacity(0.12),
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: Row(
-              children: [
-                Icon(estadoIcon, color: estadoColor, size: 22),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    estadoTexto,
-                    style: TextStyle(
-                      color: estadoColor,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 14,
-                    ),
+        ),
+        const SizedBox(height: 10),
+        _infoLine('TNA utilizada', '${r['tna']}%', textColor),
+        _infoLine('Inflación mensual', '${comp['inflacion'] ?? 'N/D'}%', textColor),
+        _infoLine('Diferencia', '${comp['resultado'] ?? 'N/D'}%', textColor),
+
+        const SizedBox(height: 12),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+          decoration: BoxDecoration(
+            color: estadoColor.withOpacity(0.12),
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: Row(
+            children: [
+              Icon(estadoIcon, color: estadoColor, size: 22),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  estadoTexto,
+                  style: TextStyle(
+                    color: estadoColor,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 14,
                   ),
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
-          const Divider(height: 25),
-          Text(
-            r['descripcion'] ?? '',
-            style: TextStyle(color: textColor.withOpacity(0.7)),
+        ),
+
+        const Divider(height: 25),
+        Text(
+          r['descripcion'] ?? '',
+          style: TextStyle(color: textColor.withOpacity(0.7)),
+        ),
+        const SizedBox(height: 12),
+        Text(
+          'Fuente: ${r['fuente'] ?? 'BCRA'}',
+          style: TextStyle(
+            color: textColor.withOpacity(0.6),
+            fontSize: 12.5,
+            fontStyle: FontStyle.italic,
           ),
-          const SizedBox(height: 12),
+        ),
+      ],
+    );
+  }
+
+  //Cripto
+  if (tipo == 'cripto') {
+  final double montoInicialUsd = _asDouble(r['monto_inicial']);
+  final double montoInicialArs = _asDouble(r['monto_inicial_ars']);
+  final double montoFinalUsd   = _asDouble(r['monto_final_estimado_usd']);
+  final double montoFinalArs   = _asDouble(r['monto_final_estimado_ars']);
+  final double precioUsd       = _asDouble(r['precio_usd']);
+  final double cantidad        = _asDouble(r['cantidad_comprada']);
+  final double rendimiento     = _asDouble(r['rendimiento_estimado_%']);
+
+  final extras = r['extras'] ?? {};
+  final var24h = _asDouble(extras['change_percent']);        // 24h
+  final var7d  = _asDouble(extras['change_percent_7d']);     // 7d
+  final var30d = _asDouble(extras['change_percent_30d']);    // 30d
+
+  final int dias = (r['dias'] is int)
+      ? r['dias'] as int
+      : int.tryParse('${r['dias'] ?? 0}') ?? 0;
+
+  // 👉 Elegimos qué variación mostrar según días
+  double variacionElegida;
+  String variacionLabel;
+  if (dias <= 2) {
+    variacionElegida = var24h;
+    variacionLabel = 'Variación 24h';
+  } else if (dias <= 8) {
+    variacionElegida = var7d;
+    variacionLabel = 'Variación 7d';
+  } else {
+    variacionElegida = var30d;
+    variacionLabel = 'Variación 30d';
+  }
+
+  final double gananciaUsd = (montoFinalUsd - montoInicialUsd);
+
+  return Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      Row(
+        children: [
           Text(
-            'Los valores son estimativos, calculados con la TNA promedio del BCRA.',
-            style: TextStyle(
-              color: textColor.withOpacity(0.6),
-              fontSize: 12.5,
-              fontStyle: FontStyle.italic,
-            ),
+            'Criptomoneda',
+            style: TextStyle(fontWeight: FontWeight.bold, color: primary, fontSize: 15),
+          ),
+          const SizedBox(width: 6),
+          const InfoIcon(
+            title: '¿Qué es una criptomoneda?',
+            message: 'Son activos digitales descentralizados cuyo precio cambia según oferta y demanda.',
           ),
         ],
-      );
-    }
+      ),
+      const SizedBox(height: 10),
+
+      _infoLine('Activo', '${r['activo'] ?? 'N/D'}', textColor),
+      _infoLine('Cotización actual', '\$${precioUsd.toStringAsFixed(2)} USD', textColor),
+      _infoLine('Monto invertido', '\$${montoInicialUsd.toStringAsFixed(2)} USD (~\$${montoInicialArs.toStringAsFixed(0)} ARS)', textColor),
+      _infoLine('Cantidad adquirida', '$cantidad ${r['activo'] ?? ''}', textColor),
+
+      // 👉 Variación principal según días
+      _infoLine(variacionLabel, '${variacionElegida.toStringAsFixed(2)}%', textColor),
+
+      // 👉 “Todas las variaciones” en un desplegable opcional
+      ExpansionTile(
+        tilePadding: EdgeInsets.zero,
+        title: Text('Ver variaciones 24h / 7d / 30d',
+            style: TextStyle(color: textColor.withOpacity(0.85), fontWeight: FontWeight.w600)),
+        children: [
+          _infoLine('Variación 24h', '${var24h.toStringAsFixed(2)}%', textColor),
+          _infoLine('Variación 7d',  '${var7d.toStringAsFixed(2)}%',  textColor),
+          _infoLine('Variación 30d', '${var30d.toStringAsFixed(2)}%', textColor),
+        ],
+      ),
+
+      // 👉 Ganancia debajo de variaciones (como pediste)
+      _infoLine('Ganancia estimada',
+          '\$${gananciaUsd.toStringAsFixed(2)} USD (~\$${(montoFinalArs - montoInicialArs).toStringAsFixed(0)} ARS)',
+          textColor),
+
+      _infoLine('Monto estimado final',
+          '\$${montoFinalUsd.toStringAsFixed(2)} USD (~\$${montoFinalArs.toStringAsFixed(0)} ARS)',
+          textColor),
+
+      _infoLine('Rendimiento estimado', '${rendimiento.toStringAsFixed(2)}%', textColor),
+
+      const SizedBox(height: 12),
+      Text(r['descripcion'] ?? '', style: TextStyle(color: textColor.withOpacity(0.7))),
+      const SizedBox(height: 8),
+    ],
+  );
+}
+
+
+  if (tipo == 'accion') {
+  final double montoInicialUsd = _asDouble(r['monto_inicial']);
+  final double montoInicialArs = _asDouble(r['monto_inicial_ars']);
+  final double montoFinalUsd   = _asDouble(r['monto_final_estimado_usd']);
+  final double montoFinalArs   = _asDouble(r['monto_final_estimado_ars']);
+  final double precioUsd       = _asDouble(r['precio_usd']);
+  final double cantidad        = _asDouble(r['cantidad_comprada']);
+  final double rendimiento     = _asDouble(r['rendimiento_estimado_%']);
+
+  final extras = r['extras'] ?? {};
+  final varDiaria = _asDouble(extras['change_percent']);       // diaria
+  final varYTD    = _asDouble(extras['percent_change_ytd']);   // YTD
+
+  final double gananciaUsd = (montoFinalUsd - montoInicialUsd);
+
+  return Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      Row(
+        children: [
+          Text(
+            'Acciones bursátiles',
+            style: TextStyle(fontWeight: FontWeight.bold, color: primary, fontSize: 15),
+          ),
+          const SizedBox(width: 6),
+          const InfoIcon(
+            title: '¿Qué son las acciones?',
+            message: 'Representan una parte de la propiedad de una empresa. Su precio refleja expectativas del mercado.',
+          ),
+        ],
+      ),
+      const SizedBox(height: 10),
+
+      _infoLine('Acción', '${r['symbol'] ?? 'N/D'}', textColor),
+      _infoLine('Cotización actual', '\$${precioUsd.toStringAsFixed(2)} USD', textColor),
+      _infoLine('Monto invertido', '\$${montoInicialUsd.toStringAsFixed(2)} USD (~\$${montoInicialArs.toStringAsFixed(0)} ARS)', textColor),
+      _infoLine('Cantidad adquirida', '$cantidad ${r['symbol'] ?? ''}', textColor),
+
+      _infoLine('Variación diaria', '${varDiaria.toStringAsFixed(2)}%', textColor),
+      _infoLine('Variación YTD',    '${varYTD.toStringAsFixed(2)}%',    textColor),
+
+      _infoLine('Ganancia estimada',
+          '\$${gananciaUsd.toStringAsFixed(2)} USD (~\$${(montoFinalArs - montoInicialArs).toStringAsFixed(0)} ARS)',
+          textColor),
+
+      _infoLine('Monto estimado final',
+          '\$${montoFinalUsd.toStringAsFixed(2)} USD (~\$${montoFinalArs.toStringAsFixed(0)} ARS)',
+          textColor),
+
+      _infoLine('Rendimiento estimado', '${rendimiento.toStringAsFixed(2)}%', textColor),
+
+      const SizedBox(height: 12),
+      Text(r['descripcion'] ?? '', style: TextStyle(color: textColor.withOpacity(0.7))),
+      const SizedBox(height: 8),
+      Text('Fuente: ${r['fuente'] ?? 'TwelveData'}',
+          style: TextStyle(color: textColor.withOpacity(0.6), fontSize: 12.5, fontStyle: FontStyle.italic)),
+    ],
+  );
+}
+
+
+  if (tipo == 'bono') {
+  final double montoInicialUsd = _asDouble(r['monto_inicial']);
+  final double montoInicialArs = _asDouble(r['monto_inicial_ars']);
+  final double montoFinalUsd   = _asDouble(r['monto_final_estimado_usd']);
+  final double montoFinalArs   = _asDouble(r['monto_final_estimado_ars']);
+  final double precioUsd       = _asDouble(r['precio_usd']);
+  final double cantidad        = _asDouble(r['cantidad_comprada']);
+  final double rendimiento     = _asDouble(r['rendimiento_estimado_%']);
+
+  final extras   = r['extras'] ?? {};
+  final varDia   = _asDouble(extras['change_percent']);       // diaria
+  final varYTD   = _asDouble(extras['percent_change_ytd']);   // YTD
+  final divYield = _asDouble(extras['dividend_yield']);       // dividend
+
+  final double gananciaUsd = (montoFinalUsd - montoInicialUsd);
+
+  return Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      Row(
+        children: [
+          Text(
+            'Bonos / ETFs',
+            style: TextStyle(fontWeight: FontWeight.bold, color: primary, fontSize: 15),
+          ),
+          const SizedBox(width: 6),
+          const InfoIcon(
+            title: '¿Qué es un bono?',
+            message: 'Es deuda emitida por gobiernos o empresas; el precio varía con tasas e inflaciones.',
+          ),
+        ],
+      ),
+      const SizedBox(height: 10),
+
+      _infoLine('Bono', '${r['symbol'] ?? 'N/D'}', textColor),
+      _infoLine('Cotización actual', '\$${precioUsd.toStringAsFixed(2)} USD', textColor),
+      _infoLine('Monto invertido', '\$${montoInicialUsd.toStringAsFixed(2)} USD (~\$${montoInicialArs.toStringAsFixed(0)} ARS)', textColor),
+      _infoLine('Cantidad adquirida', '$cantidad ${r['symbol'] ?? ''}', textColor),
+
+      _infoLine('Variación diaria', '${varDia.toStringAsFixed(2)}%', textColor),
+      _infoLine('Variación YTD',    '${varYTD.toStringAsFixed(2)}%',    textColor),
+      _infoLine('Rendimiento por dividendo', '${divYield.toStringAsFixed(2)}%', textColor),
+
+      _infoLine('Ganancia estimada',
+          '\$${gananciaUsd.toStringAsFixed(2)} USD (~\$${(montoFinalArs - montoInicialArs).toStringAsFixed(0)} ARS)',
+          textColor),
+
+      _infoLine('Monto estimado final',
+          '\$${montoFinalUsd.toStringAsFixed(2)} USD (~\$${montoFinalArs.toStringAsFixed(0)} ARS)',
+          textColor),
+
+      _infoLine('Rendimiento estimado', '${rendimiento.toStringAsFixed(2)}%', textColor),
+
+      const SizedBox(height: 12),
+      Text(r['descripcion'] ?? '', style: TextStyle(color: textColor.withOpacity(0.7))),
+      const SizedBox(height: 8),
+      Text('Fuente: ${r['fuente'] ?? 'TwelveData'}',
+          style: TextStyle(color: textColor.withOpacity(0.6), fontSize: 12.5, fontStyle: FontStyle.italic)),
+    ],
+  );
+}
 
     // 🔹 BLOQUE PRÉSTAMO ADAPTADO CON INFOICON
     return Column(
@@ -316,6 +539,8 @@ class _SimulationResultCardState extends State<SimulationResultCard>
     final surface = theme.colorScheme.surface;
     final textColor = theme.colorScheme.onSurface;
 
+
+
     return AnimatedBuilder(
       animation: _animation,
       builder: (context, _) {
@@ -414,23 +639,31 @@ class _SimulationResultCardState extends State<SimulationResultCard>
 
   Widget _infoLine(String label, String value, Color textColor) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 5),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      padding: const EdgeInsets.symmetric(vertical: 6),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(label,
-              style: TextStyle(
-                color: textColor.withOpacity(0.8),
-                fontWeight: FontWeight.w500,
-              )),
-          Text(value,
-              style: TextStyle(
-                color: textColor,
-                fontWeight: FontWeight.bold,
-                fontSize: 15,
-              )),
+          Text(
+            label,
+            style: TextStyle(
+              color: textColor.withOpacity(0.8),
+              fontWeight: FontWeight.w600,
+              fontSize: 14,
+            ),
+          ),
+          const SizedBox(height: 3),
+          Text(
+            value,
+            style: TextStyle(
+              color: textColor,
+              fontWeight: FontWeight.bold,
+              fontSize: 15,
+            ),
+          ),
         ],
       ),
     );
   }
+
+
 }

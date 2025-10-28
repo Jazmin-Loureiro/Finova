@@ -42,8 +42,8 @@ class DataApiReadController extends Controller
         ]);
     }
 
-        /**
-     * 📂 Obtener todos los registros por tipo (tasa, inversion, indicador, etc.)
+    /**
+     * 📂 Obtener todos los registros por tipo (cripto, accion, bono, tasa, indicador, etc.)
      */
     public function byType(string $type)
     {
@@ -65,16 +65,23 @@ class DataApiReadController extends Controller
         return response()->json([
             'type' => $normType,
             'count' => $rows->count(),
-            'items' => $rows->map(fn($r) => [
-                'name'         => $r->name,
-                'balance'      => $r->balance,
-                'fuente'       => $r->fuente,
-                'status'       => $r->status,
-                'updated_at'   => $r->updated_at,
-                'last_fetched' => $r->last_fetched_at,
-                'params'       => $r->params,
-            ]),
+            'items' => $rows->map(function ($r) {
+                $params = $r->params ?? [];
+
+                return [
+                    'name'          => $r->name,
+                    'symbol'        => $params['symbol'] ?? null,
+                    'label'         => $params['name'] ?? null,
+                    'price_usd'     => $r->balance,
+                    'change_percent'=> $params['change_percent'] ?? null,
+                    'fuente'        => $r->fuente,
+                    'status'        => $r->status,
+                    'updated_at'    => optional($r->updated_at)->toIso8601String(),
+                    'last_fetched'  => optional($r->last_fetched_at)->toIso8601String(),
+                ];
+            }),
         ]);
     }
+
 
 }

@@ -12,7 +12,6 @@ use App\Http\Controllers\UserChallengeController;
 use App\Http\Controllers\GamificationController;
 use App\Http\Controllers\SimulationController;
 use App\Http\Controllers\DataApiReadController;
-use App\Http\Controllers\InvestmentController;
 
 
 use App\Http\Controllers\CurrencyController;
@@ -103,8 +102,17 @@ Route::middleware('auth:sanctum')->group(function () {
 
         // 📈 Comparativa Plazo Fijo vs Inflación
         Route::get('/comparativa', [SimulationController::class, 'comparePlazoFijoVsInflacion']);
+
+        // 🔷 CRIPTO / ACCIONES / BONOS
+        Route::post('/crypto', [SimulationController::class, 'simulateCrypto']);
+        Route::post('/stock',  [SimulationController::class, 'simulateStock']);
+        Route::post('/bond',   [SimulationController::class, 'simulateBond']);
+
     });
 
     Route::get('/dataapi/current/{name}', [DataApiReadController::class, 'current']);
     Route::get('/dataapi/history/{name}', [DataApiReadController::class, 'history']);
     Route::get('/dataapi/by-type/{type}', [DataApiReadController::class, 'byType']);
+
+    // 🔍 Cotización directa en vivo
+    Route::get('/market/{type}/{symbol}', [SimulationController::class, 'marketQuote']);

@@ -6,6 +6,8 @@ use Illuminate\Database\Eloquent\Model;
 
 class DataApi extends Model
 {
+    protected $table = 'data_apis';
+
     protected $fillable = [
         'name',
         'type',
@@ -18,8 +20,9 @@ class DataApi extends Model
     ];
 
     protected $casts = [
-        'data' => 'array',
-        'params' => 'array',
-        'last_fetched_at' => 'datetime',
+        'data'            => 'array',     // Guarda/rescata JSON completo del API
+        'params'          => 'array',     // Guarda/rescata campos clave (variaciones, ROI, etc.)
+        'balance'         => 'float',     // Convierte balance automáticamente a float
+        'last_fetched_at' => 'datetime',  // Permite comparaciones con Carbon
     ];
 }

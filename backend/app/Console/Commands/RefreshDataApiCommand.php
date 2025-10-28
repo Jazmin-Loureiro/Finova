@@ -41,55 +41,145 @@ class RefreshDataApiCommand extends Command
     }
 
     /**
-     * 🔹 Grupo diario: tasas, inversiones simples y comparativas
-     */
-    protected function refreshDaily()
-    {
-        // Tasas base del BCRA
-        $this->updateBcraRate('tasa_prestamos_personales', '/tasa_prestamos_personales');
-        $this->updateBcraRate('tasa_plazo_fijo', '/tasa_depositos_30_dias');
-        $this->updateBcraRate('tasa_uva', '/uva');
+ * 🔹 Grupo diario: tasas base del BCRA e indicadores comparativos reales.
+ * Guarda tasas oficiales e incluye la comparativa real entre inflación y TNA.
+ */
+protected function refreshDaily()
+{
+    $this->info("📅 Actualizando datos diarios del BCRA...");
 
-        // Simulaciones de inversión
-        $this->updateInvestment('sim_prestamo_personal', fn() => $this->investment->simulatePlazoFijo(), 'prestamo');
-        $this->updateInvestment('sim_plazo_fijo', fn() => $this->investment->simulatePlazoFijo(), 'inversion');
-        $this->updateInvestment('sim_ahorro_dolar', fn() => $this->investment->simulateAhorroDolar(), 'inversion');
-        $this->updateInvestment('comparativa_pf_inflacion', fn() => $this->investment->comparePlazoFijoVsInflacion(), 'inversion');
+    /* ---------------- TASAS BASE ---------------- */
+    $tasas = [
+        ['name' => 'tasa_prestamos_personales', 'endpoint' => '/tasa_prestamos_personales'],
+        ['name' => 'tasa_plazo_fijo',           'endpoint' => '/tasa_depositos_30_dias'],
+        ['name' => 'tasa_uva',                  'endpoint' => '/uva'],
+    ];
+
+    foreach ($tasas as $t) {
+        $this->updateBcraRate($t['name'], $t['endpoint']);
     }
+
+    /* ---------------- INDICADORES ---------------- */
+    $indicadores = [
+        ['name' => 'inflacion_mensual',    'endpoint' => '/inflacion_mensual_oficial'],
+        ['name' => 'inflacion_interanual', 'endpoint' => '/inflacion_interanual_oficial'],
+    ];
+
+    foreach ($indicadores as $ind) {
+        $this->updateBcraRate($ind['name'], $ind['endpoint']);
+    }
+
+    /* ---------------- COMPARATIVA REAL PF vs INFLACIÓN ---------------- */
+    $this->updateInvestment(
+        'comparativa_pf_inflacion',
+        fn() => $this->investment->comparePlazoFijoVsInflacion(),
+        'indicador'
+    );
+
+    $this->line("✅ Tasas, inflación y comparativa actualizadas correctamente.");
+}
+
+
+        /**
+         * 🔹 Grupo frecuente: cotizaciones de criptos, acciones, bonos y divisas
+         * Se actualiza cada pocas horas (3–6 h).
+         */
+        protected function refreshFrequent()
+        {
+            $this->info("💱 Actualizando cotizaciones frecuentes (Criptos, Acciones y Bonos)...");
+
+            // 🔸 Instanciamos el servicio unificado
+            $market = app(\App\Services\DataApi\MarketService::class);
+
+            // 🔹 Activos a consultar
+            $assets = [
+                // 🔷 Criptos (CoinGecko)
+                ['type' => 'cripto', 'symbol' => 'bitcoin'],
+                ['type' => 'cripto', 'symbol' => 'ethereum'],
+                ['type' => 'cripto', 'symbol' => 'solana'],
+                ['type' => 'cripto', 'symbol' => 'dogecoin'],
+                ['type' => 'cripto', 'symbol' => 'cardano'],
+
+                // 🔷 Acciones (TwelveData)
+                ['type' => 'accion', 'symbol' => 'AAPL'],
+                ['type' => 'accion', 'symbol' => 'MSFT'],
+                ['type' => 'accion', 'symbol' => 'TSLA'],
+                ['type' => 'accion', 'symbol' => 'GOOGL'],
+
+                // 🔷 Bonos / ETF internacionales (TwelveData)
+                ['type' => 'bono', 'symbol' => 'TLT'],
+                ['type' => 'bono', 'symbol' => 'BND'],
+                ['type' => 'bono', 'symbol' => 'LQD'],
+                ['type' => 'bono', 'symbol' => 'IEF'],
+            ];
+
+            // 🔹 Obtenemos todas las cotizaciones
+            $quotes = $market->getBatch($assets);
+
+            // 🔸 Guardamos cada resultado con su tipo real
+            foreach ($quotes as $data) {
+
+                // 🔹 Normalizar nombre del símbolo para las criptos
+                $symbol = strtolower($data['symbol'] ?? '');
+                $type   = $data['type'] ?? 'mercado';
+
+                if ($type === 'cripto') {
+                    $map = [
+                        'btc'  => 'bitcoin',
+                        'eth'  => 'ethereum',
+                        'sol'  => 'solana',
+                        'doge' => 'dogecoin',
+                        'ada'  => 'cardano',
+                    ];
+                    $normalized = $map[$symbol] ?? $symbol;
+                } else {
+                    $normalized = $symbol;
+                }
+
+                // 🔹 Generar el nombre coherente para guardar en DataApi
+                $key = "market_{$type}_{$normalized}";
+
+                // 🔹 Guardar el registro en cache con nombre limpio
+                $this->updateInvestment($key, fn() => [
+                    'balance' => $data['price_usd'] ?? null,
+                    'fuente'  => $data['fuente'] ?? 'N/D',
+                    'params'  => $data,
+                ], $type);
+
+                usleep(200000); // 🕐 Delay pequeño entre guardados
+            }
+
+            // Llamamos a el comando existente para actualizar las monedas
+                $this->call('currencies:update');
+                $this->line("✅ Tasas de cambio actualizadas correctamente (grupo: frequent).");
+
+
+            $this->line("✅ Cotizaciones reales actualizadas correctamente con MarketService unificado.");
+        }
+
 
     /**
-     * 🔹 Grupo frecuente: divisas y cripto (por ahora pendiente)
-     */
-    protected function refreshFrequent()
-    {
-        $this->warn("💱 Aún no se han definido servicios de divisas/cripto.");
+ * 🔹 Grupo semanal: indicadores macroeconómicos (BCRA)
+ * Actualiza datos que no cambian a diario ni en tiempo real.
+ */
+protected function refreshWeekly()
+{
+    $this->info("📊 Actualizando indicadores semanales del BCRA...");
 
-    // Llamamos a el comando existente para actualizar las monedas
-    $this->call('currencies:update');
-    $this->line("✅ Tasas de cambio actualizadas correctamente (grupo: frequent).");
+    $indicadores = [
+        ['name' => 'inflacion_interanual',       'endpoint' => '/inflacion_interanual_oficial'],
+        ['name' => 'reservas_internacionales',   'endpoint' => '/reservas'],
+        ['name' => 'merval',                     'endpoint' => '/merval'],
+    ];
 
+    foreach ($indicadores as $ind) {
+        $this->updateBcraRate($ind['name'], $ind['endpoint']);
+        sleep(1); // ⚙️ pequeño delay para evitar saturar el endpoint
     }
 
-    /**
-     * 🔹 Grupo semanal: indicadores macroeconómicos
-     */
-    protected function refreshWeekly()
-    {
-        $this->info("📊 Actualizando indicadores semanales del BCRA...");
+    $this->line("✅ Indicadores semanales actualizados correctamente.");
+}
 
-        $this->updateBcraRate('inflacion_interanual', '/inflacion_interanual_oficial');
-        $this->updateBcraRate('reservas_internacionales', '/reservas');
-        $this->updateBcraRate('merval', '/merval');
-
-        $this->line("✅ Indicadores semanales actualizados correctamente.");
-    }
-
-    protected function refreshAll()
-    {
-        $this->refreshDaily();
-        $this->refreshFrequent();
-        $this->refreshWeekly();
-    }
 
     /**
      * 🔸 Actualiza un valor base del BCRA (tasas, indicadores, etc.)
@@ -138,25 +228,29 @@ class RefreshDataApiCommand extends Command
     /**
      * 🔸 Actualiza una simulación o inversión calculada
      */
-    protected function updateInvestment(string $name, \Closure $callback, string $type = 'inversion')
-    {
-        $this->info("→ Actualizando inversión: {$name}");
+    protected function updateInvestment(string $name, \Closure $fetch, string $type = 'inversion')
+{
+    $this->line("→ Actualizando inversión: {$name}");
 
-        $record = $this->cache->rememberOrRefresh($name, $type, 24, function () use ($callback) {
-            $data = $callback();
+    $data = $fetch();
 
-            return [
-                'balance' => $data['resultado']
-                            ?? $data['monto_final']
-                            ?? $data['monto_usd']
-                            ?? null,
-                'fuente'  => $data['fuente'] ?? 'BCRA',
-                'params'  => $data,
-            ];
-        });
-
-        $value  = $record->balance ?? ($record->data['balance'] ?? 'N/D');
-        $status = $record->status ?? 'no_data';
-        $this->line("   - {$record->name}: {$value}% ({$record->fuente}) [{$status}] actualizado a las {$record->updated_at}");
+    // 🔹 Si existe precio, lo usamos como balance
+    if (is_array($data)) {
+        if (isset($data['price_usd'])) {
+            $data['balance'] = $data['price_usd'];
+        } elseif (isset($data['price'])) {
+            $data['balance'] = $data['price'];
+        } elseif (isset($data['ultimo_precio'])) {
+            $data['balance'] = $data['ultimo_precio'];
+        }
     }
+
+    $ttl = config('dataapi.ttl.frequent', 3);
+    $record = $this->cache->rememberOrRefresh($name, $type, $ttl, fn() => $data);
+
+    $status = strtoupper($record->status);
+    $value  = $record->balance !== null ? round($record->balance, 2) . ' USD' : 'N/D%';
+    $this->line("   - {$name}: {$value} ({$record->fuente}) [{$status}] actualizado a las " . now());
+}
+
 }

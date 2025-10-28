@@ -6,6 +6,8 @@ use Illuminate\Database\Eloquent\Model;
 
 class DataApiSnapshot extends Model
 {
+    protected $table = 'data_api_snapshots';
+
     protected $fillable = [
         'name',
         'type',
@@ -21,10 +23,11 @@ class DataApiSnapshot extends Model
     ];
 
     protected $casts = [
-        'data' => 'array',
-        'params' => 'array',
-        'raw_response' => 'array',
-        'fetched_at' => 'datetime',
-        'is_current' => 'boolean',
+        'balance'       => 'float',     // 🔹 igual que en DataApi
+        'data'          => 'array',     // 🔹 bloque extendido completo (CoinGecko/TwelveData)
+        'params'        => 'array',     // 🔹 resumen de campos clave
+        'raw_response'  => 'array',     // 🔹 si guardás el JSON literal de la API
+        'fetched_at'    => 'datetime',  // 🔹 para orden cronológico y formateo Carbon
+        'is_current'    => 'boolean',   // 🔹 fácil filtrado en queries
     ];
 }

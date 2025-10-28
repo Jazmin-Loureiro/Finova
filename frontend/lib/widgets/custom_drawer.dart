@@ -8,6 +8,8 @@ import '../screens/currency_converter_screen.dart';
 import '../screens/export_reports_screen.dart';
 import '../screens/loan_simulator_screen.dart';
 import '../screens/investment_simulator_screen.dart';
+import '../screens/category/category_list.dart';
+
 class CustomDrawer extends StatelessWidget {
   final String currentRoute;
 
@@ -156,6 +158,12 @@ class CustomDrawer extends StatelessWidget {
                     title: 'Exportar Reportes',
                     routeName: 'export',
                     screen: const ExportReportsScreen(),
+                  ),
+                  buildMenuItem(
+                    icon: Icons.category_rounded	,
+                    title: 'Categorias',
+                    routeName: 'category_management',
+                    screen: const CategoryListScreen(),
                   ),
                   buildMenuItem(
                     icon: Icons.request_quote_rounded,

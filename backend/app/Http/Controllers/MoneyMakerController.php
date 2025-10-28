@@ -34,6 +34,7 @@ class MoneyMakerController extends Controller
                 'type' => $m->type,
                 'balance' => $m->balance,
                 'balanceConverted' => round($balanceConverted, 2),
+                'balance_reserved' => $m->balance_reserved,
                 'color' => $m->color,
                 'currency' => $m->currency,
             ];

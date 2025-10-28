@@ -10,6 +10,7 @@ use App\Http\Controllers\UserController;
 use App\Http\Controllers\ChallengeController;
 use App\Http\Controllers\UserChallengeController;
 use App\Http\Controllers\GamificationController;
+use App\Http\Controllers\GoalController;
 use App\Http\Controllers\SimulationController;
 use App\Http\Controllers\DataApiReadController;
 
@@ -69,6 +70,10 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/categories', [CategoryController::class, 'store']);
     // Obtener todas las categorias
     Route::get('/categories', [CategoryController::class, 'index']);
+    // Actualizar categoria
+    Route::put('/categories/{id}', [CategoryController::class, 'update']);
+    // Eliminar categoria
+    Route::delete('/categories/{id}', [CategoryController::class, 'destroy']);
 
 ////////////////////////////////////////////////////////////////////////////////
     // Reenviar email de verificación que todavia no se usa
@@ -88,7 +93,13 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // 🔹 Perfil de gamificación (nuevo endpoint principal)
     Route::get('/gamification/profile', [GamificationController::class, 'profile']);
-
+////////////////////////////////////////////////////////////////
+    //Metas
+    Route::get('goals', [GoalController::class, 'index']);
+    Route::post('goals', [GoalController::class, 'store']);
+    Route::post('goals/assign-reserved', [GoalController::class, 'assignReservedToMoneyMakers']);
+    Route::put('goals/{goal}', [GoalController::class, 'update']);
+    Route::delete('goals/{goal}', [GoalController::class, 'delete']);
     });
 
     // 📊 Rutas para simulaciones de préstamos e inversiones

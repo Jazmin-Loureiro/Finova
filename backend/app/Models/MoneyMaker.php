@@ -17,6 +17,7 @@ class MoneyMaker extends Model
         'name',
         'type',
         'balance',
+        'balance_reserved',
         'currency_id',
         'color',
     ];
@@ -35,8 +36,8 @@ class MoneyMaker extends Model
         return $this->belongsTo(User::class);
     }
 
-    public function registers()
-    {
-        return $this->hasMany(Register::class);
-    }
+   public function registers()
+{
+    return $this->hasMany(Register::class, 'moneyMaker_id'); // aquí la columna correcta
+}
 }

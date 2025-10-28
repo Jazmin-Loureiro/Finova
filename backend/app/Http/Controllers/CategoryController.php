@@ -60,9 +60,22 @@ class CategoryController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function update(Request $request, $id)
-    {
-        //
+    public function update(Request $request, $id) {
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'color' => 'required|string|max:7', 
+        ]);
+        $category = Category::where('id', $id)
+            ->where('user_id', $request->user()->id)
+            ->first();
+
+        if (!$category) {
+            return response()->json(['message' => 'Categoría no encontrada'], 404);
+        }
+        $category->name = $request->name;
+        $category->color = $request->color;
+        $category->save();
+        return response()->json(['message' => 'Categoría actualizada con éxito', 'data' => $category], 200);
     }
 
     /**

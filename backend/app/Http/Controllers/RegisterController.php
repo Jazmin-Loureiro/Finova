@@ -8,6 +8,7 @@ use App\Services\CurrencyService;
 use App\Models\MoneyMaker;
 use Illuminate\Http\Request;
 use App\Models\Currency;
+use App\Models\Goal;
 
 class RegisterController extends Controller {
     /**
@@ -40,64 +41,32 @@ class RegisterController extends Controller {
             'name' => 'nullable|string|max:255',
         ]);
 
-        $filePath = $request->hasFile('file') ? $request->file('file')->store('uploads', 'public') : null;
-
         $user = $request->user();
+        $service = app(\App\Services\RegisterService::class);
 
-        // Buscar moneda por ID
-        $currency = Currency::findOrFail($request->currency_id);
-        $fromCurrency = $currency->code;         // código de la moneda del registro
-        $toCurrency   = $user->currency->code;   // código de la moneda base del usuario
-        $rate = $fromCurrency === $toCurrency ? 1.0 : CurrencyService::getRate($fromCurrency, $toCurrency);
-        $amountInBaseCurrency = $request->balance * $rate;
+            try {
+                $register = $service->createRegister($request, $user);
+                $service->updateBalances($register, $user); // actualizo los balances relacionados a meta y MoneyMaker
 
-        // Crear registro
-        try {
-            $register = $user->registers()->create([
-                'type' => $request->type,
-                'balance' => $request->balance,
-                'file' => $filePath,
-                'name' => $request->name,
-                'category_id' => $request->category_id,
-                'moneyMaker_id' => $request->moneyMaker_id,
-                'currency_id' => $currency->id,
-                'repetition' => $request->repetition ?? 0,
-                'frequency_repetition' => $request->frequency_repetition ?? 0,
-                'goal_id' => $request->goal_id,
-            ]);
-        } catch (\Exception $e) {
-            return response()->json([
-                'error' => 'No se pudo crear el registro',
-                'details' => $e->getMessage()
-            ], 500);
-        }
+                $register->load(['currency', 'category']);
 
-        // Actualizar saldo de MoneyMaker
-        $moneyMaker = MoneyMaker::findOrFail($request->moneyMaker_id);
-        $moneyMaker->balance += $register->type === 'income' ? $register->balance : -$register->balance;
-        $moneyMaker->save();
+            } catch (\Exception $e) {
+                return response()->json([
+                    'error' => 'No se pudo crear el registro',
+                    'details' => $e->getMessage()
+                ], 500);
+            }
 
-        // Actualizar saldo del usuario (en su moneda base)
-        $user->balance += $register->type === 'income'
-            ? $amountInBaseCurrency
-            : -$amountInBaseCurrency;
-        $user->save();
-        // Cargar relaciones necesarias
-        $register->load(['currency', 'category']);
-        
-        // --- 🔹 Recalcular progreso y obtener recompensas (si se completó algo)
-        $rewards = app(\App\Services\ChallengeProgressService::class)
-            ->recomputeForUserWithRewards($user);
+            $rewards = app(\App\Services\ChallengeProgressService::class)
+                ->recomputeForUserWithRewards($user);
 
-
-        // ✅ Recién ahora respondemos
         return response()->json([
             'message' => 'Registro creado con éxito',
             'data' => $register,
-            'moneyMaker' => $moneyMaker,
-            'rewards' => $rewards, // 👈 novedades de puntos / level / badge (si completó algo)
-        ], 201);
-    }
+            'rewards' => $rewards,
+            'goal' => $register['goal'] ?? null,
+            ], 201);
+        }
 
     /**
      * Display the specified resource.
@@ -112,7 +81,7 @@ class RegisterController extends Controller {
 
     public function getByMoneyMaker($moneyMakerId) {
         $user = auth()->user();
-        $registers = Register::with('currency', 'category' ) // carga relación
+        $registers = Register::with('currency', 'category', 'goal' ) // carga relación
             ->where('user_id', $user->id)
             ->where('moneyMaker_id', $moneyMakerId)
             ->orderBy('created_at', 'desc')

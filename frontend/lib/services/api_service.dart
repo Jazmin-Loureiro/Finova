@@ -1,5 +1,6 @@
 import 'dart:io';
 //import 'package:flutter/material.dart';
+import 'package:frontend/models/investment_rate.dart';
 import 'package:path/path.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
@@ -924,7 +925,17 @@ Future<Map<String, dynamic>> getTransactionFormData(String type) async {
     }
   }
 
-
+ Future<List<InvestmentRate>> getInvestmentRates() async {
+    final response = await http.get(
+      Uri.parse('$apiUrl/soap/investment-rates'),
+    );
+    if (response.statusCode == 200) {
+      final data = json.decode(response.body)['data']['rates'] as List;
+      return data.map((json) => InvestmentRate.fromJson(json)).toList();
+    } else {
+      throw Exception('Error al cargar las tasas');
+    }
+  }
 }
 
 

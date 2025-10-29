@@ -13,8 +13,9 @@ use App\Http\Controllers\GamificationController;
 use App\Http\Controllers\GoalController;
 use App\Http\Controllers\SimulationController;
 use App\Http\Controllers\DataApiReadController;
-
-
+///////////////////////////////////////////////////
+use App\Http\Controllers\ServicesSoap\SoapWrapperController;
+////////////////////////////////////////////////////
 use App\Http\Controllers\CurrencyController;
 
 
@@ -127,3 +128,12 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // 🔍 Cotización directa en vivo
     Route::get('/market/{type}/{symbol}', [SimulationController::class, 'marketQuote']);
+
+
+///////////////////////////////////////////// FRAMEWORK SOAP /////////////////////////////////////////////
+    Route::get('/soap/investment-rates', [SoapWrapperController::class, 'getInvestmentRates']);
+
+
+use App\Http\Controllers\ServicesSoap\ServicesSoapController;
+
+Route::any('/soap', [ServicesSoapController::class, 'handle']);

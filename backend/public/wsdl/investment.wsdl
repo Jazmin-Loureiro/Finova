@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions name="InvestmentService"
+             targetNamespace="http://example.com/investment"
+             xmlns:tns="http://example.com/investment"
+             xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/"
+             xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+             xmlns="http://schemas.xmlsoap.org/wsdl/">
+
+  <types>
+    <xsd:schema targetNamespace="http://example.com/investment">
+      <!-- Tipo InvestmentRate -->
+      <xsd:complexType name="InvestmentRate">
+        <xsd:sequence>
+          <xsd:element name="id" type="xsd:int"/>
+          <xsd:element name="name" type="xsd:string"/>
+          <xsd:element name="type" type="xsd:string"/>
+          <xsd:element name="balance" type="xsd:double"/>
+        </xsd:sequence>
+      </xsd:complexType>
+
+      <!-- Request y Response -->
+      <xsd:element name="getAllDataRequest" type="xsd:anyType"/>
+      <xsd:element name="getAllDataResponse">
+        <xsd:complexType>
+          <xsd:sequence>
+            <xsd:element name="rates" minOccurs="0" maxOccurs="unbounded">
+              <xsd:complexType>
+                <xsd:sequence>
+                  <xsd:element name="id" type="xsd:int"/>
+                  <xsd:element name="name" type="xsd:string"/>
+                  <xsd:element name="type" type="xsd:string"/>
+                  <xsd:element name="balance" type="xsd:double"/>
+                </xsd:sequence>
+              </xsd:complexType>
+            </xsd:element>
+          </xsd:sequence>
+        </xsd:complexType>
+      </xsd:element>
+    </xsd:schema>
+  </types>
+
+  <!-- Mensajes -->
+  <message name="GetAllDataRequest">
+    <part name="parameters" element="tns:getAllDataRequest"/>
+  </message>
+
+  <message name="GetAllDataResponse">
+    <part name="parameters" element="tns:getAllDataResponse"/>
+  </message>
+
+  <!-- PortType -->
+  <portType name="InvestmentPortType">
+    <operation name="getAllData">
+      <input message="tns:GetAllDataRequest"/>
+      <output message="tns:GetAllDataResponse"/>
+    </operation>
+  </portType>
+
+  <!-- Binding -->
+  <binding name="InvestmentBinding" type="tns:InvestmentPortType">
+    <soap:binding style="document" transport="http://schemas.xmlsoap.org/soap/http"/>
+    <operation name="getAllData">
+      <soap:operation soapAction="urn:getAllData"/>
+      <input><soap:body use="literal"/></input>
+      <output><soap:body use="literal"/></output>
+    </operation>
+  </binding>
+
+  <!-- Servicio -->
+  <service name="InvestmentService">
+    <port name="InvestmentPort" binding="tns:InvestmentBinding">
+      <soap:address location="http://127.0.0.1:8000/soap"/>
+    </port>
+  </service>
+</definitions>

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:frontend/screens/Soap/investment_rates_screen.dart';
 
 // 🔹 Importá tus pantallas reales
 import '../screens/dashboard_screen.dart';
@@ -176,6 +177,12 @@ class CustomDrawer extends StatelessWidget {
                     title: 'Simular inversiones',
                     routeName: 'investment_simulation',
                     screen: const InvestmentSimulatorScreen(),
+                  ),
+                   buildMenuItem(
+                    icon: Icons.list,
+                    title: 'Lista de Inversiones',
+                    routeName: 'investment_list',
+                    screen: const InvestmentRatesScreen(),
                   ),
                 ],
               ),

@@ -142,7 +142,7 @@ class _GoalFormScreenState extends State<GoalFormScreen> {
                         labelText: 'Moneda',
                         border: OutlineInputBorder(),
                       ),
-                value: selectedCurrency,
+                initialValue: selectedCurrency,
                 items: currencies
                     .map((c) => DropdownMenuItem(
                           value: c,

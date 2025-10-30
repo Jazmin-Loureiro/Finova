@@ -213,7 +213,7 @@ class _UserFormScreenState extends State<UserFormScreen> {
                 isLoadingCurrencies
                     ? const CircularProgressIndicator()
                     : DropdownButtonFormField<Currency>(
-                        value: selectedCurrency,
+                        initialValue: selectedCurrency,
                         decoration: _inputDecoration("Moneda base"),
                         items: currencies
                             .map((c) => DropdownMenuItem(

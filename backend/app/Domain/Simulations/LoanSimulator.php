@@ -58,17 +58,23 @@ class LoanSimulator
         $cft = ($total / $capital - 1) * 100;
 
         return [
-            'capital' => round($capital, 2),
-            'cuotas' => $cuotas,
-            'tna' => round($tna, 2),
-            'tasa_mensual' => round($i * 100, 2),
-            'cuota_mensual' => round($cuota, 2),
-            'total_a_pagar' => round($total, 2),
-            'intereses_totales' => round($intereses, 2),
-            'cft_estimado' => round($cft, 2),
-            'fuente' => 'BCRA',
-            'mensaje' => 'Simulación informativa. No constituye una oferta real de crédito.',
-            'detalle_cuotas' => $detalle, // 👈 nuevo
-        ];
+        'capital' => round($capital, 2),
+        'cuotas' => $cuotas,
+        'tna' => round($tna, 2),
+        'tasa_mensual' => round($i * 100, 2),
+        'cuota_mensual' => round($cuota, 2),
+        'total_a_pagar' => round($total, 2),
+        'intereses_totales' => round($intereses, 2),
+        'cft_estimado' => round($cft, 2),
+        'fuente' => 'BCRA',
+        'mensaje' => 'Simulación informativa. No constituye una oferta real de crédito.',
+        'detalle_cuotas' => $detalle,
+
+        // 👇 NUEVO BLOQUE COMPATIBLE (sin romper nada)
+        'tipo' => 'prestamo',
+        'monto_inicial' => round($capital, 2),
+        'monto_final_estimado' => round($total, 2),
+    ];
+
     }
 }

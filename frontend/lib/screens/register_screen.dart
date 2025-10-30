@@ -278,7 +278,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       isLoadingCurrencies
                           ? const CircularProgressIndicator()
                           : DropdownButtonFormField<Currency>(
-                          value: currencyBase ?? (currencyBases.isNotEmpty ? currencyBases.first : null), // CAMBIO: valor inicial como Currency
+                          initialValue: currencyBase ?? (currencyBases.isNotEmpty ? currencyBases.first : null), // CAMBIO: valor inicial como Currency
                           items: currencyBases
                               .map((c) => DropdownMenuItem(
                                     value: c,

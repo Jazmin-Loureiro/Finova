@@ -44,26 +44,46 @@ class _SimulationResultCardState extends State<SimulationResultCard>
 
 
   @override
-  void initState() {
-    super.initState();
+  @override
+void initState() {
+  super.initState();
 
-    // ✅ cálculo unificado para todos los tipos
-    final monto = (widget.resultado['monto_inicial'] ?? 0).toDouble();
-    final montoFinal = (widget.resultado['monto_final_estimado'] ?? monto).toDouble();
+  final r = widget.resultado;
+  double monto = 0;
+  double montoFinal = 0;
 
-    final interes = (montoFinal - monto).clamp(0, double.infinity);
-    porcentajeInteres = monto > 0 ? (interes / monto) : 0;
-
-    _controller = AnimationController(
-      vsync: this,
-      duration: const Duration(seconds: 2),
-    );
-
-    _animation = Tween<double>(begin: 0, end: porcentajeInteres)
-        .animate(CurvedAnimation(parent: _controller, curve: Curves.easeOut));
-
-    _controller.forward();
+  switch (r['tipo']) {
+    case 'plazo_fijo':
+      monto = _asDouble(r['monto_inicial']);
+      montoFinal = _asDouble(r['monto_final_estimado']);
+      break;
+    case 'cripto':
+    case 'accion':
+    case 'bono':
+      monto = _asDouble(r['monto_inicial']);
+      montoFinal = _asDouble(r['monto_final_estimado_usd']);
+      break;
+    case 'prestamo': // no está explícito en el backend, lo agregás así
+    default:
+      monto = _asDouble(r['capital']);
+      montoFinal = _asDouble(r['total_a_pagar']);
+      break;
   }
+
+  final interes = (montoFinal - monto).clamp(0, double.infinity);
+  porcentajeInteres = monto > 0 ? (interes / monto) : 0;
+
+  _controller = AnimationController(
+    vsync: this,
+    duration: const Duration(seconds: 2),
+  );
+
+  _animation = Tween<double>(begin: 0, end: porcentajeInteres)
+      .animate(CurvedAnimation(parent: _controller, curve: Curves.easeOut));
+
+  _controller.forward();
+}
+
 
 
   @override

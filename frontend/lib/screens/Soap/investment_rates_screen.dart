@@ -15,6 +15,31 @@ class _InvestmentRatesScreenState extends State<InvestmentRatesScreen> {
   List<InvestmentRate> rates = [];
   bool isLoading = true;
 
+  // 🔹 Nombres amigables
+  final Map<String, String> prettyNames = {
+    'tasa_prestamos_personales': 'Tasa de Préstamos Personales',
+    'tasa_plazo_fijo': 'Tasa de Plazo Fijo',
+    'tasa_uva': 'Tasa UVA',
+    'inflacion_mensual': 'Inflación Mensual',
+    'inflacion_interanual': 'Inflación Interanual',
+    'comparativa_pf_inflacion': 'Comparativa PF vs Inflación',
+    'market_cripto_bitcoin': 'Bitcoin (BTC)',
+    'market_cripto_ethereum': 'Ethereum (ETH)',
+    'market_cripto_solana': 'Solana (SOL)',
+    'market_cripto_dogecoin': 'Dogecoin (DOGE)',
+    'market_cripto_cardano': 'Cardano (ADA)',
+    'market_accion_aapl': 'Apple (AAPL)',
+    'market_accion_msft': 'Microsoft (MSFT)',
+    'market_accion_tsla': 'Tesla (TSLA)',
+    'market_accion_googl': 'Google (GOOGL)',
+    'market_bono_tlt': 'Bono TLT',
+    'market_bono_bnd': 'Bono BND',
+    'market_bono_lqd': 'Bono LQD',
+    'market_bono_ief': 'Bono IEF',
+    'reservas_internacionales': 'Reservas Internacionales',
+    'merval': 'Índice Merval',
+  };
+
   @override
   void initState() {
     super.initState();
@@ -36,6 +61,72 @@ class _InvestmentRatesScreenState extends State<InvestmentRatesScreen> {
     }
   }
 
+  IconData _getIcon(String name, String type) {
+    if (name.contains('reservas')) return Icons.savings_outlined;
+    if (name.contains('merval')) return Icons.trending_up_outlined;
+    if (name.contains('inflacion_mensual')) return Icons.trending_flat_outlined;
+    if (name.contains('inflacion_interanual')) return Icons.show_chart_outlined;
+    if (name.contains('comparativa_pf_inflacion')) return Icons.compare_arrows_outlined;
+    if (name.contains('tasa_prestamos_personales')) return Icons.account_balance_wallet_outlined;
+
+    switch (type.toLowerCase()) {
+      case 'cripto':
+        return Icons.currency_bitcoin_outlined;
+      case 'accion':
+        return Icons.show_chart_outlined;
+      case 'bono':
+        return Icons.account_balance_outlined;
+      case 'tasa':
+        return Icons.percent_outlined;
+      default:
+        return Icons.info_outline;
+    }
+  }
+
+  Color _getColor(String name, String type) {
+    if (name.contains('reservas')) return Colors.teal;
+    if (name.contains('merval')) return Colors.indigo;
+    if (name.contains('inflacion')) return Colors.redAccent;
+    if (name.contains('comparativa')) return Colors.amber[800]!;
+    if (name.contains('prestamos')) return Colors.deepOrangeAccent;
+
+    switch (type.toLowerCase()) {
+      case 'cripto':
+        return Colors.orangeAccent;
+      case 'accion':
+        return Colors.blueAccent;
+      case 'bono':
+        return Colors.green;
+      case 'tasa':
+        return Colors.purpleAccent;
+      default:
+        return Colors.grey;
+    }
+  }
+
+  /// 🔹 Determina el formato del valor según el nombre
+  String _formatValue(InvestmentRate rate) {
+    final value = rate.balance;
+    final name = rate.name;
+    final type = rate.type;
+
+    // Porcentajes
+    if (name.contains('tasa_') ||
+        name.contains('inflacion') ||
+        name.contains('comparativa_pf_inflacion') ||
+        name.contains('merval')) {
+      return '${value.toStringAsFixed(2)}%';
+    }
+
+    // En dólares
+    if (type == 'bono' || type == 'accion' || type == 'cripto' || name.contains('reservas')) {
+      return '\$${value.toStringAsFixed(2)} USD';
+    }
+
+    // Por defecto: pesos
+    return '\$${value.toStringAsFixed(2)} ARS';
+  }
+
   @override
   Widget build(BuildContext context) {
     return CustomScaffold(
@@ -47,13 +138,42 @@ class _InvestmentRatesScreenState extends State<InvestmentRatesScreen> {
               itemCount: rates.length,
               itemBuilder: (context, i) {
                 final rate = rates[i];
+                final name = prettyNames[rate.name] ?? rate.name;
+                final color = _getColor(rate.name, rate.type);
+                final icon = _getIcon(rate.name, rate.type);
+                final formattedValue = _formatValue(rate);
+
                 return Card(
-                  margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+                  elevation: 2,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
                   child: ListTile(
-                   
-                    title: Text(rate.name),
-                    subtitle: Text('Tipo: ${rate.type}, Fuente: ${rate.fuente}'),
-                    trailing: Text('Balance: \$${rate.balance.toStringAsFixed(2)}'),
+                    leading: CircleAvatar(
+                      backgroundColor: color.withOpacity(0.15),
+                      radius: 22,
+                      child: Icon(icon, color: color, size: 22),
+                    ),
+                    title: Text(
+                      name,
+                      style: const TextStyle(fontWeight: FontWeight.w600),
+                    ),
+                    subtitle: Text(
+                      'Tipo: ${rate.type}  •  Fuente: ${rate.fuente}',
+                      style: TextStyle(
+                        fontSize: 12.5,
+                        color: Colors.grey[700],
+                        height: 1.3,
+                      ),
+                    ),
+                    trailing: Text(
+                      formattedValue,
+                      style: TextStyle(
+                        color: color,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
                   ),
                 );
               },

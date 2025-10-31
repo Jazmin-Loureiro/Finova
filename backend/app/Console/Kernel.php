@@ -47,6 +47,14 @@ class Kernel extends ConsoleKernel
          * Ejecuta cada 12 horas (a las 00:00 y 12:00) 
         */
         $schedule->command('currencies:update')->twiceDaily(0, 12);
+        /**
+         * Actualización de metas vencidas
+         * -> todos los días a las 00:00 AM
+         */
+        $schedule->command('goals:update-expired')
+            ->dailyAt('00:00')
+            ->runInBackground()
+            ->withoutOverlapping();
     }
 
     /**

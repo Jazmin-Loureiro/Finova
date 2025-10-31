@@ -29,7 +29,9 @@ class CurrencyTextField extends StatelessWidget {
         labelText: label,
         border: const OutlineInputBorder(),
         prefixText: selectedCurrency != null ? '${selectedCurrency!.symbol} ': '',
-      ),
+         counterText: '', // opcional: oculta el contador visual
+                ),
+      maxLength: 10, // máximo 10 caracteres
       onTap: () {
         if (controller.text.trim() == '0') controller.clear();
       },

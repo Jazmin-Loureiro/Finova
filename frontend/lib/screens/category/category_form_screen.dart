@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_colorpicker/flutter_colorpicker.dart';
+import 'package:frontend/widgets/confirm_dialog_widget.dart';
 import '../../services/api_service.dart';
 import 'package:frontend/models/category.dart';
 
@@ -57,6 +58,16 @@ class _CategoryFormScreenState extends State<CategoryFormScreen> {
     }
   }
 
+  Future<void> _deleteCategory() async {
+      if (widget.category == null) return;
+      try {
+        await api.deleteCategory(widget.category!.id);
+        Navigator.pop(context, true);
+      } catch (e) {
+        debugPrint('Error al eliminar categoría: $e');
+      }
+    }
+
   @override
   Widget build(BuildContext context) {
     const Map<String, String> typeLabels = {
@@ -66,7 +77,9 @@ class _CategoryFormScreenState extends State<CategoryFormScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text("Nueva categoría (${typeLabels[widget.type] ?? widget.type})"),
+        title: Text(widget.category != null
+                ? 'Editar ${typeLabels[widget.type]}: ${widget.category!.name}'
+                : 'Nueva Categoria ${typeLabels[widget.type]}')
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -138,7 +151,7 @@ class _CategoryFormScreenState extends State<CategoryFormScreen> {
                   );
                 },
               ),
-              const SizedBox(height: 24),
+              const SizedBox(height: 20),
 
               // Botón guardar
               SizedBox(
@@ -147,6 +160,30 @@ class _CategoryFormScreenState extends State<CategoryFormScreen> {
                   onPressed: saveCategory,
                   child: const Text("Guardar"),
                 ),
+              ),
+              ElevatedButton.icon(
+                icon: const Icon(Icons.delete),
+                label: const Text('Eliminar Categoría'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Theme.of(context).colorScheme.primary,
+                  foregroundColor: Theme.of(context).colorScheme.onPrimary,
+                ),
+                onPressed: () async {
+                  final confirmed = await showDialog<bool>(
+                    context: context,
+                    barrierDismissible: false,
+                    builder: (_) => const ConfirmDialogWidget(
+                      title: "Eliminar Meta",
+                      message: "¿Seguro que querés deshabilitar esta categoría?",
+                      confirmText: "Eliminar",
+                      cancelText: "Cancelar",
+                      confirmColor: Colors.red,
+                    ),
+                  );
+                  if (confirmed == true) {
+                    _deleteCategory(); // o _deleteGoal() según tu función
+                  }
+                },
               ),
             ],
           ),

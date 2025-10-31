@@ -1,24 +1,27 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<definitions name="InvestmentService"
+<!-- nombre del servicio -->
+<definitions name="InvestmentService" 
              targetNamespace="http://example.com/investment"
              xmlns:tns="http://example.com/investment"
              xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/"
              xmlns:xsd="http://www.w3.org/2001/XMLSchema"
              xmlns="http://schemas.xmlsoap.org/wsdl/">
 
-  <types>
+  <types> <!-- Define la estructura de datos que devuelve el servicio -->
     <xsd:schema targetNamespace="http://example.com/investment">
       <!-- Tipo InvestmentRate -->
       <xsd:complexType name="InvestmentRate">
         <xsd:sequence>
-          <xsd:element name="id" type="xsd:int"/>
-          <xsd:element name="name" type="xsd:string"/>
-          <xsd:element name="type" type="xsd:string"/>
-          <xsd:element name="balance" type="xsd:double"/>
+          <xsd:element name="id" type="xsd:int"/> <!-- ID de la tasa de inversión en tipo entero -->
+          <xsd:element name="name" type="xsd:string"/> <!-- Nombre de la tasa de inversión en tipo cadena -->
+          <xsd:element name="type" type="xsd:string"/> <!-- Tipo de la tasa de inversión en tipo cadena -->
+          <xsd:element name="balance" type="xsd:double"/> <!-- Balance de la tasa de inversión en tipo doble -->
+          <xsd:element name="updated_at" type="xsd:dateTime"/> <!-- Fecha de actualización en tipo fecha y hora -->
         </xsd:sequence>
       </xsd:complexType>
 
       <!-- Request y Response -->
+      <!-- Define los elementos request y response para la operacion getAllData-->
       <xsd:element name="getAllDataRequest" type="xsd:anyType"/>
       <xsd:element name="getAllDataResponse">
         <xsd:complexType>
@@ -30,6 +33,7 @@
                   <xsd:element name="name" type="xsd:string"/>
                   <xsd:element name="type" type="xsd:string"/>
                   <xsd:element name="balance" type="xsd:double"/>
+                  <xsd:element name="updated_at" type="xsd:dateTime"/>
                 </xsd:sequence>
               </xsd:complexType>
             </xsd:element>
@@ -40,6 +44,7 @@
   </types>
 
   <!-- Mensajes -->
+  <!--Define los mensajes de entrada y salida que SOAP usará para comunicarse.-->
   <message name="GetAllDataRequest">
     <part name="parameters" element="tns:getAllDataRequest"/>
   </message>
@@ -49,6 +54,8 @@
   </message>
 
   <!-- PortType -->
+  <!--portType → define qué métodos ofrece el servicio.
+operation → cada método disponible; en este caso getAllData().-->
   <portType name="InvestmentPortType">
     <operation name="getAllData">
       <input message="tns:GetAllDataRequest"/>
@@ -67,6 +74,7 @@
   </binding>
 
   <!-- Servicio -->
+  <!--Define la URL donde los clientes SOAP pueden invocar el servicio.-->
   <service name="InvestmentService">
     <port name="InvestmentPort" binding="tns:InvestmentBinding">
       <soap:address location="http://127.0.0.1:8000/soap"/>

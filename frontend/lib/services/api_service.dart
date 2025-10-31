@@ -584,6 +584,17 @@ Future<bool> updateCategory({required int id, required Map<String, dynamic> data
   return response.statusCode == 200;
 }
 
+Future<bool> deleteCategory(int id) async {
+  final token = await storage.read(key: 'token');
+  if (token == null) return false;
+  final response = await http.delete(
+    Uri.parse('$apiUrl/categories/$id'),
+    headers: jsonHeaders(token),
+  );
+  print ('Delete category response: ${response.statusCode} - ${response.body}');
+  return response.statusCode == 200;
+}
+
 ////////////////////////////////////////////////////
 /// Monedas
 /// ///////////////////////////////////////////////
@@ -807,6 +818,21 @@ Future<Map<String, dynamic>> getTransactionFormData(String type) async {
         throw Exception('Error al eliminar la meta: ${res.statusCode}');
       }
   }
+
+Future<List<Register>> fetchRegistersByGoal(int goalId) async {
+  final token = await storage.read(key: 'token');
+  if (token == null) throw Exception('Usuario no logueado');
+  final res = await http.get(
+    Uri.parse('$apiUrl/goals/$goalId/registers'),
+    headers: jsonHeaders(token),
+  );
+  if (res.statusCode == 200) {
+    final data = jsonDecode(res.body)['registers'] as List;
+    return data.map((json) => Register.fromJson(json)).toList();
+  } else {
+    throw Exception('Error al obtener registros: ${res.statusCode}');
+  }
+}
 
 //////////////////////////////////////////////////////////////// Simulaciones financieras
 

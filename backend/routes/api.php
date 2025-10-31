@@ -14,7 +14,7 @@ use App\Http\Controllers\GoalController;
 use App\Http\Controllers\SimulationController;
 use App\Http\Controllers\DataApiReadController;
 ///////////////////////////////////////////////////
-use App\Http\Controllers\ServicesSoap\SoapWrapperController;
+
 ////////////////////////////////////////////////////
 use App\Http\Controllers\CurrencyController;
 
@@ -101,6 +101,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('goals/assign-reserved', [GoalController::class, 'assignReservedToMoneyMakers']);
     Route::put('goals/{goal}', [GoalController::class, 'update']);
     Route::delete('goals/{goal}', [GoalController::class, 'delete']);
+    Route::get('goals/{goal}/registers', [GoalController::class, 'fetchRegistersByGoal']);
     });
 
     // 📊 Rutas para simulaciones de préstamos e inversiones
@@ -131,9 +132,13 @@ Route::middleware('auth:sanctum')->group(function () {
 
 
 ///////////////////////////////////////////// FRAMEWORK SOAP /////////////////////////////////////////////
-    Route::get('/soap/investment-rates', [SoapWrapperController::class, 'getInvestmentRates']);
 
-
+/**Ruta para el manejo de solicitudes SOAP */
 use App\Http\Controllers\ServicesSoap\ServicesSoapController;
-
 Route::any('/soap', [ServicesSoapController::class, 'handle']);
+
+/**Ruta para API REST */
+use App\Http\Controllers\ServicesSoap\SoapWrapperController;
+Route::get('/soap/investment-rates', [SoapWrapperController::class, 'getInvestmentRates']);
+
+

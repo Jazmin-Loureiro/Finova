@@ -4,6 +4,7 @@ class InvestmentRate {
   final String type;
   final String fuente;
   final double balance;
+  late final String updatedAt;
 
   InvestmentRate({
     required this.id,
@@ -11,6 +12,7 @@ class InvestmentRate {
     required this.type,
     required this.fuente,
     required this.balance,
+    required this.updatedAt,
   });
 
   factory InvestmentRate.fromJson(Map<String, dynamic> json) {
@@ -22,6 +24,7 @@ class InvestmentRate {
       fuente: json['fuente'].toString(),
       type: json['type'].toString(),
       balance: double.tryParse(json['balance'].toString()) ?? 0.0,
+      updatedAt: json['updated_at'].datatime(),
     );
   }
 }

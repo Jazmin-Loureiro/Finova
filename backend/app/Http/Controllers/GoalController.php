@@ -34,7 +34,7 @@ class GoalController extends Controller
             'name' => 'required|string|max:255',
             'target_amount' => 'required|numeric|min:0.01',
             'currency_id' => 'required|integer|exists:currencies,id',
-            'date_limit' => 'required|date|after:today',
+            'date_limit' => 'required|date',
         ]);
         $goal = $request->user()->goals()->create([
             'name' => $request->name,
@@ -71,7 +71,7 @@ class GoalController extends Controller
             'name' => 'sometimes|required|string|max:255',
             'target_amount' => 'sometimes|required|numeric|min:0.01',
             'currency_id' => 'sometimes|required|integer|exists:currencies,id',
-            'date_limit' => 'sometimes|required|date|after:today',
+            'date_limit' => 'sometimes|required|date',
         ]);
         $goal->fill($validated);
         // Si cambia la moneda, se valida su existencia
@@ -99,7 +99,7 @@ class GoalController extends Controller
 
         // Desvincular registros de la meta y limpiar reserved_for_goal
         foreach ($goal->registers as $register) {
-            $register->goal_id = null;
+          //  $register->goal_id = null;
             $register->reserved_for_goal = 0;
             $register->save();
         }
@@ -146,5 +146,10 @@ class GoalController extends Controller
             'message' => 'Dinero reservado asignado correctamente.',
             'goal' => $goal,
         ]);
+    }
+
+    public function fetchRegistersByGoal(Goal $goal) {
+        $registers = $goal->registers()->with('moneyMaker', 'category', 'currency')->get();
+        return response()->json(['registers' => $registers], 200);
     }
 }

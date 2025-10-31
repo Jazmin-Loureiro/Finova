@@ -38,6 +38,7 @@ class CategoryController extends Controller
         'name' => $request->name,
         'type' => $request->type,
         'color' => $request->color,
+        'active' => true,
     ]);
         return response()->json(['message' => 'Categoría creada con éxito', 'data' => $category], 201);
     }
@@ -84,8 +85,21 @@ class CategoryController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function destroy($id)
-    {
-        //
+    public function destroy(Request $request, $id) {
+        $category = Category::where('id', $id)
+            ->where('user_id', $request->user()->id)
+            ->first();
+
+        if (!$category) {
+            return response()->json(['message' => 'Categoría no encontrada'], 404);
+        }
+       $category->update([
+    'active' => false,
+    'updated_at' => now(),
+]);
+
+
+        return response()->json(['message' => 'Categoría eliminada con éxito'], 200);
+        
     }
 }

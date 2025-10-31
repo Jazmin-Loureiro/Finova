@@ -119,7 +119,9 @@ class _GoalFormScreenState extends State<GoalFormScreen> {
                 decoration: const InputDecoration(
                   labelText: 'Nombre de la Meta',
                   border: OutlineInputBorder(),
+                    counterText: '', // opcional: oculta el contador visual
                 ),
+                  maxLength: 30, // máximo 30 caracteres
                 validator: (value) =>
                     value == null || value.isEmpty ? 'Ingrese un nombre' : null,
                 onSaved: (val) => _name = val,
@@ -184,9 +186,9 @@ class _GoalFormScreenState extends State<GoalFormScreen> {
                       final now = DateTime.now();
                       final picked = await showDatePicker(
                         context: context,
-                        initialDate: now,
-                        firstDate: now,
-                        lastDate: DateTime(now.year + 10),
+                        initialDate: now, // fecha inicial
+                        firstDate: now, // no permitir fechas pasadas
+                        lastDate: DateTime(now.year + 20), // hasta 20 años en el futuro
                       );
                       if (picked != null) {
                         setState(() {

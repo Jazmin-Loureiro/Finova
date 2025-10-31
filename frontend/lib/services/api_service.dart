@@ -951,6 +951,8 @@ Future<List<Register>> fetchRegistersByGoal(int goalId) async {
     }
   }
 
+
+  ///////////////////////////////////////// Obtener tasas de inversión SOAP
  Future<List<InvestmentRate>> getInvestmentRates() async {
     final response = await http.get(
       Uri.parse('$apiUrl/soap/investment-rates'),

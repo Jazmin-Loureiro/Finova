@@ -139,12 +139,19 @@ class _InvestmentRatesScreenState extends State<InvestmentRatesScreen> {
               itemCount: rates.length,
               itemBuilder: (context, i) {
                 final rate = rates[i];
-                final formattedDate = DateFormat('dd/MM/yyyy – HH:mm')
-                  .format(DateTime.parse(rate.updatedAt));
                 final name = prettyNames[rate.name] ?? rate.name;
                 final color = _getColor(rate.name, rate.type);
                 final icon = _getIcon(rate.name, rate.type);
                 final formattedValue = _formatValue(rate);
+
+                // 🔹 Formatea la fecha de actualización
+                String formattedDate = '';
+                try {
+                  formattedDate = DateFormat('dd/MM/yyyy – HH:mm')
+                      .format(DateTime.parse(rate.updatedAt).toLocal());
+                } catch (_) {
+                  formattedDate = 'Fecha no disponible';
+                }
 
                 return Card(
                   margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
@@ -152,29 +159,50 @@ class _InvestmentRatesScreenState extends State<InvestmentRatesScreen> {
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  child: ListTile(
-                    leading: CircleAvatar(
-                      backgroundColor: color.withOpacity(0.15),
-                      radius: 22,
-                      child: Icon(icon, color: color, size: 22),
-                    ),
-                    title: Text(
-                      name,
-                      style: const TextStyle(fontWeight: FontWeight.w600),
-                    ),
-                    subtitle: Text(
-                      'Tipo: ${rate.type}  •  Fuente: ${rate.fuente}',
-                      style: TextStyle(
-                        fontSize: 12.5,
-                        color: Colors.grey[700],
-                        height: 1.3,
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 6),
+                    child: ListTile(
+                      leading: CircleAvatar(
+                        backgroundColor: color.withOpacity(0.15),
+                        radius: 22,
+                        child: Icon(icon, color: color, size: 22),
                       ),
-                    ),
-                    trailing: Text(
-                      formattedValue,
-                      style: TextStyle(
-                        color: color,
-                        fontWeight: FontWeight.w600,
+                      title: Text(
+                        name,
+                        style: const TextStyle(fontWeight: FontWeight.w600),
+                      ),
+                      subtitle: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Tipo: ${rate.type}  •  Fuente: ${rate.fuente}',
+                            style: TextStyle(
+                              fontSize: 12.5,
+                              color: Theme.of(context).brightness == Brightness.dark
+                                  ? Colors.white70       // 👈 más claro en modo oscuro
+                                  : Colors.grey[800],    // 👈 mantiene contraste en modo claro
+                              height: 1.3,
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            'Última actualización: $formattedDate',
+                            style: TextStyle(
+                              fontSize: 11.5,
+                              color: Theme.of(context).brightness == Brightness.dark
+                                  ? const Color.fromARGB(227, 255, 255, 255)       // 👈 aclarado también
+                                  : Colors.grey[700],
+                              fontStyle: FontStyle.italic,
+                            ),
+                          ),
+                        ],
+                      ),
+                      trailing: Text(
+                        formattedValue,
+                        style: TextStyle(
+                          color: color,
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
                     ),
                   ),

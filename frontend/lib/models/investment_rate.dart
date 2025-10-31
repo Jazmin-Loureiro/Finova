@@ -24,7 +24,7 @@ class InvestmentRate {
       fuente: json['fuente'].toString(),
       type: json['type'].toString(),
       balance: double.tryParse(json['balance'].toString()) ?? 0.0,
-      updatedAt: json['updated_at'].datatime(),
+      updatedAt: json['updated_at']?.toString() ?? '',
     );
   }
 }

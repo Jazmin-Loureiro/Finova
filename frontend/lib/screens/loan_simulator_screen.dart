@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 import '../services/api_service.dart';
 import '../widgets/custom_scaffold.dart';
 import '../widgets/simulation_result_card_widget.dart';
-import '../widgets/info_icon_widget.dart';
 import '../widgets/loading_widget.dart';
 
 class LoanSimulatorScreen extends StatefulWidget {

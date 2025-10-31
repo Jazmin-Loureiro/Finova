@@ -263,7 +263,7 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
                               labelText: 'Fuente de dinero',
                               border: OutlineInputBorder(),
                             ),
-                            value: selectedMoneyMaker,
+                            initialValue: selectedMoneyMaker,
                             items: moneyMakers
                                 .map((m) => DropdownMenuItem(value: m, child: Text(m.name)))
                                 .toList(),
@@ -300,7 +300,7 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
 
                     // Moneda (deshabilitada)
                     DropdownButtonFormField<int>(
-                      value: selectedCurrency?.id ?? currencies.first.id,
+                      initialValue: selectedCurrency?.id ?? currencies.first.id,
                       items: currencies
                           .map((c) => DropdownMenuItem(
                                 value: c.id,
@@ -324,7 +324,7 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
                               labelText: 'Categoría',
                               border: OutlineInputBorder(),
                             ),
-                            value: selectedCategory,
+                            initialValue: selectedCategory,
                             items: categories
                                 .map((c) => DropdownMenuItem(value: c, child: Text(c['name'])))
                                 .toList(),
@@ -358,7 +358,7 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
                         labelText: 'Meta (opcional)',
                         border: OutlineInputBorder(),
                       ),
-                      value: selectedGoal,
+                      initialValue: selectedGoal,
                       items: [
                         DropdownMenuItem<Goal?>(
                           value: null,
@@ -383,7 +383,7 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
                               labelText: 'Repetir',
                               border: OutlineInputBorder(),
                             ),
-                            value: repeatType,
+                            initialValue: repeatType,
                             items: const [
                               DropdownMenuItem(value: null, child: Text('No Repetir')),
                               DropdownMenuItem(value: '1', child: Text('Por día')),

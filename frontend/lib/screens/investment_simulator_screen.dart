@@ -539,7 +539,7 @@ Future<void> _loadQuote(String type, String symbol) async {
               ),
               const SizedBox(height: 25),
               DropdownButtonFormField<String>(
-                value: coin,
+                initialValue: coin,
                 decoration: InputDecoration(
                   labelText: 'Criptomoneda',
                   border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
@@ -711,7 +711,7 @@ _quoteCard(
               ),
               const SizedBox(height: 16),
               DropdownButtonFormField<String>(
-                value: stock,
+                initialValue: stock,
                 decoration: InputDecoration(
                   labelText: 'Acción',
                   border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
@@ -864,7 +864,7 @@ Widget _buildBond(ThemeData theme, Color surface, Color textColor, Color primary
               ),
               const SizedBox(height: 16),
               DropdownButtonFormField<String>(
-                value: bono,
+                initialValue: bono,
                 decoration: InputDecoration(
                   labelText: 'Bono / ETF',
                   border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),

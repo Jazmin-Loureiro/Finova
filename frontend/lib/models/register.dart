@@ -41,9 +41,9 @@ class Register {
       created_at: DateTime.parse(json['created_at']),
       currency: Currency.fromJson(json['currency']),   // 
       category: Category.fromJson(json['category']),   // 
-      moneyMakerId: json['moneyMakerId'] is int
-          ? json['moneyMakerId']
-          : int.tryParse(json['moneyMakerId'].toString()) ?? 0,
+      moneyMakerId: json['moneyMaker_id'] is int
+          ? json['moneyMaker_id']
+          : int.tryParse(json['moneyMaker_id'].toString()) ?? 0,
       goal: json['goal'] != null ? Goal.fromJson(json['goal']) : null,
     );
   }

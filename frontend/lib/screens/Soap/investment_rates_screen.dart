@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../models/investment_rate.dart';
 import '../../services/api_service.dart';
 import '../../widgets/custom_scaffold.dart';
+import 'package:intl/intl.dart';
 
 class InvestmentRatesScreen extends StatefulWidget {
   const InvestmentRatesScreen({super.key});
@@ -138,6 +139,8 @@ class _InvestmentRatesScreenState extends State<InvestmentRatesScreen> {
               itemCount: rates.length,
               itemBuilder: (context, i) {
                 final rate = rates[i];
+                final formattedDate = DateFormat('dd/MM/yyyy – HH:mm')
+                  .format(DateTime.parse(rate.updatedAt));
                 final name = prettyNames[rate.name] ?? rate.name;
                 final color = _getColor(rate.name, rate.type);
                 final icon = _getIcon(rate.name, rate.type);

@@ -13,7 +13,7 @@ class CategoryController extends Controller
      * @return \Illuminate\Http\Response
      */
     public function index(Request $request) {
-        $query = Category::where('user_id', $request->user()->id);
+        $query = Category::where('user_id', $request->user()->id )->where('active', true);
         if ($request->has('type')) { 
             $query->where('type', $request->query('type')); 
         }
@@ -93,10 +93,9 @@ class CategoryController extends Controller
         if (!$category) {
             return response()->json(['message' => 'Categoría no encontrada'], 404);
         }
-       $category->update([
-    'active' => false,
-    'updated_at' => now(),
-]);
+       $category->active = false;
+       $category->updated_at = now();
+       $category->save();
 
 
         return response()->json(['message' => 'Categoría eliminada con éxito'], 200);

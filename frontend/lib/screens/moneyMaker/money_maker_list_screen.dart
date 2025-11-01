@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:frontend/screens/registers/register_list_screen.dart';
 import 'package:intl/intl.dart';
-import '../widgets/custom_scaffold.dart';
-import '../models/money_maker.dart';
+import '../../widgets/custom_scaffold.dart';
+import '../../models/money_maker.dart';
 import 'money_maker_form_screen.dart';
-import '../widgets/loading_widget.dart';
+import '../../widgets/loading_widget.dart';
 import 'package:provider/provider.dart';
-import '../providers/register_provider.dart';
+import '../../providers/register_provider.dart';
 
 class MoneyMakerListScreen extends StatefulWidget {
   final int? initialMoneyMakerId; // <-- ID del MoneyMaker a enfocar cuando se crea uno

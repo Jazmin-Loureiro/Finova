@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_colorpicker/flutter_colorpicker.dart';
-import '../services/api_service.dart';
+import '../../services/api_service.dart';
 
-import '../models/currency.dart';
-import '../models/money_maker.dart';
-import '../widgets/currency_text_field.dart';
-import '../widgets/loading_widget.dart';
-import '../widgets/success_dialog_widget.dart';
+import '../../models/currency.dart';
+import '../../models/money_maker.dart';
+import '../../widgets/currency_text_field.dart';
+import '../../widgets/loading_widget.dart';
+import '../../widgets/success_dialog_widget.dart';
+import '../../widgets/ColorPickerField.widget.dart';
 
 class MoneyMakerFormScreen extends StatefulWidget {
   final MoneyMaker? moneyMaker; // Fuente opcional (si se edita)
@@ -186,59 +186,13 @@ class _MoneyMakerFormScreenState extends State<MoneyMakerFormScreen> {
 
                       const SizedBox(height: 16),
 
-                      // Selector de color
-                      FormField<Color>(
-                        validator: (val) {
-                          if (selectedColor == null) return 'Debes seleccionar un color';
-                          return null;
-                        },
-                        builder: (state) {
-                          return InputDecorator(
-                            decoration: InputDecoration(
-                              labelText: 'Color',
-                              border: const OutlineInputBorder(),
-                              errorText: state.errorText,
-                            ),
-                            child: GestureDetector(
-                              onTap: () {
-                                showDialog(
-                                  context: context,
-                                  builder: (context) => AlertDialog(
-                                    title: const Text('Elige un color'),
-                                    content: SingleChildScrollView(
-                                      child: BlockPicker(
-                                        pickerColor: selectedColor ?? Colors.blue,
-                                        onColorChanged: (color) {
-                                          setState(() {
-                                            selectedColor = color;
-                                            state.didChange(color);
-                                          });
-                                        },
-                                      ),
-                                    ),
-                                    actions: [
-                                      TextButton(
-                                        child: const Text('Cerrar'),
-                                        onPressed: () => Navigator.of(context).pop(),
-                                      ),
-                                    ],
-                                  ),
-                                );
-                              },
-                              child: Row(
-                                children: [
-                                  CircleAvatar(
-                                    backgroundColor: selectedColor ?? Colors.transparent,
-                                  ),
-                                  const SizedBox(width: 12),
-                                  Text(selectedColor == null
-                                      ? 'Seleccionar Color'
-                                      : '#${selectedColor!.toARGB32().toRadixString(16).substring(2)}'),
-                                ],
-                              ),
-                            ),
-                          );
-                        },
+                      // Selector de color (reutilizable)
+                      ColorPickerField(
+                        initialColor: selectedColor,
+                        onSaved: (color) => selectedColor = color,
+                        validator: (color) =>
+                            color == null ? 'Seleccione un color' : null,
+                        label: 'Color de la categoría',
                       ),
                       const SizedBox(height: 24),
 

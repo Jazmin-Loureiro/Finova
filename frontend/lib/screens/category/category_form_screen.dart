@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_colorpicker/flutter_colorpicker.dart';
+import '../../widgets/ColorPickerField.widget.dart';
 import 'package:frontend/widgets/confirm_dialog_widget.dart';
 import '../../services/api_service.dart';
 import 'package:frontend/models/category.dart';
@@ -99,58 +99,14 @@ class _CategoryFormScreenState extends State<CategoryFormScreen> {
               const SizedBox(height: 16),
 
               // Selector de color
-              FormField<Color>(
-                validator: (value) { if (colorSelected == null) return 'Seleccione un color'; return null;},
-                builder: (state) {
-                  return InputDecorator(
-                    decoration: InputDecoration(
-                      labelText: 'Color',
-                      border: const OutlineInputBorder(),
-                      errorText: state.errorText,
-                    ),
-                    child: GestureDetector(
-                      onTap: () {
-                        showDialog(
-                          context: context,
-                          builder: (context) => AlertDialog(
-                            title: const Text('Elige un color'),
-                            content: SingleChildScrollView(
-                              child: BlockPicker(
-                                pickerColor: colorSelected,
-                                onColorChanged: (color) {
-                                  setState(() {
-                                    colorSelected = color;
-                                    state.didChange(color); 
-                                  });
-                                },
-                              ),
-                            ),
-                            actions: [
-                              TextButton(
-                                child: const Text('Cerrar'),
-                                onPressed: () => Navigator.of(context).pop(),
-                              ),
-                            ],
-                          ),
-                        );
-                      },
-                      child: Row(
-                        children: [
-                          CircleAvatar(
-                            backgroundColor: colorSelected ?? Colors.transparent,
-                          ),
-                          const SizedBox(width: 12),
-                          Text(
-                            colorSelected == null 
-                              ? 'Seleccionar color' 
-                              : '#${colorSelected!.toARGB32().toRadixString(16).substring(2)}',
-                          ),
-                        ],
-                      ),
-                    ),
-                  );
-                },
-              ),
+           // Selector de color (reutilizable)
+            ColorPickerField(
+              initialColor: colorSelected,
+              onSaved: (color) => colorSelected = color,
+              validator: (color) =>
+                  color == null ? 'Seleccione un color' : null,
+              label: 'Color de la categoría',
+            ),
               const SizedBox(height: 20),
 
               // Botón guardar
@@ -161,6 +117,8 @@ class _CategoryFormScreenState extends State<CategoryFormScreen> {
                   child: const Text("Guardar"),
                 ),
               ),
+
+              if (widget.category != null) ...[
               ElevatedButton.icon(
                 icon: const Icon(Icons.delete),
                 label: const Text('Eliminar Categoría'),
@@ -173,7 +131,7 @@ class _CategoryFormScreenState extends State<CategoryFormScreen> {
                     context: context,
                     barrierDismissible: false,
                     builder: (_) => const ConfirmDialogWidget(
-                      title: "Eliminar Meta",
+                      title: "Eliminar Categoria",
                       message: "¿Seguro que querés deshabilitar esta categoría?",
                       confirmText: "Eliminar",
                       cancelText: "Cancelar",
@@ -185,9 +143,12 @@ class _CategoryFormScreenState extends State<CategoryFormScreen> {
                   }
                 },
               ),
+              ]
             ],
           ),
+
         ),
+
       ),
     );
   }

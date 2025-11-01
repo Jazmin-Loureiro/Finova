@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../screens/money_maker_list_screen.dart';
+import '../screens/moneyMaker/money_maker_list_screen.dart';
 import '../screens/registers/transaction_form_screen.dart';
 import '../screens/home_screen.dart';
 import '../screens/user_screen.dart';

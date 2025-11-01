@@ -7,7 +7,7 @@ import '../../models/money_maker.dart';
 import '../../models/currency.dart';
 import '../../models/goal.dart';
 
-import '../money_maker_form_screen.dart';
+import '../moneyMaker/money_maker_form_screen.dart';
 import '../category/category_form_screen.dart';
 import '../../widgets/currency_text_field.dart';
 import '../../widgets/success_dialog_widget.dart';

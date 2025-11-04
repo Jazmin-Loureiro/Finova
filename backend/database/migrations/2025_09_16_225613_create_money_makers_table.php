@@ -24,7 +24,7 @@ return new class extends Migration
             //$table->string('typeMoney');
             $table->foreignId('currency_id')->constrained('currencies'); // clave foránea a la tabla currencies   
             $table->string('color')->nullable(); // Nueva columna para el color
-
+            $table->boolean('active')->default(true);
             $table->timestamps();
         });
     }

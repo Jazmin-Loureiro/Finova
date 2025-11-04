@@ -505,23 +505,37 @@ Future<MoneyMaker?> addPaymentSource(
 
   return null;
 }
-Future<dynamic> updatePaymentSource(int id, String name, String type, double balance, Currency currency, String color) async {
+
+Future<dynamic> updatePaymentSource( int id,String name, String type, String color,) async {
+  final token = await storage.read(key: 'token');
+  if (token == null) return false;
   final response = await http.put(
-    Uri.parse('$baseUrl/moneyMakers/$id'),
-    headers: await jsonHeaders(),
+    Uri.parse('$apiUrl/moneyMakers/$id'),
+        headers: jsonHeaders(token),
     body: jsonEncode({
       'name': name,
       'type': type,
-      'balance': balance,
-      'currency_id': currency.id,
       'color': color,
     }),
   );
-
   if (response.statusCode == 200) {
     return MoneyMaker.fromJson(jsonDecode(response.body));
   } else {
     return null;
+  }
+}
+
+  ////////////////////////////////////////////////////////// Eliminar fuente de pago
+Future<void> deleteMoneyMaker(int id) async {
+  final token = await storage.read(key: 'token');
+  if (token == null) return;
+  final response = await http.delete(
+    Uri.parse('$apiUrl/moneyMakers/$id'),
+    headers: jsonHeaders(token),
+  );
+  final data = jsonDecode(response.body);
+  if (response.statusCode != 200) {
+    throw Exception(data['message']);
   }
 }
 

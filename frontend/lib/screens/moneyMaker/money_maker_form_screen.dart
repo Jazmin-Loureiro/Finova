@@ -1,15 +1,16 @@
 import 'package:flutter/material.dart';
+import 'package:frontend/widgets/confirm_dialog_widget.dart';
 import '../../services/api_service.dart';
-
 import '../../models/currency.dart';
 import '../../models/money_maker.dart';
 import '../../widgets/currency_text_field.dart';
 import '../../widgets/loading_widget.dart';
 import '../../widgets/success_dialog_widget.dart';
-import '../../widgets/ColorPickerField.widget.dart';
+import '../../widgets/color_pickerfield.widget.dart';
+import '../../widgets/custom_scaffold.dart';
 
 class MoneyMakerFormScreen extends StatefulWidget {
-  final MoneyMaker? moneyMaker; // Fuente opcional (si se edita)
+  final MoneyMaker? moneyMaker;
 
   const MoneyMakerFormScreen({super.key, this.moneyMaker});
 
@@ -19,12 +20,9 @@ class MoneyMakerFormScreen extends StatefulWidget {
 
 class _MoneyMakerFormScreenState extends State<MoneyMakerFormScreen> {
   final ApiService api = ApiService();
-
   final TextEditingController nameController = TextEditingController();
   final TextEditingController balanceController = TextEditingController();
-
   final _formKey = GlobalKey<FormState>();
-  
 
   Color? selectedColor;
   String typeSelected = "Efectivo";
@@ -33,7 +31,7 @@ class _MoneyMakerFormScreenState extends State<MoneyMakerFormScreen> {
   List<Currency> currencies = [];
   Currency? selectedCurrency;
 
-@override
+  @override
   void initState() {
     super.initState();
     if (widget.moneyMaker != null) {
@@ -62,6 +60,7 @@ class _MoneyMakerFormScreenState extends State<MoneyMakerFormScreen> {
 
   Future<void> saveMoneyMaker() async {
     if (!_formKey.currentState!.validate()) return;
+    _formKey.currentState!.save();
 
     final isEditing = widget.moneyMaker != null;
     final name = nameController.text.trim();
@@ -72,24 +71,8 @@ class _MoneyMakerFormScreenState extends State<MoneyMakerFormScreen> {
     setState(() => isSaving = true);
 
     dynamic newSource;
-    if (isEditing) {
-      newSource = await api.updatePaymentSource(
-        widget.moneyMaker!.id,
-        name,
-        typeSelected,
-        balance,
-        selectedCurrency!,
-        colorHex,
-      );
-    } else {
-      newSource = await api.addPaymentSource(
-        name,
-        typeSelected,
-        balance,
-        selectedCurrency!,
-        colorHex,
-      );
-    }
+    if (isEditing) { newSource = await api.updatePaymentSource( widget.moneyMaker!.id,name,typeSelected, colorHex,);
+    } else {newSource = await api.addPaymentSource(name, typeSelected, balance, selectedCurrency!, colorHex, );}
 
     setState(() => isSaving = false);
 
@@ -105,118 +88,190 @@ class _MoneyMakerFormScreenState extends State<MoneyMakerFormScreen> {
         ),
       );
       if (confirmed && mounted) Navigator.pop(context, newSource);
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Error al guardar la fuente')),
-      );
-    }
+    } 
   }
+
+  Future<void> _deleteMoneyMaker() async {
+  if (widget.moneyMaker == null) return;
+  try {
+    await api.deleteMoneyMaker(widget.moneyMaker!.id);
+    if (!mounted) return;
+    await showDialog(
+      context: context,
+      builder: (_) => const SuccessDialogWidget(
+        title: "Fuente eliminada",
+        message: "La fuente fue eliminada exitosamente.",
+        buttonText: "Aceptar",
+      ),
+    );
+    if (!mounted) return;
+    Navigator.pop(context, true);
+  } catch (e) {
+    if (!mounted) return;
+    await showDialog(
+      context: context,
+      builder: (_) => ConfirmDialogWidget(
+        title: "No se pudo eliminar",
+        message: e.toString().replaceAll("Exception: ", ""),
+        confirmText: "Aceptar",
+      ),
+    );
+  }
+}
 
   @override
   Widget build(BuildContext context) {
-    final isEditing = widget.moneyMaker != null;
-    if (_isLoading) return const Scaffold(body: Center(child: LoadingWidget()));
-    return Scaffold(
-      appBar: AppBar(title:  Text(isEditing ? 'Editar Fuente' : 'Agregar Fuente')),
-      body: Stack(
-        children: [
-          Padding(
-            padding: const EdgeInsets.all(16),
-            child: Form(
-                key: _formKey,
-                child: SingleChildScrollView(
-                  child: Column(
-                    children: [
-                      // Nombre
-                      TextFormField(
-                        controller: nameController,
-                        decoration: const InputDecoration(
-                          labelText: 'Nombre de la fuente',
-                          border: OutlineInputBorder(),
-                        ),
-                        validator: (val) {
-                          if (val == null || val.trim().isEmpty) return 'El nombre no puede estar vacío';
-                          if (val.trim().length < 3) return 'Debe tener al menos 3 caracteres';
-                          return null;
-                        },
-                      ),
-                      const SizedBox(height: 16),
+    if (_isLoading) {
+      return const Scaffold(
+        body: Center(child: LoadingWidget()),
+      );
+    }
 
-                      // Tipo de fuente
-                      DropdownButtonFormField<String>(
-                        decoration: const InputDecoration(
-                          labelText: 'Tipo de fuente',
-                          border: OutlineInputBorder(),
-                        ),
-                        initialValue: typeSelected,
-                        items: [
-                          "Efectivo", "Mastercard", "Visa", "Tarjeta de débito", "Ahorros",
-                          "Banco", "Inversión", "Tarjeta de crédito", "Cuenta bancaria", "Criptomoneda",
-                          "Cheque", "Cuenta virtual", "PayPal", "Transferencia", "Préstamo", "Otro"
-                        ]
-                            .map((f) => DropdownMenuItem(value: f, child: Text(f)))
-                            .toList(),
-                        onChanged: (value) => setState(() => typeSelected = value!),
-                      ),
-                      const SizedBox(height: 16),
-
-                      // Tipo de moneda
-                      DropdownButtonFormField<Currency>(
-                        initialValue: selectedCurrency,
-                        decoration: const InputDecoration(
-                          labelText: 'Tipo de moneda',
-                          border: OutlineInputBorder(),
-                        ),
-                        items: currencies.map((c) => DropdownMenuItem<Currency>(
-                          value: c,
-                          child: Text('${c.symbol} ${c.code} - ${c.name}'),
-                        )).toList(),
-                        onChanged: (value) => setState(() => selectedCurrency = value),
-                        validator: (val) => val == null ? 'Debes seleccionar una moneda' : null,
-                      ),
-                      const SizedBox(height: 16),
-
-                      // Saldo inicial
-                      CurrencyTextField(
-                        controller: balanceController,
-                        currencies: currencies,
-                        selectedCurrency: selectedCurrency,
-                        label: 'Saldo inicial',
-                      ),
-
-                      const SizedBox(height: 16),
-
-                      // Selector de color (reutilizable)
-                      ColorPickerField(
-                        initialColor: selectedColor,
-                        onSaved: (color) => selectedColor = color,
-                        validator: (color) =>
-                            color == null ? 'Seleccione un color' : null,
-                        label: 'Color de la categoría',
-                      ),
-                      const SizedBox(height: 24),
-
-                      SizedBox(
-                        width: double.infinity,
-                        child: ElevatedButton(
-                          onPressed: saveMoneyMaker,
-                          child: Text(isEditing ? 'Guardar Cambios' : 'Agregar'),
-                        ),
-                      ),
-                    ],
-                  ),
+    return CustomScaffold(
+      title: widget.moneyMaker != null ? 'Editar Fuente' : 'Agregar Fuente',
+      currentRoute: 'money_maker_form',
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Form(
+          key: _formKey,
+          child: ListView(
+            children: [
+              // Nombre
+              TextFormField(
+                controller: nameController,
+                decoration: const InputDecoration(
+                  labelText: 'Nombre de la fuente',
+                  border: OutlineInputBorder(),
                 ),
+                validator: (val) {
+                  if (val == null || val.trim().isEmpty) {
+                    return 'El nombre no puede estar vacío';
+                  }
+                  if (val.trim().length < 3) {
+                    return 'Debe tener al menos 3 caracteres';
+                  }
+                  return null;
+                },
               ),
-            ),
-          // Overlay de guardado
-          if (isSaving)
-            Container(
-              color: Theme.of(context).colorScheme.onPrimary,
-              child: const Center(
-                child: LoadingWidget(message: 'Guardando fuente...'),
+              const SizedBox(height: 16),
+
+              // Tipo de fuente esto deberia ser una tabla en la base de datos 
+              DropdownButtonFormField<String>(
+                decoration: const InputDecoration(
+                  labelText: 'Tipo de fuente',
+                  border: OutlineInputBorder(),
+                ),
+                value: typeSelected,
+                items: [
+                  "Efectivo",
+                  "Mastercard",
+                  "Visa",
+                  "Tarjeta de débito",
+                  "Ahorros",
+                  "Banco",
+                  "Inversión",
+                  "Tarjeta de crédito",
+                  "Cuenta bancaria",
+                  "Criptomoneda",
+                  "Cheque",
+                  "Cuenta virtual",
+                  "PayPal",
+                  "Transferencia",
+                  "Préstamo",
+                  "Otro"
+                ]
+                    .map((f) => DropdownMenuItem(value: f, child: Text(f)))
+                    .toList(),
+                onChanged: (value) => setState(() => typeSelected = value!),
               ),
-            ),
-        ],
+
+              if (widget.moneyMaker == null) ...[
+                const SizedBox(height: 16),
+
+                // Tipo de moneda
+                DropdownButtonFormField<Currency>(
+                  value: selectedCurrency,
+                  decoration: const InputDecoration(
+                    labelText: 'Tipo de moneda',
+                    border: OutlineInputBorder(),
+                  ),
+                  items: currencies
+                      .map((c) => DropdownMenuItem<Currency>(
+                            value: c,
+                            child: Text('${c.symbol} ${c.code} - ${c.name}'),
+                          ))
+                      .toList(),
+                  onChanged: (value) => setState(() => selectedCurrency = value),
+                  validator: (val) =>
+                      val == null ? 'Debes seleccionar una moneda' : null,
+                ),
+                const SizedBox(height: 16),
+
+                // Saldo inicial
+                CurrencyTextField(
+                  controller: balanceController,
+                  currencies: currencies,
+                  selectedCurrency: selectedCurrency,
+                  label: 'Saldo inicial',
+                ),
+              ],
+
+              const SizedBox(height: 16),
+
+              // Selector de color
+              ColorPickerField(
+                initialColor: selectedColor,
+                onSaved: (color) => selectedColor = color,
+                validator: (color) =>
+                    color == null ? 'Seleccione un color' : null,
+                label: 'Color de la fuente',
+              ),
+
+              const SizedBox(height: 20),
+
+              ElevatedButton(
+                onPressed: saveMoneyMaker,
+                child: Text(widget.moneyMaker != null
+                    ? 'Guardar Cambios'
+                    : 'Agregar Fuente'),
+              ),
+
+              if (widget.moneyMaker != null) ...[
+                ElevatedButton.icon(
+                  icon: const Icon(Icons.delete),
+                  label: const Text('Eliminar Fuente'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Theme.of(context).colorScheme.primary,
+                    foregroundColor: Theme.of(context).colorScheme.onPrimary,
+                  ),
+                  onPressed: () async {
+                    final confirmed = await showDialog<bool>(
+                      context: context,
+                      barrierDismissible: false,
+                      builder: (_) => const ConfirmDialogWidget(
+                        title: "Eliminar Fuente",
+                        message: "¿Seguro que querés eliminar esta fuente?",
+                        confirmText: "Eliminar",
+                        cancelText: "Cancelar",
+                        confirmColor: Colors.red,
+                      ),
+                    );
+                    if (confirmed == true) {
+                      _deleteMoneyMaker();
+                    }
+                  },
+                ),
+              ],
+
+              if (isSaving) ...[
+                const SizedBox(height: 24),
+                const Center(
+                  child: LoadingWidget(message: 'Guardando fuente...'),
+                ),
+              ],
+            ],
+          ),
+        ),
       ),
     );
   }

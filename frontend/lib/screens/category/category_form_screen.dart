@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../widgets/ColorPickerField.widget.dart';
+import '../../widgets/color_pickerfield.widget.dart';
 import 'package:frontend/widgets/confirm_dialog_widget.dart';
 import '../../services/api_service.dart';
 import 'package:frontend/models/category.dart';

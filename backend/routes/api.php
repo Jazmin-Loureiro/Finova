@@ -66,6 +66,10 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/moneyMakers', [MoneyMakerController::class, 'store']);
     // Obtener todas las fuentes de dinero
     Route::get('/moneyMakers', [MoneyMakerController::class, 'index']);
+    //Editar Fuente de Dinero
+    Route::put('/moneyMakers/{moneyMaker}', [MoneyMakerController::class, 'update']);
+    //Eliminar Fuente de Dinero
+    Route::delete('/moneyMakers/{moneyMaker}', [MoneyMakerController::class, 'destroy']);
 ////////////////////////////////////////////////////////////////////////////////
     //Registrar Categoria
     Route::post('/categories', [CategoryController::class, 'store']);

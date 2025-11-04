@@ -11,7 +11,7 @@ class ColorPickerField extends FormField<Color> {
     String label = 'Color',
   }) : super(
           key: key,
-          initialValue: initialColor ?? Colors.red,
+          initialValue: initialColor ,
           onSaved: onSaved,
           validator: (value) {
             if (value == null) return 'Seleccione un color';
@@ -25,12 +25,8 @@ class ColorPickerField extends FormField<Color> {
             return InputDecorator(
               decoration: InputDecoration(
                 labelText: label,
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(14),
-                ),
+                border: OutlineInputBorder(),
                 errorText: state.errorText,
-                contentPadding:
-                    const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               ),
               child: InkWell(
                 borderRadius: BorderRadius.circular(12),

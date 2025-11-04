@@ -108,7 +108,7 @@ Widget build(BuildContext context) {
                     const SizedBox(height: 10),
                     if (pageController != null)
                       SizedBox(
-                        height: 180,
+                        height: 210,
                         child: PageView.builder(
                           controller: pageController,
                           itemCount: moneyMakers.length,
@@ -158,56 +158,49 @@ Widget build(BuildContext context) {
                                         fontWeight: FontWeight.bold,
                                       ),
                                     ),
-                                    const SizedBox(height: 4),
+                                    const SizedBox(height: 5),
 
                                     // Nombre de la moneda
                                     Text(
-                                      m.currency?.name ?? '',
+                                      m.type ,
                                       style: TextStyle(
                                         color: Theme.of(context).colorScheme.onPrimary,
                                         fontSize: 18,
                                         fontWeight: FontWeight.w500,
                                       ),
                                     ),
-                                    const SizedBox(height: 4),
-
-                                    // Balance principal con balance convertido al lado
-                                    Row(
-                                      crossAxisAlignment: CrossAxisAlignment.end,
-                                      children: [
+                                    const SizedBox(height: 6),
+                                    // Balance principal 
                                         Text(
-                                          '${m.currency?.symbol}${m.balance.toStringAsFixed(2)}',
+                                          '${m.currency?.symbol}${m.balance.toStringAsFixed(2)} ${m.currency?.code}',
                                           style: TextStyle(
                                             color: Theme.of(context).colorScheme.onPrimary,
-                                            fontSize: 22,
+                                            fontSize: 20,
                                             fontWeight: FontWeight.bold,
                                           ),
                                         ),
-                                        const SizedBox(width: 8),
+                                        const SizedBox(width: 6),
                                         if (currencyBase != m.currency?.code)
                                           Text(
-                                            '≈ $currencySymbol${m.balanceConverted.toStringAsFixed(2)}',
+                                            '≈ $currencySymbol${m.balanceConverted.toStringAsFixed(2)} $currencyBase',
                                             style: TextStyle(
                                               color: Theme.of(context).colorScheme.onPrimary,
-                                              fontSize: 22,
+                                              fontSize: 20,
                                             ),
                                           ),
-                                      ],
-                                    ),
-
-                                    // Balance reservado
-                                    const SizedBox(height: 6),
-                                    if (m.balance_reserved > 0)
-                                      Text(
-                                        'Reservado: ${m.currency?.symbol}${m.balance_reserved.toStringAsFixed(2)}',
-                                        style: TextStyle(
-                                          fontSize: 18,
-                                          color: Theme.of(context).colorScheme.onPrimary,
-                                          fontWeight: FontWeight.w500,
+                                                                              const SizedBox(width: 8),
+                                                                        // Balance reservado
+                                      if (m.balance_reserved > 0)
+                                        Text(
+                                          'Reservado: ${m.currency?.symbol}${m.balance_reserved.toStringAsFixed(2)}',
+                                          style: TextStyle(
+                                            fontSize: 18,
+                                            color: Theme.of(context).colorScheme.onPrimary,
+                                            fontWeight: FontWeight.w500,
+                                          ),
                                         ),
-                                      ),
-                                  ],
-                                ),
+                                    ],
+                                  ),
                               ),
 
                                 Positioned(

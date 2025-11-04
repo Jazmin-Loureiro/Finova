@@ -27,7 +27,8 @@ class CurrencyTextField extends StatelessWidget {
       keyboardType: const TextInputType.numberWithOptions(decimal: true),
       decoration: InputDecoration(
         labelText: label,
-        border: const OutlineInputBorder(),
+        border: const OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(12)),
+),
         prefixText: selectedCurrency != null ? '${selectedCurrency!.symbol} ': '',
          counterText: '', // opcional: oculta el contador visual
                 ),

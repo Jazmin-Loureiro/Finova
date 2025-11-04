@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:frontend/widgets/loading_widget.dart';
 import 'package:provider/provider.dart'; // 👈 import del provider
-import 'screens/login_screen.dart';
+//import 'screens/login_screen.dart';
 import 'screens/home_screen.dart';
 import 'services/api_service.dart';
 import 'providers/house_provider.dart'; // 👈 tu nuevo provider
@@ -8,6 +9,7 @@ import 'providers/register_provider.dart';
 
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
+import 'screens/home/onboarding_screen.dart';
 // Punto de entrada de la aplicación
 void main() async {
     //  Inicializa los datos de localización para español (Argentina o genérico)
@@ -123,7 +125,7 @@ class _SplashScreenState extends State<SplashScreen> {
     } else {
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (_) => const LoginScreen()),
+        MaterialPageRoute(builder: (_) => const OnboardingScreen()),
       );
     }
   }
@@ -131,7 +133,7 @@ class _SplashScreenState extends State<SplashScreen> {
   @override
   Widget build(BuildContext context) {
     return const Scaffold(
-      body: Center(child: CircularProgressIndicator()),
+      body: Center(child: LoadingWidget()),
     );
   }
 }

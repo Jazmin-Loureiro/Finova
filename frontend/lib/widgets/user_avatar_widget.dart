@@ -19,6 +19,8 @@ class UserAvatarWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
     Widget child;
 
     if (iconFile != null) {
@@ -63,7 +65,46 @@ class UserAvatarWidget extends StatelessWidget {
 
     return GestureDetector(
       onTap: onTap,
-      child: child,
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          // 🔹 Marco con borde
+          Container(
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              border: Border.all(
+                color: colorScheme.primary.withOpacity(0.8),
+                width: 3,
+              ),
+            ),
+            child: ClipOval(child: child),
+          ),
+
+          // 🔹 Ícono de cámara en la esquina inferior derecha
+          Positioned(
+            bottom: 2,
+            right: 4,
+            child: Container(
+              decoration: BoxDecoration(
+                color: colorScheme.primary,
+                shape: BoxShape.circle,
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.2),
+                    blurRadius: 4,
+                  ),
+                ],
+              ),
+              padding: const EdgeInsets.all(4),
+              child: const Icon(
+                Icons.camera_alt_outlined,
+                size: 16,
+                color: Colors.white,
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

@@ -47,32 +47,38 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return CustomScaffold(
-      title: 'Inicio',
-      currentRoute: 'inicio',
-      extendBody: true,
-      extendBodyBehindAppBar: true,
-      actions: [
-        IconButton(
-          icon: const Icon(Icons.logout),
-          onPressed: logout,
-        ),
-      ],
-      body: Stack(
-        children: [
-          const CasaWidget(),
-          SafeArea(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.all(16),
-              child: const Column(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  HomeInfoWidget(),
-                ],
-              ),
-            ),
+    return WillPopScope(
+      onWillPop: () async {
+        // 🔒 Evita que el botón "atrás" cierre el Home o vuelva al login
+        return false;
+      },
+      child: CustomScaffold(
+        title: 'Inicio',
+        currentRoute: '/home',
+        extendBody: true,
+        extendBodyBehindAppBar: true,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.logout),
+            onPressed: logout,
           ),
         ],
+        body: Stack(
+          children: [
+            const CasaWidget(),
+            SafeArea(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(16),
+                child: const Column(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    HomeInfoWidget(),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

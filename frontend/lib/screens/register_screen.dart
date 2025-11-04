@@ -1,5 +1,4 @@
 import 'dart:io';
-import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -206,125 +205,235 @@ class _RegisterScreenState extends State<RegisterScreen> {
     }
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Registro')),
-      body: isLoading
-          ? const LoadingWidget(message: "Registrando usuario...")
-          : Padding(
-              padding: const EdgeInsets.all(16),
-              child: Form(
-                key: _formKey,
-                child: SingleChildScrollView(
-                  child: Column(
-                    children: [
-                      UserAvatarWidget(
-                        iconFile: icon,
-                        avatarSeed: selectedAvatarSeed,
-                        radius: 60,
-                        onTap: _showAvatarOptions,
+ @override
+Widget build(BuildContext context) {
+  final colorScheme = Theme.of(context).colorScheme;
+  final isDark = Theme.of(context).brightness == Brightness.dark;
+  return Scaffold(
+    body: isLoading
+        ? const LoadingWidget(message: "Registrando usuario...")
+        : Container(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [
+                  colorScheme.primary.withOpacity(0.1),
+                  colorScheme.surface,
+                ],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+            ),
+            child: Center(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    //  Tarjeta del formulario
+                    Container(
+                      padding: const EdgeInsets.all(22),
+                      decoration: BoxDecoration(
+                        color: isDark
+                            ? colorScheme.surface.withOpacity(0.85)
+                            : Colors.white,
+                        borderRadius: BorderRadius.circular(20),
                       ),
-                      const SizedBox(height: 16),
-
-                      TextFormField(
-                        decoration: const InputDecoration(
-                            labelText: 'Nombre',
-                            border: OutlineInputBorder()),
-                        onChanged: (val) => name = val,
-                        validator: (val) =>
-                            val == null || val.isEmpty ? 'Obligatorio' : null,
-                      ),
-                      const SizedBox(height: 16),
-                      TextFormField(
-                        decoration: const InputDecoration(
-                            labelText: 'Email',
-                            border: OutlineInputBorder()),
-                        keyboardType: TextInputType.emailAddress,
-                        onChanged: (val) => email = val,
-                        validator: (val) {
-                          if (val == null || val.isEmpty) return 'Obligatorio';
-                          if (!val.contains('@')) return 'Email inválido';
-                          return null;
-                        },
-                      ),
-                      const SizedBox(height: 16),
-
-                      TextFormField(
-                        decoration: const InputDecoration(
-                            labelText: 'Contraseña',
-                            border: OutlineInputBorder()),
-                        obscureText: true,
-                        onChanged: (val) => password = val,
-                        validator: (val) =>
-                            val == null || val.isEmpty ? 'Obligatorio' : null,
-                      ),
-                      const SizedBox(height: 16),
-                      TextFormField(
-                        decoration: const InputDecoration(
-                            labelText: 'Confirmar Contraseña',
-                            border: OutlineInputBorder()),
-                        obscureText: true,
-                        validator: (val) {
-                          if (val == null || val.isEmpty) return 'Obligatorio';
-                          if (val != password) {
-                            return 'Las contraseñas no coinciden';
-                          }
-                          return null;
-                        },
-                      ),
-                      const SizedBox(height: 16),
-
-                      isLoadingCurrencies
-                          ? const CircularProgressIndicator()
-                          : DropdownButtonFormField<Currency>(
-                          initialValue: currencyBase ?? (currencyBases.isNotEmpty ? currencyBases.first : null), // CAMBIO: valor inicial como Currency
-                          items: currencyBases
-                              .map((c) => DropdownMenuItem(
-                                    value: c,
-                                    child: Text(
-                                      '${c.symbol} ${c.code} - ${c.name}'),
-                                  ))
-                              .toList(),
-                          onChanged: (Currency? val) {
-                            if (val != null) setState(() => currencyBase = val);
-                          },
-                          decoration: const InputDecoration(
-                              labelText: 'Moneda Base',
-                              border: OutlineInputBorder()),
-                          validator: (val) => 
-                          val == null ? 'Obligatorio' : null,
+                      child: Form(
+                        key: _formKey,
+                        child: Column(
+                          children: [
+                                Text(
+                          "¡Creá tu cuenta!",
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontSize: 32,
+                            fontWeight: FontWeight.w800,
+                            letterSpacing: -0.3,
+                            height: 1.1,
+                            color: isDark
+                                ? Colors.white.withOpacity(0.95)
+                                : colorScheme.onSurface.withOpacity(0.9),
+                          ),
                         ),
-                      const SizedBox(height: 16),
+                        const SizedBox(height: 6),
+                        Text(
+                          "Crea una cuenta para continuar.",
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w400,
+                            color: isDark
+                                ? Colors.white.withOpacity(0.7)
+                                : Colors.black.withOpacity(0.6),
+                          ),
+                        ),
+                            const SizedBox(height: 20),
+                                   
+                            UserAvatarWidget(
+                              iconFile: icon,
+                              avatarSeed: selectedAvatarSeed,
+                              radius: 55,
+                              onTap: _showAvatarOptions,
+                            ),
+                            const SizedBox(height: 20),
 
-                      CurrencyTextField(
-                        controller: balanceController,
-                        currencies: currencyBases,
-                        selectedCurrency: currencyBase,
-                        label: 'Saldo Inicial (opcional)',
-                        onChanged: (val) => balanceStr = val,
-                      ),
-                      const SizedBox(height: 16),
+                            // Nombre
+                            TextFormField(
+                              decoration: const InputDecoration(
+                                labelText: 'Nombre',
+                                prefixIcon: Icon(Icons.person_outline),
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.all(Radius.circular(12)),
+                                ),
+                              ),
+                              onChanged: (val) => name = val,
+                              validator: (val) =>
+                                  val == null || val.isEmpty ? 'Obligatorio' : null,
+                            ),
+                            const SizedBox(height: 16),
 
-                      ElevatedButton(
-                        onPressed: registerUser,
-                        child: const Text('Registrar'),
+                            // Email
+                            TextFormField(
+                              decoration: const InputDecoration(
+                                labelText: 'Email',
+                                prefixIcon: Icon(Icons.email_outlined),
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.all(Radius.circular(12)),
+                                ),
+                              ),
+                              keyboardType: TextInputType.emailAddress,
+                              onChanged: (val) => email = val,
+                              validator: (val) {
+                                if (val == null || val.isEmpty) return 'Obligatorio';
+                                if (!val.contains('@')) return 'Email inválido';
+                                return null;
+                              },
+                            ),
+                            const SizedBox(height: 16),
+
+                            // Contraseña
+                            TextFormField(
+                              decoration: const InputDecoration(
+                                labelText: 'Contraseña',
+                                prefixIcon: Icon(Icons.lock_outline),
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.all(Radius.circular(12)),
+                                ),
+                              ),
+                              obscureText: true,
+                              onChanged: (val) => password = val,
+                              validator: (val) =>
+                                  val == null || val.isEmpty ? 'Obligatorio' : null,
+                            ),
+                            const SizedBox(height: 16),
+
+                            // Confirmar contraseña
+                            /**TextFormField(
+                              decoration: const InputDecoration(
+                                labelText: 'Confirmar Contraseña',
+                                prefixIcon: Icon(Icons.lock_person_outlined),
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.all(Radius.circular(12)),
+                                ),
+                              ),
+                              obscureText: true,
+                              validator: (val) {
+                                if (val == null || val.isEmpty) return 'Obligatorio';
+                                if (val != password) {
+                                  return 'Las contraseñas no coinciden';
+                                }
+                                return null;
+                              },
+                            ),
+                            const SizedBox(height: 16),
+                            */
+
+                            // Moneda base
+                            isLoadingCurrencies
+                                ? const CircularProgressIndicator()
+                                : DropdownButtonFormField<Currency>(
+                                    value: currencyBase ??
+                                        (currencyBases.isNotEmpty
+                                            ? currencyBases.first
+                                            : null),
+                                    items: currencyBases
+                                        .map((c) => DropdownMenuItem(
+                                              value: c,
+                                              child: Text(
+                                                  '${c.symbol} ${c.code} - ${c.name}'),
+                                            ))
+                                        .toList(),
+                                    onChanged: (val) =>
+                                        setState(() => currencyBase = val),
+                                    decoration: const InputDecoration(
+                                      labelText: 'Moneda Base',
+                                      border: OutlineInputBorder(
+                                        borderRadius: BorderRadius.all(Radius.circular(12)),
+                                      ),
+                                    ),
+                                    validator: (val) =>
+                                        val == null ? 'Obligatorio' : null,
+                                  ),
+                            const SizedBox(height: 16),
+
+                            // Saldo inicial
+                            CurrencyTextField(
+                              controller: balanceController,
+                              currencies: currencyBases,
+                              selectedCurrency: currencyBase,
+                              label: 'Saldo Inicial (opcional)',
+                              onChanged: (val) => balanceStr = val,
+                            ),
+                            const SizedBox(height: 20),
+
+                            // Botón principal
+                            ElevatedButton(
+                              onPressed: registerUser,
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: colorScheme.primary,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                minimumSize: const Size(double.infinity, 48),
+                              ),
+                              child: Text(
+                                'Registrarme',
+                                style: TextStyle(
+                                  color: colorScheme.onPrimary,
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 12),
+
+                            // 🔹 Link inferior
+                            TextButton(
+                              onPressed: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (_) => const LoginScreen(),
+                                  ),
+                                );
+                              },
+                              child: Text(
+                                '¿Ya tenés cuenta? Iniciá sesión',
+                                style: TextStyle(
+                                  color: colorScheme.primary,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
-                      TextButton(
-                        onPressed: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                                builder: (_) => const LoginScreen()),
-                          );
-                        },
-                        child: const Text('Ya tienes cuenta? Ingresar'),
-                      ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
               ),
             ),
-    );
-  }
+          ),
+  );
+}
 }

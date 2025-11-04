@@ -19,8 +19,8 @@ class _LoginScreenState extends State<LoginScreen> {
   String email = '', password = '';
   bool isLoading = false;
   bool showResend = false;
+  bool obscureText = true;
 
-  /// 🔹 Inicia sesión
   void loginUser() async {
     if (!_formKey.currentState!.validate()) return;
 
@@ -31,7 +31,6 @@ class _LoginScreenState extends State<LoginScreen> {
 
     try {
       final res = await api.login(email, password);
-
       if (!mounted) return;
       setState(() => isLoading = false);
 
@@ -40,7 +39,6 @@ class _LoginScreenState extends State<LoginScreen> {
         return;
       }
 
-      // ✅ Login exitoso
       if (res['token'] != null) {
         Navigator.pushReplacement(
           context,
@@ -51,44 +49,28 @@ class _LoginScreenState extends State<LoginScreen> {
         return;
       }
 
-      final message = (res['message'] ?? 'Error al iniciar sesión').toLowerCase();
+      final message = (res['message'] ?? '').toLowerCase();
 
-      // 🟣 Caso: usuario no existe → ofrecer registrarse
       if (message.contains('no existe')) {
-        await showDialog(
-          context: context,
-          barrierDismissible: false,
-          builder: (_) => SuccessDialogWidget(
-            title: 'Error',
-            message: 'No existe una cuenta registrada con ese correo. Podés crear una nueva cuenta en Finova.',
-            buttonText: 'Registrarme',
-          ),
-        ).then((_) {
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(builder: (_) => const RegisterScreen()),
-          );
-        });
+        await _showError('No existe una cuenta registrada con ese correo.');
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (_) => const RegisterScreen()),
+        );
         return;
       }
 
-      // 🔴 Caso: correo o contraseña incorrectos
       if (message.contains('correo o contraseña')) {
         await _showError('Correo o contraseña incorrectos. Verificá los datos e intentá nuevamente.');
         return;
       }
 
-      // 🟡 Caso: cuenta dada de baja
       if (message.contains('dada de baja')) {
         await _showError('Tu cuenta fue dada de baja. Podés reactivarla desde el botón de abajo.');
         return;
       }
 
-      // 📬 Caso: falta verificación → mostrar botón reenviar
-      setState(() {
-        showResend = message.contains('verificar');
-      });
-
+      setState(() => showResend = message.contains('verificar'));
       await _showError(res['message'] ?? 'Error al iniciar sesión.');
     } catch (e) {
       if (!mounted) return;
@@ -97,7 +79,6 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
-  /// 🔹 Muestra diálogo de error genérico reutilizando tu widget
   Future<void> _showError(String message) async {
     await showDialog(
       context: context,
@@ -110,7 +91,7 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
-  /// 🔹 Reenvía el correo de verificación (con o sin token)
+/// 🔹 Reenvía el correo de verificación (con o sin token)
   Future<void> resendEmail() async {
     setState(() => isLoading = true);
 
@@ -147,87 +128,233 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
-  /// 🔹 UI principal
   @override
   Widget build(BuildContext context) {
-    final violet = Theme.of(context).colorScheme.primary;
+    final colorScheme = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Login')),
       body: isLoading
-          ? const LoadingWidget(message: "Ingresando...")
-          : Padding(
-              padding: const EdgeInsets.all(16),
-              child: Form(
-                key: _formKey,
-                child: Column(
-                  children: [
-                    TextFormField(
-                      decoration: const InputDecoration(
-                        labelText: 'Email',
-                        border: OutlineInputBorder(),
-                      ),
-                      keyboardType: TextInputType.emailAddress,
-                      onChanged: (val) => email = val,
-                      validator: (val) {
-                        if (val == null || val.isEmpty) return 'Obligatorio';
-                        if (!val.contains('@')) return 'Email inválido';
-                        return null;
-                      },
-                    ),
-                    const SizedBox(height: 16),
-                    TextFormField(
-                      decoration: const InputDecoration(
-                        labelText: 'Contraseña',
-                        border: OutlineInputBorder(),
-                      ),
-                      obscureText: true,
-                      onChanged: (val) => password = val,
-                      validator: (val) =>
-                          val == null || val.isEmpty ? 'Obligatorio' : null,
-                    ),
-                    const SizedBox(height: 16),
-                    ElevatedButton(
-                      onPressed: loginUser,
-                      child: const Text('Ingresar'),
-                    ),
-                    TextButton(
-                      onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => const RegisterScreen(),
-                          ),
-                        );
-                      },
-                      child: const Text('¿No tienes cuenta? Registrate'),
-                    ),
-                    TextButton(
-                      onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => const RequestReactivationScreen(),
-                          ),
-                        );
-                      },
-                      child: const Text('¿Tu cuenta fue dada de baja? Reactívala'),
-                    ),
-                    if (showResend)
-                      TextButton(
-                        onPressed: resendEmail,
-                        child: Text(
-                          '¿No recibiste el correo de verificación?',
+          ? const LoadingWidget(message: "Ingresando...") :
+        Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [
+              colorScheme.primary.withOpacity(0.1),
+              colorScheme.surface,
+            ],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+        ),
+        child: Center(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [ 
+                Container(
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    color: isDark
+                        ? colorScheme.surface.withOpacity(0.8)
+                        : Colors.white,
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  
+                  child: Form(
+                    key: _formKey,
+                    child: Column(
+                      children: [
+                         Text(
+                          "¡Hola de nuevo!",
+                          textAlign: TextAlign.center,
                           style: TextStyle(
-                            color: violet,
-                            fontWeight: FontWeight.w600,
+                            fontSize: 32,
+                            fontWeight: FontWeight.w800,
+                            letterSpacing: -0.3,
+                            height: 1.1,
+                            color: isDark
+                                ? Colors.white.withOpacity(0.95)
+                                : colorScheme.onSurface.withOpacity(0.9),
                           ),
                         ),
-                      ),
-                  ],
+                        const SizedBox(height: 6),
+                        Text(
+                          " Inicia sesión para continuar.",
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w400,
+                            color: isDark
+                                ? Colors.white.withOpacity(0.7)
+                                : Colors.black.withOpacity(0.6),
+                          ),
+                        ),
+                        const SizedBox(height: 24),
+                        TextFormField(
+                          decoration: const InputDecoration(
+                            labelText: 'Email',
+                            prefixIcon: Icon(Icons.email_outlined),
+                            border: OutlineInputBorder(
+                              borderRadius:
+                                  BorderRadius.all(Radius.circular(12)),
+                            ),
+                          ),
+                          keyboardType: TextInputType.emailAddress,
+                          onChanged: (val) => email = val,
+                          validator: (val) {
+                            if (val == null || val.isEmpty) return 'Obligatorio';
+                            if (!val.contains('@')) return 'Email inválido';
+                            return null;
+                          },
+                        ),
+                        const SizedBox(height: 16),
+                        TextFormField(
+                          obscureText: obscureText,
+                          decoration: InputDecoration(
+                            labelText: 'Contraseña',
+                            prefixIcon: const Icon(Icons.lock_outline),
+                            suffixIcon: IconButton(
+                              icon: Icon(
+                                obscureText
+                                    ? Icons.visibility_off
+                                    : Icons.visibility,
+                              ),
+                              onPressed: () =>
+                                  setState(() => obscureText = !obscureText),
+                            ),
+                            border: const OutlineInputBorder(
+                              borderRadius:
+                                  BorderRadius.all(Radius.circular(12)),
+                            ),
+                          ),
+                          onChanged: (val) => password = val,
+                          validator: (val) =>
+                              val == null || val.isEmpty ? 'Obligatorio' : null,
+                        ),
+                        const SizedBox(height: 20),
+                        ElevatedButton(
+                          onPressed: loginUser,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: colorScheme.primary,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            minimumSize: const Size(double.infinity, 48),
+                          ),
+                          child:  Text(
+                            'Iniciar Sesión',
+                            style: TextStyle(
+                              color: Theme.of(context).colorScheme.onPrimary,
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        TextButton(
+                          onPressed: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => const RegisterScreen(),
+                              ),
+                            );
+                          },
+                          child: Text(
+                            '¿No tienes cuenta? Registrate',
+                            style: TextStyle(
+                              color: Theme.of(context).colorScheme.primary,
+                            ),
+                          ),
+                        ),
+                        Divider(color: Colors.grey[400]),
+                         Padding(
+                          padding: const EdgeInsets.only(top: 10),
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Wrap(
+                                alignment: WrapAlignment.center,
+                                spacing: 12,
+                                runSpacing: -8, // 🔹 reduce el espacio vertical entre filas
+                                children: [
+                                  TextButton(
+                                    onPressed: () {
+                                      // TODO: recuperar contraseña
+                                    },
+                                    style: TextButton.styleFrom(
+                                      padding: EdgeInsets.zero,
+                                      minimumSize: const Size(0, 30),
+                                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                    ),
+                                    child: Text(
+                                      'Recuperar contraseña',
+                                      style: TextStyle(
+                                        color: Theme.of(context).colorScheme.primary,
+                                        fontSize: 14,
+                                      ),
+                                    ),
+                                  ),
+                                  TextButton(
+                                    onPressed: () {
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (_) => const RequestReactivationScreen(),
+                                        ),
+                                      );
+                                    },
+                                    style: TextButton.styleFrom(
+                                      padding: EdgeInsets.zero,
+                                      minimumSize: const Size(0, 30),
+                                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                    ),
+                                    child: Text(
+                                      'Reactivar cuenta',
+                                      style: TextStyle(
+                                        color: Theme.of(context).colorScheme.primary,
+                                        fontSize: 14,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              if (showResend)
+                                Padding(
+                                  padding: const EdgeInsets.only(top: 6),
+                                  child: TextButton(
+                                    onPressed: () async {
+                                      await resendEmail(); // reenviar verificación
+                                    },
+                                    style: TextButton.styleFrom(
+                                      padding: EdgeInsets.zero,
+                                      minimumSize: const Size(0, 30),
+                                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                    ),
+                                    child: Text(
+                                      '¿No recibiste el correo de verificación?',
+                                      style: TextStyle(
+                                        color: colorScheme.primary,
+                                        fontWeight: FontWeight.w600,
+                                        fontSize: 14,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
-              ),
+              ],
             ),
+          ),
+        ),
+      ),
     );
   }
 }

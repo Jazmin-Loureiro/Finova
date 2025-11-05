@@ -90,7 +90,7 @@ class _GoalsListScreenState extends State<GoalsListScreen>
                     children: [
                       _buildGoalsList(_filterGoals('in_progress')),
                       _buildGoalsList(_filterGoals('completed')),
-                      _buildGoalsList(_filterGoals('cancelled')),
+                      _buildGoalsList(_filterGoals('disabled')),
                     ],
                   ),
           ),

@@ -366,7 +366,7 @@ class _ChallengeScreenState extends State<ChallengeScreen>
                       title: "¡No hay desafíos disponibles!",
                       message: "Parece que completaste todos los desafíos por ahora.\nPodés intentar regenerarlos",
                       icon: Icons.emoji_events_outlined,
-                      onRefresh: _refreshChallengesManually,
+                
                     ),
                   ],
                 )
@@ -607,7 +607,7 @@ class _ChallengeScreenState extends State<ChallengeScreen>
             message:
                 "Podés aceptar uno desde la pestaña 'Disponibles' para empezar a ganar puntos y recompensas 🏅",
             icon: Icons.assignment_turned_in_outlined,
-            onRefresh: () => _refreshTab(1),
+   
           );
         }
 

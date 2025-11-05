@@ -4,6 +4,7 @@ import 'package:frontend/models/register.dart';
 import 'package:frontend/screens/goals/goal_form_screen.dart';
 import 'package:frontend/services/api_service.dart';
 import 'package:frontend/widgets/custom_scaffold.dart';
+import 'package:frontend/widgets/empty_state_widget.dart';
 import 'package:intl/intl.dart';
 
 class GoalDetailScreen extends StatefulWidget  {
@@ -103,27 +104,25 @@ Future<void> _fetchRegistersGoal() async {
                                         : Colors.blue[800],
                                   ),
                                 ),
-                                
-                                
                               ),
+                            if (widget.goal.active && widget.goal.state == 'in_progress')
                              IconButton(
-                          icon: const Icon(Icons.edit, size: 20),
-                          tooltip: 'Editar meta',
-                          onPressed: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                  builder: (context) =>
-                                      GoalFormScreen(goal: widget.goal)),
-                            ).then((value) {
-                              if (value == true) {
-                                // Si se editó la meta, recargar los datos
-                                setState(() {});
-                              }
-                             
-                            });
-                          },
-                        ),
+                                icon: const Icon(Icons.edit, size: 20),
+                                tooltip: 'Editar meta',
+                                onPressed: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                        builder: (context) =>
+                                            GoalFormScreen(goal: widget.goal)),
+                                  ).then((value) {
+                                    if (value == true) {
+                                      // Si se editó la meta, recargar los datos
+                                      setState(() {});
+                                    }
+                                  });
+                                },
+                              ),
                             ],
                           ),
                           const SizedBox(height: 12),
@@ -192,7 +191,12 @@ Future<void> _fetchRegistersGoal() async {
                             );
                           },
                         )
-                      : const Text('No hay registros asociados a esta meta.'),
+                      :   EmptyStateWidget(
+                          title: "Aún no hay registros.",
+                          message:
+                              "No has reservado ninguna cantidad aún.",
+                          icon: Icons.receipt_long,
+                        )
                 ],
               ),
             ),

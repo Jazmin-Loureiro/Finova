@@ -46,7 +46,7 @@ class Kernel extends ConsoleKernel
          * Actualización de tasas de cambio
          * Ejecuta cada 12 horas (a las 00:00 y 12:00) 
         */
-        $schedule->command('currencies:update')->twiceDaily(0, 12);
+        $schedule->command('currencies:update')->everyTwoHours();
         /**
          * Actualización de metas vencidas
          * -> todos los días a las 00:00 AM

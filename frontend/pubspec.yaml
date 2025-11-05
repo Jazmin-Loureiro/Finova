@@ -50,6 +50,9 @@ dependencies:
   path_provider: ^2.1.2
   open_filex: ^4.3.2
   excel: ^4.0.2
+  google_fonts: ^6.3.2
+  animated_text_kit: ^4.2.2
+  animate_do: ^3.3.4
   
 
 
@@ -102,6 +105,12 @@ flutter:
     - assets/lottie/home_loading2.json
     - assets/icon.png
     - assets/font/Roboto/Roboto-Italic-VariableFont_wdth,wght.ttf
+    - assets/icon.svg
+    - assets/lottie/BudgetAndBills.json
+    - assets/lottie/SavingAndFinancialGrowth.json
+    - assets/lottie/GrowthAndAnalytics.json
+
+
     
   
 

@@ -1,16 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:animate_do/animate_do.dart';
 
 class EmptyStateWidget extends StatelessWidget {
   final String title, message;
   final IconData icon;
-  final VoidCallback onRefresh;
 
   const EmptyStateWidget({
     super.key,
     required this.title,
     required this.message,
     required this.icon,
-    required this.onRefresh,
   });
 
   @override
@@ -20,52 +19,60 @@ class EmptyStateWidget extends StatelessWidget {
     return Center(
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 24),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              icon,
-              size: 90,
-              color: cs.primary.withOpacity(0.7),
-            ),
-            const SizedBox(height: 16),
-            Text(
-              title,
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-                color: cs.onSurface, // 🔹 color adaptable
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              message,
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                color: cs.onSurface.withOpacity(0.8), // 🔹 color adaptable
-                fontSize: 14,
-                height: 1.4,
-              ),
-            ),
-            const SizedBox(height: 24),
-            ElevatedButton.icon(
-              onPressed: onRefresh,
-              icon: const Icon(Icons.refresh),
-              label: const Text("Actualizar"),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: cs.primary,
-                foregroundColor: cs.onPrimary,
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 24,
-                  vertical: 12,
+        child: FadeInUp(
+          duration: const Duration(milliseconds: 700),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(24),
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  gradient: LinearGradient(
+                    colors: [
+                      cs.primary.withOpacity(0.15),
+                      cs.primary.withOpacity(0.05),
+                    ],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: cs.primary.withOpacity(0.25),
+                      blurRadius: 18,
+                      spreadRadius: 2,
+                      offset: const Offset(0, 6),
+                    ),
+                  ],
                 ),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
+                child: Icon(
+                  icon,
+                  size: 80,
+                  color: cs.primary,
                 ),
               ),
-            ),
-          ],
+              const SizedBox(height: 24),
+              Text(
+                title,
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 22,
+                  fontWeight: FontWeight.w800,
+                  color: cs.onSurface,
+                ),
+              ),
+              const SizedBox(height: 10),
+              Text(
+                message,
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: cs.onSurface.withOpacity(0.75),
+                  fontSize: 15,
+                  height: 1.5,
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

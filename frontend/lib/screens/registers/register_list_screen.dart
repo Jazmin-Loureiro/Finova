@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:frontend/widgets/category_summary_chart_widget.dart';
+import 'package:frontend/widgets/empty_state_widget.dart';
 import 'package:frontend/widgets/loading_widget.dart';
 import 'package:frontend/widgets/month_header_widget.dart';
 import '../../services/api_service.dart';
@@ -120,7 +121,12 @@ class _RegisterListScreenState extends State<RegisterListScreen> {
                     ],
                     const SizedBox(height: 8),
 
-                    registers.isEmpty ? const Center(child: Text('No hay registros para esta moneda')) : 
+                    registers.isEmpty ? EmptyStateWidget(
+                          title: "Aún no hay registros.",
+                          message:
+                              "No has reservado ninguna cantidad aún.",
+                          icon: Icons.receipt_long,
+                        ) : 
                     /// LISTA DE REGISTROS
                     Expanded(
                       child: ListView.builder(

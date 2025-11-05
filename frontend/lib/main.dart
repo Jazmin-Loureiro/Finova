@@ -1,37 +1,31 @@
 import 'package:flutter/material.dart';
 import 'package:frontend/widgets/loading_widget.dart';
-import 'package:provider/provider.dart'; // 👈 import del provider
-//import 'screens/login_screen.dart';
+import 'package:provider/provider.dart';
 import 'screens/home_screen.dart';
 import 'services/api_service.dart';
-import 'providers/house_provider.dart'; // 👈 tu nuevo provider
-import 'providers/register_provider.dart'; 
-
+import 'providers/house_provider.dart';
+import 'providers/register_provider.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'screens/home/onboarding_screen.dart';
-// Punto de entrada de la aplicación
-void main() async {
-    //  Inicializa los datos de localización para español (Argentina o genérico)
-    WidgetsFlutterBinding.ensureInitialized();
 
+import 'package:google_fonts/google_fonts.dart';
+
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
   await initializeDateFormatting('es', null);
+
   runApp(
     MultiProvider(
-      providers:[
-        ChangeNotifierProvider(
-          create: (_) => RegisterProvider(), 
-        ),
-        ChangeNotifierProvider(
-          create: (_) => HouseProvider(), // 👈 se inicializa apenas arranca la app
-        ),
+      providers: [
+        ChangeNotifierProvider(create: (_) => RegisterProvider()),
+        ChangeNotifierProvider(create: (_) => HouseProvider()),
       ],
-       child: const MyApp(),
+      child: const MyApp(),
     ),
   );
 }
 
-// Widget raíz de la aplicación
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
@@ -40,41 +34,61 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'Finova',
 
-      // 🎨 Tema claro
+      //  Tema claro ()
       theme: ThemeData(
         colorScheme: const ColorScheme.light(
-          primary: Colors.deepPurple,
+          primary: Color(0xFF7D2FFF), // Violeta Finova
           onPrimary: Colors.white,
-          secondary: Color(0xFF9575CD),
+          secondary: Color(0xFF00CC46), // Verde éxito
           onSecondary: Colors.white,
-          surface: Colors.white,
-          onSurface: Colors.black,
+          surface: Color(0xFFFFFFFF), // Tarjetas
+          onSurface: Color(0xFF141414), // Texto principal
         ),
-        scaffoldBackgroundColor: const Color.fromARGB(255, 232, 229, 229),
+       
+        scaffoldBackgroundColor: Color(0xFFF8F8F8), // Fondo claro general
+        cardColor: Color(0xFFFFFFFF), // Fondo secundario
+        shadowColor: Color(0xFFE0E0E0), // Bordes/sombras suaves
+         textTheme: TextTheme(
+          bodyLarge: GoogleFonts.poppins(fontSize: 16, color: Color(0xFF141414)),
+          bodyMedium: GoogleFonts.poppins(fontSize: 14, color: Color(0xFF141414)),
+          titleLarge: GoogleFonts.spaceGrotesk(
+              fontSize: 22, fontWeight: FontWeight.bold, color: Color(0xFF7D2FFF)),
+          headlineMedium: GoogleFonts.spaceGrotesk(
+              fontSize: 18, fontWeight: FontWeight.w600, color: Color(0xFF3A00FF)),
+        ),
         useMaterial3: true,
       ),
 
-      // 🎨 Tema oscuro
+      // Tema oscuro ()
       darkTheme: ThemeData(
         colorScheme: const ColorScheme.dark(
-          primary: Colors.deepPurple,
+          primary: Color(0xFF7D2FFF), // Violeta Finova
           onPrimary: Colors.black,
-          secondary: Color(0xFF9575CD),
+          secondary: Color(0xFF00FF4C), // Verde Neón
           onSecondary: Colors.white,
-          surface: Color(0xFF121212),
-          onSurface: Colors.white,
+          surface: Color(0xFF151515), // Tarjetas
+          onSurface: Color(0xFFFFFFFF), // Texto principal
         ),
-        scaffoldBackgroundColor: const Color.fromARGB(255, 48, 48, 48),
+        scaffoldBackgroundColor: Color(0xFF0A0A0A), // Fondo principal
+        cardColor: Color(0xFF151515), // Fondo secundario
+        shadowColor: Color(0xFF303030), // Bordes/íconos suaves
+          textTheme: TextTheme(
+            bodyLarge: GoogleFonts.poppins(fontSize: 16, color: Colors.white),
+            bodyMedium: GoogleFonts.poppins(fontSize: 14, color: Color(0xFFB3B3B3)),
+            titleLarge: GoogleFonts.spaceGrotesk(
+                fontSize: 22, fontWeight: FontWeight.bold, color: Color(0xFF7D2FFF)),
+            headlineMedium: GoogleFonts.spaceGrotesk(
+                fontSize: 18, fontWeight: FontWeight.w600, color: Color(0xFF00FF4C)),
+          ),
         useMaterial3: true,
       ),
 
       // 👇 Usa el tema según el sistema
       themeMode: ThemeMode.system,
-      //  Esto hace que todo (calendario, fechas, textos) use español
       locale: const Locale('es', 'ES'),
       supportedLocales: const [
-        Locale('es', 'ES'), // Español
-        Locale('en', 'US'), // Inglés (por si acaso)
+        Locale('es', 'ES'),
+        Locale('en', 'US'),
       ],
       localizationsDelegates: const [
         GlobalMaterialLocalizations.delegate,
@@ -82,7 +96,6 @@ class MyApp extends StatelessWidget {
         GlobalCupertinoLocalizations.delegate,
       ],
 
-      // 🕐 Fuerza formato 24 horas global
       builder: (context, child) {
         return MediaQuery(
           data: MediaQuery.of(context).copyWith(alwaysUse24HourFormat: true),
@@ -96,7 +109,6 @@ class MyApp extends StatelessWidget {
   }
 }
 
-// Pantalla de carga inicial (Splash Screen)
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
 

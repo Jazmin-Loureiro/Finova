@@ -6,6 +6,7 @@ import 'package:frontend/screens/goals/goal_form_screen.dart';
 import 'package:frontend/services/api_service.dart';
 import 'package:frontend/widgets/custom_scaffold.dart';
 import 'package:frontend/widgets/loading_widget.dart';
+import '../../widgets/empty_state_widget.dart';
 
 class GoalsListScreen extends StatefulWidget {
   const GoalsListScreen({super.key});
@@ -101,12 +102,12 @@ class _GoalsListScreenState extends State<GoalsListScreen>
 
   Widget _buildGoalsList(List<Goal> filteredGoals) {
     if (filteredGoals.isEmpty) {
-      return Center(
-        child: Text(
-          'No hay metas aun.',
-          style: TextStyle(fontSize: 16, color: Theme.of(context).colorScheme.primary),
-        ),
-      );
+      return EmptyStateWidget(
+            title: "Aún no tenés metas.",
+            message:
+                "Las metas te ayudan a organizar y alcanzar tus objetivos financieros.",
+            icon: Icons.flag,
+          );
     }
 
     return ListView.builder(
@@ -175,7 +176,7 @@ class _GoalsListScreenState extends State<GoalsListScreen>
                           ),
                         ),
                       ),
-                      if (goal.active && goal.state != 'completed')
+                      if (goal.active && goal.state == 'in_progress')
                         IconButton(
                           icon: const Icon(Icons.edit, size: 20),
                           tooltip: 'Editar meta',

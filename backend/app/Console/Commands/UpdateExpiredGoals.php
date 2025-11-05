@@ -17,8 +17,7 @@ class UpdateExpiredGoals extends Command
             ->get();
 
         foreach ($expiredGoals as $goal) {
-            $goal->update(['active' => 0]);
-            $goal->update(['state' => 'cancelled']);
+            $goal->disableGoal();
         }
         $this->info('Metas vencidas actualizadas correctamente.');
     }

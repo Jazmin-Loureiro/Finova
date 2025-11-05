@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/svg.dart';
 import '../services/api_service.dart';
 import 'register_screen.dart';
 import 'home_screen.dart';
@@ -166,6 +167,11 @@ class _LoginScreenState extends State<LoginScreen> {
                     key: _formKey,
                     child: Column(
                       children: [
+                        SvgPicture.asset(
+                          'assets/icon.svg',
+                          height: 100,
+                        ),
+                        const SizedBox(height: 16),
                          Text(
                           "¡Hola de nuevo!",
                           textAlign: TextAlign.center,

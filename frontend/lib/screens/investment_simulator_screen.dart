@@ -105,66 +105,54 @@ class _InvestmentSimulatorScreenState extends State<InvestmentSimulatorScreen>
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final primary = theme.colorScheme.primary;
-    final background = theme.scaffoldBackgroundColor;
     final surface = theme.colorScheme.surface;
     final textColor = theme.colorScheme.onSurface;
 
     return CustomScaffold(
       title: 'Simulador de Inversiones',
       currentRoute: 'investment_simulation',
-      body: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: [
-              background.withOpacity(0.97),
-              background.withOpacity(0.85),
-              primary.withOpacity(0.1),
-            ],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
+      // 🧹 Eliminamos el Container con gradient
+      body: Column(
+        children: [
+          // 🔹 Tabs superiores (idéntico a ChallengeScreen)
+          Container(
+            color: surface.withOpacity(0.15),
+            child: TabBar(
+              controller: _tabController,
+              labelColor: primary,
+              unselectedLabelColor: textColor.withOpacity(0.7),
+              indicatorColor: primary,
+              indicatorWeight: 3,
+              labelStyle: const TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 15,
+                letterSpacing: 0.2,
+              ),
+              tabs: _tabs
+                  .map((t) => Tab(
+                        icon: Icon(t['icon'], size: 20),
+                        text: t['label'],
+                      ))
+                  .toList(),
+            ),
           ),
-        ),
-        child: Column(
-          children: [
-            // 🔹 Tabs superiores (idéntico a ChallengeScreen)
-            Container(
-              color: surface.withOpacity(0.15),
-              child: TabBar(
-                controller: _tabController,
-                labelColor: primary,
-                unselectedLabelColor: textColor.withOpacity(0.7),
-                indicatorColor: primary,
-                indicatorWeight: 3,
-                labelStyle: const TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 15,
-                  letterSpacing: 0.2,
-                ),
-                tabs: _tabs
-                    .map((t) => Tab(
-                          icon: Icon(t['icon'], size: 20),
-                          text: t['label'],
-                        ))
-                    .toList(),
-              ),
-            ),
 
-            // 🔹 Contenido de cada tab — mismo alto, swipe suave
-            Expanded(
-              child: TabBarView(
-                controller: _tabController,
-                physics: const BouncingScrollPhysics(), // ← mejora el deslizamiento lateral
-                children: [
-                  _buildPlazoFijo(theme, surface, textColor, primary),
-                  _buildCrypto(theme, surface, textColor, primary),
-                ],
-              ),
+          // 🔹 Contenido de cada tab — mismo alto, swipe suave
+          Expanded(
+            child: TabBarView(
+              controller: _tabController,
+              physics: const BouncingScrollPhysics(),
+              children: [
+                _buildPlazoFijo(theme, surface, textColor, primary),
+                _buildCrypto(theme, surface, textColor, primary),
+              ],
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
+
 
   Widget _buildPlazoFijo(
       ThemeData theme, Color surface, Color textColor, Color primary) {

@@ -336,15 +336,78 @@ class _SimulationResultCardState extends State<SimulationResultCard>
         _infoLine('Intereses totales', formatterARS(_asDouble(r['intereses_totales'])), textColor),
         _infoLine('CFT estimado', '${r['cft_estimado']}%', textColor),
         const Divider(height: 25),
+        // 🧭 Tipo francés
         Row(
           children: [
-            Text('Tipo de préstamo',
-                style: TextStyle(fontWeight: FontWeight.bold, color: primary, fontSize: 15)),
+            Text(
+              'Tipo de préstamo',
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                color: primary,
+                fontSize: 15,
+              ),
+            ),
             const SizedBox(width: 6),
-            const InfoIcon(
+            InfoIcon(
               title: 'Préstamo tipo francés',
               message:
-                  'Cuotas fijas; cada cuota combina interés y capital con proporción variable en el tiempo.',
+                  'En el sistema francés las cuotas son fijas durante todo el plazo. '
+                  'Cada cuota incluye una parte de interés (que disminuye con el tiempo) '
+                  'y una parte de capital (que aumenta mes a mes).',
+            ),
+          ],
+        ),
+        const SizedBox(height: 10),
+
+        // 🧮 Fórmula de cálculo
+        Row(
+          children: [
+            Text(
+              'Fórmula utilizada',
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                color: primary,
+                fontSize: 15,
+              ),
+            ),
+            const SizedBox(width: 6),
+            InfoIcon(
+              title: 'Fórmula del sistema francés',
+              message:
+                  'La cuota (C) se calcula con la fórmula:\n\n'
+                  'C = P × [i × (1 + i)^n] / [(1 + i)^n − 1]\n\n'
+                  'Donde:\n'
+                  '• C = cuota mensual\n'
+                  '• P = capital solicitado\n'
+                  '• i = tasa mensual\n'
+                  '• n = cantidad de cuotas\n\n'
+                  'Esta fórmula permite mantener cuotas iguales, '
+                  'aunque la proporción entre interés y capital varía cada mes.',
+            ),
+          ],
+        ),
+        const SizedBox(height: 10),
+
+        // 📘 Composición de las cuotas
+        Row(
+          children: [
+            Text(
+              'Cómo se componen las cuotas',
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                color: primary,
+                fontSize: 15,
+              ),
+            ),
+            const SizedBox(width: 6),
+            InfoIcon(
+              title: 'Composición de las cuotas',
+              message:
+                  'Cada cuota se divide en dos partes:\n\n'
+                  '• Una porción de interés, calculada sobre el saldo pendiente.\n'
+                  '• Una porción de capital, que reduce la deuda.\n\n'
+                  'Con el tiempo, los intereses bajan y el capital amortizado sube, '
+                  'manteniendo el valor total de la cuota fijo.',
             ),
           ],
         ),
@@ -426,15 +489,12 @@ class _SimulationResultCardState extends State<SimulationResultCard>
                     ),
                   ),
                   const SizedBox(width: 6),
-                  const InfoIcon(
-                    title: 'Qué significa esta simulación',
-                    message:
-                        'El resultado muestra cómo evolucionaría tu inversión según datos reales del mercado. '
-                        'Los valores pueden ser positivos (ganancia) o negativos (pérdida) dependiendo del comportamiento del activo.',
+                  InfoIcon(
+                    title: _infoTitle(widget.resultado['tipo']),
+                    message: _infoMessage(widget.resultado['tipo']),
                   ),
                 ],
               ),
-
               const SizedBox(height: 18),
               Center(
                 child: Stack(
@@ -483,6 +543,35 @@ class _SimulationResultCardState extends State<SimulationResultCard>
         );
       },
     );
+  }
+
+  String _infoTitle(dynamic tipo) {
+    switch (tipo) {
+      case 'plazo_fijo':
+        return 'Qué significa esta simulación de plazo fijo';
+      case 'cripto':
+        return 'Qué significa esta simulación de cripto';
+      case 'prestamo':
+        return 'Qué significa esta simulación de préstamo';
+      default:
+        return 'Qué significa esta simulación';
+    }
+  }
+
+  String _infoMessage(dynamic tipo) {
+    switch (tipo) {
+      case 'plazo_fijo':
+        return 'La simulación de plazo fijo muestra los intereses generados según la tasa actual del BCRA. '
+              'El resultado depende de la TNA y del plazo seleccionado. Los valores son estimativos.';
+      case 'cripto':
+        return 'La simulación cripto usa la variación real del precio del activo en el período base (24h, 7d o 30d). '
+              'El resultado puede ser positivo o negativo según el comportamiento reciente del mercado.';
+      case 'prestamo':
+        return 'La simulación de préstamo calcula las cuotas fijas bajo el sistema francés, considerando tasa mensual, CFT y cantidad de cuotas. '
+              'Los valores son aproximados y pueden variar según la entidad.';
+      default:
+        return 'El resultado muestra cómo evolucionaría tu inversión según datos reales del mercado.';
+    }
   }
 
   Widget _infoLine(String label, String value, Color textColor) {

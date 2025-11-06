@@ -51,17 +51,6 @@ class _LoanSimulatorScreenState extends State<LoanSimulatorScreen> {
       title: 'Simulador',
       currentRoute: 'loan_simulation',
       body: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: [
-              background.withOpacity(0.97),
-              background.withOpacity(0.9),
-              primary.withOpacity(0.12),
-            ],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
-        ),
         child: Padding(
           padding: const EdgeInsets.all(18.0),
           child: ListView(

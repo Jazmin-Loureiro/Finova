@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'info_icon_widget.dart'; // 👈 asegúrate de tener este import correcto
+import 'info_icon_widget.dart';
 
 class SimulationResultCard extends StatefulWidget {
   final Map<String, dynamic> resultado;
@@ -29,62 +29,86 @@ String _formatDate(dynamic dateInput) {
   }
 }
 
+const Map<String, String> _symbolByCode = {
+  'USD': r'$',
+  'ARS': r'$',
+  'EUR': '€',
+  'BRL': r'R$',
+  'CLP': r'$',
+  'COP': r'$',
+  'MXN': r'$',
+};
+
+String _fmt(double value, String code) {
+  final symbol = _symbolByCode[code.toUpperCase()] ?? r'$';
+  final absValue = value.abs();
+  final formatted = NumberFormat.currency(
+    locale: 'en_US', // siempre símbolo antes del número
+    symbol: symbol,
+    decimalDigits: 2,
+  ).format(absValue);
+
+  if (value < 0) {
+    // Colocamos el signo después del símbolo (ej: $-100.00)
+    return '$symbol-${NumberFormat("#,##0.00", "en_US").format(absValue)}';
+  }
+
+  return formatted;
+}
+
+
+double _asDouble(dynamic v, [double fallback = 0]) {
+  if (v == null) return fallback;
+  if (v is num) return v.toDouble();
+  if (v is String) return double.tryParse(v) ?? fallback;
+  return fallback;
+}
+
 class _SimulationResultCardState extends State<SimulationResultCard>
     with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _animation;
-  late double porcentajeInteres;
-
-  double _asDouble(dynamic v, [double fallback = 0]) {
-    if (v == null) return fallback;
-    if (v is num) return v.toDouble();
-    if (v is String) return double.tryParse(v) ?? fallback;
-    return fallback;
-  }
-
+  late double porcentajeInteres; // puede ser negativo
 
   @override
-  @override
-void initState() {
-  super.initState();
+  void initState() {
+    super.initState();
 
-  final r = widget.resultado;
-  double monto = 0;
-  double montoFinal = 0;
+    final r = widget.resultado;
+    double monto = 0;
+    double montoFinal = 0;
 
-  switch (r['tipo']) {
-    case 'plazo_fijo':
-      monto = _asDouble(r['monto_inicial']);
-      montoFinal = _asDouble(r['monto_final_estimado']);
-      break;
-    case 'cripto':
-    case 'accion':
-    case 'bono':
-      monto = _asDouble(r['monto_inicial']);
-      montoFinal = _asDouble(r['monto_final_estimado_usd']);
-      break;
-    case 'prestamo': // no está explícito en el backend, lo agregás así
-    default:
-      monto = _asDouble(r['capital']);
-      montoFinal = _asDouble(r['total_a_pagar']);
-      break;
+    switch (r['tipo']) {
+      case 'plazo_fijo':
+        monto = _asDouble(r['monto_inicial']);
+        montoFinal = _asDouble(r['monto_final_estimado']);
+        break;
+      case 'cripto':
+        // Gauge en USD para consistencia
+        monto = _asDouble(r['monto_inicial']);
+        montoFinal = _asDouble(r['monto_final_estimado_usd']);
+        break;
+      case 'prestamo':
+      default:
+        monto = _asDouble(r['capital']);
+        montoFinal = _asDouble(r['total_a_pagar']);
+        break;
+    }
+
+    final interes = (montoFinal - monto); // puede ser negativo
+    porcentajeInteres = (monto > 0) ? (interes / monto) : 0;
+
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 2),
+    );
+
+    // el gauge solo acepta [0..1]; si es pérdida, lo dejamos en 0 pero mostramos el % en rojo
+    _animation = Tween<double>(begin: 0, end: porcentajeInteres.clamp(0, 1))
+        .animate(CurvedAnimation(parent: _controller, curve: Curves.easeOut));
+
+    _controller.forward();
   }
-
-  final interes = (montoFinal - monto).clamp(0, double.infinity);
-  porcentajeInteres = monto > 0 ? (interes / monto) : 0;
-
-  _controller = AnimationController(
-    vsync: this,
-    duration: const Duration(seconds: 2),
-  );
-
-  _animation = Tween<double>(begin: 0, end: porcentajeInteres)
-      .animate(CurvedAnimation(parent: _controller, curve: Curves.easeOut));
-
-  _controller.forward();
-}
-
-
 
   @override
   void dispose() {
@@ -93,425 +117,243 @@ void initState() {
   }
 
   Widget _buildDetails(Map<String, dynamic> r, Color textColor, Color primary) {
-    final formatter = NumberFormat.currency(locale: 'es_AR', symbol: '\$');
     final tipo = r['tipo']?.toString();
 
-    // 🔸 BLOQUE PLAZO FIJO (sin cambios)
+    // -------------------- PLAZO FIJO --------------------
     if (tipo == 'plazo_fijo') {
-    final formatter = NumberFormat.currency(locale: 'es_AR', symbol: '\$');
+      final double montoInicial = _asDouble(r['monto_inicial']);
+      final double montoFinal = _asDouble(r['monto_final_estimado']);
+      final double interes = (montoFinal - montoInicial).clamp(0, double.infinity);
+      final double rendimiento = _asDouble(r['rendimiento_estimado_%']);
 
-    final double montoInicial = (r['monto_inicial'] ?? 0).toDouble();
-    final double montoFinal   = (r['monto_final_estimado'] ?? 0).toDouble();
-    final double interes      = (montoFinal - montoInicial).clamp(0, double.infinity);
-    final double rendimiento  = (r['rendimiento_estimado_%'] ?? 0).toDouble();
+      // Usamos ARS para PF (fuente BCRA); si querés hacerlo base-usuario también, pasame esos campos desde el backend.
+      final formatterARS = (double v) => _fmt(v, 'ARS');
 
-    // 👇 Comparativa (se mantiene)
-    final comp   = r['comparativa'] ?? {};
-    final estado = comp['estado'] ?? 'neutral';
+      final comp = r['comparativa'] ?? {};
+      final estado = comp['estado'] ?? 'neutral';
 
-    String estadoTexto;
-    Color estadoColor;
-    IconData estadoIcon;
+      String estadoTexto;
+      Color estadoColor;
+      IconData estadoIcon;
 
-    if (estado == 'positivo') {
-      estadoTexto = 'El plazo fijo le gana a la inflación';
-      estadoColor = Colors.greenAccent.shade400;
-      estadoIcon  = Icons.trending_up;
-    } else if (estado == 'negativo') {
-      estadoTexto = 'La inflación supera al plazo fijo';
-      estadoColor = Colors.redAccent.shade200;
-      estadoIcon  = Icons.trending_down;
-    } else {
-      estadoTexto = 'Plazo fijo e inflación están equilibrados';
-      estadoColor = Colors.grey;
-      estadoIcon  = Icons.drag_handle;
-    }
+      if (estado == 'positivo') {
+        estadoTexto = 'El plazo fijo le gana a la inflación';
+        estadoColor = Colors.greenAccent.shade400;
+        estadoIcon = Icons.trending_up;
+      } else if (estado == 'negativo') {
+        estadoTexto = 'La inflación supera al plazo fijo';
+        estadoColor = Colors.redAccent.shade200;
+        estadoIcon = Icons.trending_down;
+      } else {
+        estadoTexto = 'Plazo fijo e inflación están equilibrados';
+        estadoColor = Colors.grey;
+        estadoIcon = Icons.drag_handle;
+      }
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        _infoLine('Monto invertido', formatter.format(montoInicial), textColor),
-        _infoLine('Interés generado', formatter.format(interes), textColor),
-        _infoLine('Monto total a recibir', formatter.format(montoFinal), textColor),
-        _infoLine('Rendimiento estimado', '${rendimiento.toStringAsFixed(2)}%', textColor),
-
-        const SizedBox(height: 10),
-        _infoLine('TNA aplicada', '${r['tna']}%', textColor),
-        _infoLine('Días de inversión', '${r['dias']}', textColor),
-
-        const Divider(height: 25),
-        Text(
-          'Comparativa con inflación',
-          style: TextStyle(
-            color: primary,
-            fontWeight: FontWeight.bold,
-            fontSize: 16,
-          ),
-        ),
-        const SizedBox(height: 10),
-        _infoLine('TNA utilizada', '${r['tna']}%', textColor),
-        _infoLine('Inflación mensual', '${comp['inflacion'] ?? 'N/D'}%', textColor),
-        _infoLine('Diferencia', '${comp['resultado'] ?? 'N/D'}%', textColor),
-
-        const SizedBox(height: 12),
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-          decoration: BoxDecoration(
-            color: estadoColor.withOpacity(0.12),
-            borderRadius: BorderRadius.circular(10),
-          ),
-          child: Row(
-            children: [
-              Icon(estadoIcon, color: estadoColor, size: 22),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                  estadoTexto,
-                  style: TextStyle(
-                    color: estadoColor,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 14,
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _infoLine('Monto invertido', formatterARS(montoInicial), textColor),
+          _infoLine('Interés generado', formatterARS(interes), textColor),
+          _infoLine('Monto total a recibir', formatterARS(montoFinal), textColor),
+          _infoLine('Rendimiento estimado', '${rendimiento.toStringAsFixed(2)}%', textColor),
+          const SizedBox(height: 10),
+          _infoLine('TNA aplicada', '${r['tna']}%', textColor),
+          _infoLine('Días de inversión', '${r['dias']}', textColor),
+          const Divider(height: 25),
+          Text('Comparativa con inflación',
+              style: TextStyle(color: primary, fontWeight: FontWeight.bold, fontSize: 16)),
+          const SizedBox(height: 10),
+          _infoLine('Inflación mensual', '${comp['inflacion'] ?? 'N/D'}%', textColor),
+          _infoLine('Diferencia', '${comp['resultado'] ?? 'N/D'}%', textColor),
+          const SizedBox(height: 12),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+            decoration: BoxDecoration(
+              color: estadoColor.withOpacity(0.12),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Row(
+              children: [
+                Icon(estadoIcon, color: estadoColor, size: 22),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    estadoTexto,
+                    style: TextStyle(
+                      color: estadoColor,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 14,
+                    ),
                   ),
                 ),
+              ],
+            ),
+          ),
+          const Divider(height: 25),
+          Text(r['descripcion'] ?? '', style: TextStyle(color: textColor.withOpacity(0.7))),
+          const SizedBox(height: 12),
+        ],
+      );
+    }
+
+    // -------------------- CRIPTO --------------------
+    if (tipo == 'cripto') {
+      // USD SIEMPRE presente (compra cripto en USD).
+      final double montoInicialUsd = _asDouble(r['monto_inicial']);
+      final double montoFinalUsd   = _asDouble(r['monto_final_estimado_usd']);
+      final double precioUsd       = _asDouble(r['precio_usd']);
+      final double cantidad        = _asDouble(r['cantidad_comprada']);
+
+      // Moneda base del usuario
+      final String baseCode = (r['moneda_base'] ?? 'ARS').toString().toUpperCase();
+      final double montoInicialBase = _asDouble(r['monto_inicial_base']);
+      final double montoFinalBase   = _asDouble(r['monto_final_estimado_base']);
+
+      final double variacion = _asDouble(r['variacion_%']);            // del periodo_base
+      final double rendimiento = _asDouble(r['rendimiento_estimado_%']); // ajustado a días
+      final String periodo = (r['periodo_base'] ?? '30d').toString();
+
+      final double gananciaUsd  = montoFinalUsd - montoInicialUsd;
+      final double gananciaBase = montoFinalBase - montoInicialBase;
+      final bool gananciaPositiva = gananciaUsd >= 0;
+
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Text('Criptomoneda',
+                  style: TextStyle(fontWeight: FontWeight.bold, color: primary, fontSize: 15)),
+              const SizedBox(width: 6),
+              const InfoIcon(
+                title: '¿Qué es una criptomoneda?',
+                message:
+                    'Son activos digitales descentralizados cuyo precio varía según la oferta y la demanda.',
               ),
             ],
           ),
-        ),
-
-        const Divider(height: 25),
-        Text(
-          r['descripcion'] ?? '',
-          style: TextStyle(color: textColor.withOpacity(0.7)),
-        ),
-        const SizedBox(height: 12),
-        Text(
-          'Fuente: ${r['fuente'] ?? 'BCRA'}',
-          style: TextStyle(
-            color: textColor.withOpacity(0.6),
-            fontSize: 12.5,
-            fontStyle: FontStyle.italic,
+          const SizedBox(height: 10),
+          _infoLine('Activo', '${r['activo'] ?? 'N/D'}', textColor),
+          _infoLine('Cotización actual', _fmt(precioUsd, 'USD'), textColor),
+          Row(
+            children: [
+              Expanded(
+                child: _infoLine(
+                  'Monto invertido',
+                  '${_fmt(montoInicialUsd, "USD")} (${_fmt(montoInicialBase, baseCode)})',
+                  textColor,
+                ),
+              ),
+              const InfoIcon(
+                title: 'Monto invertido',
+                message:
+                    'Las criptomonedas cotizan globalmente en dólares (USD). '
+                    'El valor entre paréntesis muestra el equivalente en tu moneda local según la cotización actual.',
+              ),
+            ],
           ),
-        ),
-      ],
-    );
-  }
-
-  //Cripto
-  if (tipo == 'cripto') {
-  final double montoInicialUsd = _asDouble(r['monto_inicial']);
-  final double montoInicialArs = _asDouble(r['monto_inicial_ars']);
-  final double montoFinalUsd   = _asDouble(r['monto_final_estimado_usd']);
-  final double montoFinalArs   = _asDouble(r['monto_final_estimado_ars']);
-  final double precioUsd       = _asDouble(r['precio_usd']);
-  final double cantidad        = _asDouble(r['cantidad_comprada']);
-  final double rendimiento     = _asDouble(r['rendimiento_estimado_%']);
-
-  final extras = r['extras'] ?? {};
-  final var24h = _asDouble(extras['change_percent']);        // 24h
-  final var7d  = _asDouble(extras['change_percent_7d']);     // 7d
-  final var30d = _asDouble(extras['change_percent_30d']);    // 30d
-
-  final int dias = (r['dias'] is int)
-      ? r['dias'] as int
-      : int.tryParse('${r['dias'] ?? 0}') ?? 0;
-
-  // 👉 Elegimos qué variación mostrar según días
-  double variacionElegida;
-  String variacionLabel;
-  if (dias <= 2) {
-    variacionElegida = var24h;
-    variacionLabel = 'Variación 24h';
-  } else if (dias <= 8) {
-    variacionElegida = var7d;
-    variacionLabel = 'Variación 7d';
-  } else {
-    variacionElegida = var30d;
-    variacionLabel = 'Variación 30d';
-  }
-
-  final double gananciaUsd = (montoFinalUsd - montoInicialUsd);
-
-  return Column(
-    crossAxisAlignment: CrossAxisAlignment.start,
-    children: [
-      Row(
-        children: [
-          Text(
-            'Criptomoneda',
-            style: TextStyle(fontWeight: FontWeight.bold, color: primary, fontSize: 15),
+          _infoLine('Cantidad adquirida', '$cantidad ${r['activo'] ?? ''}', textColor),
+          Row(
+            children: [
+              Expanded(
+                child: _infoLine(
+                  'Variación base ($periodo)',
+                  '${variacion.toStringAsFixed(2)}%',
+                  textColor,
+                ),
+              ),
+              const InfoIcon(
+                title: 'Variación base',
+                message:
+                    'Representa el cambio porcentual real de la criptomoneda en el período base (24h, 7d o 30d) '
+                    'según CoinGecko. Este valor es la referencia para calcular el rendimiento estimado.',
+              ),
+            ],
           ),
-          const SizedBox(width: 6),
-          const InfoIcon(
-            title: '¿Qué es una criptomoneda?',
-            message: 'Son activos digitales descentralizados cuyo precio cambia según oferta y demanda.',
+          Row(
+            children: [
+              Expanded(
+                child: _infoLine(
+                  'Rendimiento estimado (${r['dias']} días)',
+                  '${rendimiento.toStringAsFixed(2)}%',
+                  rendimiento >= 0
+                      ? Colors.greenAccent.shade400
+                      : Colors.redAccent.shade200,
+                ),
+              ),
+              const InfoIcon(
+                title: '¿Cómo se calcula el rendimiento?',
+                message:
+                    'El rendimiento se estima usando la variación porcentual del activo (24h, 7d o 30d) '
+                    'ajustada proporcionalmente a los días simulados. Si es positivo, ganás; si es negativo, perdés valor.',
+              ),
+            ],
           ),
+          const Divider(height: 20),
+          Row(
+            children: [
+              Expanded(
+                child: _infoLine(
+                  'Ganancia estimada',
+                  '${_fmt(gananciaUsd, "USD")} (${_fmt(gananciaBase, baseCode)})',
+                  gananciaPositiva
+                      ? Colors.greenAccent.shade400
+                      : Colors.redAccent.shade200,
+                ),
+              ),
+              const InfoIcon(
+                title: 'Ganancia estimada',
+                message:
+                    'Este valor refleja cuánto ganarías o perderías si el precio del activo variara según el período elegido. '
+                    'Es una estimación basada en datos recientes del mercado y puede cambiar con la volatilidad.',
+              ),
+            ],
+          ),
+          _infoLine(
+            'Monto estimado final',
+            '${_fmt(montoFinalUsd, "USD")} (${_fmt(montoFinalBase, baseCode)})',
+            textColor,
+          ),
+          const SizedBox(height: 12),
+          Text(r['descripcion'] ?? '', style: TextStyle(color: textColor.withOpacity(0.7))),
+          const SizedBox(height: 8),
         ],
-      ),
-      const SizedBox(height: 10),
+      );
+    }
 
-      _infoLine('Activo', '${r['activo'] ?? 'N/D'}', textColor),
-      _infoLine('Cotización actual', '\$${precioUsd.toStringAsFixed(2)} USD', textColor),
-      _infoLine('Monto invertido', '\$${montoInicialUsd.toStringAsFixed(2)} USD (~\$${montoInicialArs.toStringAsFixed(0)} ARS)', textColor),
-      _infoLine('Cantidad adquirida', '$cantidad ${r['activo'] ?? ''}', textColor),
+    // -------------------- PRÉSTAMO --------------------
+    final formatterARS = (double v) => _fmt(v, 'ARS');
 
-      // 👉 Variación principal según días
-      _infoLine(variacionLabel, '${variacionElegida.toStringAsFixed(2)}%', textColor),
-
-      // 👉 “Todas las variaciones” en un desplegable opcional
-      ExpansionTile(
-        tilePadding: EdgeInsets.zero,
-        title: Text('Ver variaciones 24h / 7d / 30d',
-            style: TextStyle(color: textColor.withOpacity(0.85), fontWeight: FontWeight.w600)),
-        children: [
-          _infoLine('Variación 24h', '${var24h.toStringAsFixed(2)}%', textColor),
-          _infoLine('Variación 7d',  '${var7d.toStringAsFixed(2)}%',  textColor),
-          _infoLine('Variación 30d', '${var30d.toStringAsFixed(2)}%', textColor),
-        ],
-      ),
-
-      // 👉 Ganancia debajo de variaciones (como pediste)
-      _infoLine('Ganancia estimada',
-          '\$${gananciaUsd.toStringAsFixed(2)} USD (~\$${(montoFinalArs - montoInicialArs).toStringAsFixed(0)} ARS)',
-          textColor),
-
-      _infoLine('Monto estimado final',
-          '\$${montoFinalUsd.toStringAsFixed(2)} USD (~\$${montoFinalArs.toStringAsFixed(0)} ARS)',
-          textColor),
-
-      _infoLine('Rendimiento estimado', '${rendimiento.toStringAsFixed(2)}%', textColor),
-
-      const SizedBox(height: 12),
-      Text(r['descripcion'] ?? '', style: TextStyle(color: textColor.withOpacity(0.7))),
-      const SizedBox(height: 8),
-    ],
-  );
-}
-
-
-  if (tipo == 'accion') {
-  final double montoInicialUsd = _asDouble(r['monto_inicial']);
-  final double montoInicialArs = _asDouble(r['monto_inicial_ars']);
-  final double montoFinalUsd   = _asDouble(r['monto_final_estimado_usd']);
-  final double montoFinalArs   = _asDouble(r['monto_final_estimado_ars']);
-  final double precioUsd       = _asDouble(r['precio_usd']);
-  final double cantidad        = _asDouble(r['cantidad_comprada']);
-  final double rendimiento     = _asDouble(r['rendimiento_estimado_%']);
-
-  final extras = r['extras'] ?? {};
-  final varDiaria = _asDouble(extras['change_percent']);       // diaria
-  final varYTD    = _asDouble(extras['percent_change_ytd']);   // YTD
-
-  final double gananciaUsd = (montoFinalUsd - montoInicialUsd);
-
-  return Column(
-    crossAxisAlignment: CrossAxisAlignment.start,
-    children: [
-      Row(
-        children: [
-          Text(
-            'Acciones bursátiles',
-            style: TextStyle(fontWeight: FontWeight.bold, color: primary, fontSize: 15),
-          ),
-          const SizedBox(width: 6),
-          const InfoIcon(
-            title: '¿Qué son las acciones?',
-            message: 'Representan una parte de la propiedad de una empresa. Su precio refleja expectativas del mercado.',
-          ),
-        ],
-      ),
-      const SizedBox(height: 10),
-
-      _infoLine('Acción', '${r['symbol'] ?? 'N/D'}', textColor),
-      _infoLine('Cotización actual', '\$${precioUsd.toStringAsFixed(2)} USD', textColor),
-      _infoLine('Monto invertido', '\$${montoInicialUsd.toStringAsFixed(2)} USD (~\$${montoInicialArs.toStringAsFixed(0)} ARS)', textColor),
-      _infoLine('Cantidad adquirida', '$cantidad ${r['symbol'] ?? ''}', textColor),
-
-      _infoLine('Variación diaria', '${varDiaria.toStringAsFixed(2)}%', textColor),
-      _infoLine('Variación YTD',    '${varYTD.toStringAsFixed(2)}%',    textColor),
-
-      _infoLine('Ganancia estimada',
-          '\$${gananciaUsd.toStringAsFixed(2)} USD (~\$${(montoFinalArs - montoInicialArs).toStringAsFixed(0)} ARS)',
-          textColor),
-
-      _infoLine('Monto estimado final',
-          '\$${montoFinalUsd.toStringAsFixed(2)} USD (~\$${montoFinalArs.toStringAsFixed(0)} ARS)',
-          textColor),
-
-      _infoLine('Rendimiento estimado', '${rendimiento.toStringAsFixed(2)}%', textColor),
-
-      const SizedBox(height: 12),
-      Text(r['descripcion'] ?? '', style: TextStyle(color: textColor.withOpacity(0.7))),
-      const SizedBox(height: 8),
-      Text('Fuente: ${r['fuente'] ?? 'TwelveData'}',
-          style: TextStyle(color: textColor.withOpacity(0.6), fontSize: 12.5, fontStyle: FontStyle.italic)),
-    ],
-  );
-}
-
-
-  if (tipo == 'bono') {
-  final double montoInicialUsd = _asDouble(r['monto_inicial']);
-  final double montoInicialArs = _asDouble(r['monto_inicial_ars']);
-  final double montoFinalUsd   = _asDouble(r['monto_final_estimado_usd']);
-  final double montoFinalArs   = _asDouble(r['monto_final_estimado_ars']);
-  final double precioUsd       = _asDouble(r['precio_usd']);
-  final double cantidad        = _asDouble(r['cantidad_comprada']);
-  final double rendimiento     = _asDouble(r['rendimiento_estimado_%']);
-
-  final extras   = r['extras'] ?? {};
-  final varDia   = _asDouble(extras['change_percent']);       // diaria
-  final varYTD   = _asDouble(extras['percent_change_ytd']);   // YTD
-  final divYield = _asDouble(extras['dividend_yield']);       // dividend
-
-  final double gananciaUsd = (montoFinalUsd - montoInicialUsd);
-
-  return Column(
-    crossAxisAlignment: CrossAxisAlignment.start,
-    children: [
-      Row(
-        children: [
-          Text(
-            'Bonos / ETFs',
-            style: TextStyle(fontWeight: FontWeight.bold, color: primary, fontSize: 15),
-          ),
-          const SizedBox(width: 6),
-          const InfoIcon(
-            title: '¿Qué es un bono?',
-            message: 'Es deuda emitida por gobiernos o empresas; el precio varía con tasas e inflaciones.',
-          ),
-        ],
-      ),
-      const SizedBox(height: 10),
-
-      _infoLine('Bono', '${r['symbol'] ?? 'N/D'}', textColor),
-      _infoLine('Cotización actual', '\$${precioUsd.toStringAsFixed(2)} USD', textColor),
-      _infoLine('Monto invertido', '\$${montoInicialUsd.toStringAsFixed(2)} USD (~\$${montoInicialArs.toStringAsFixed(0)} ARS)', textColor),
-      _infoLine('Cantidad adquirida', '$cantidad ${r['symbol'] ?? ''}', textColor),
-
-      _infoLine('Variación diaria', '${varDia.toStringAsFixed(2)}%', textColor),
-      _infoLine('Variación YTD',    '${varYTD.toStringAsFixed(2)}%',    textColor),
-      _infoLine('Rendimiento por dividendo', '${divYield.toStringAsFixed(2)}%', textColor),
-
-      _infoLine('Ganancia estimada',
-          '\$${gananciaUsd.toStringAsFixed(2)} USD (~\$${(montoFinalArs - montoInicialArs).toStringAsFixed(0)} ARS)',
-          textColor),
-
-      _infoLine('Monto estimado final',
-          '\$${montoFinalUsd.toStringAsFixed(2)} USD (~\$${montoFinalArs.toStringAsFixed(0)} ARS)',
-          textColor),
-
-      _infoLine('Rendimiento estimado', '${rendimiento.toStringAsFixed(2)}%', textColor),
-
-      const SizedBox(height: 12),
-      Text(r['descripcion'] ?? '', style: TextStyle(color: textColor.withOpacity(0.7))),
-      const SizedBox(height: 8),
-      Text('Fuente: ${r['fuente'] ?? 'TwelveData'}',
-          style: TextStyle(color: textColor.withOpacity(0.6), fontSize: 12.5, fontStyle: FontStyle.italic)),
-    ],
-  );
-}
-
-    // 🔹 BLOQUE PRÉSTAMO ADAPTADO CON INFOICON
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _infoLine('Monto solicitado', formatter.format(r['capital']), textColor),
+        _infoLine('Monto solicitado', formatterARS(_asDouble(r['capital'])), textColor),
         _infoLine('Cantidad de cuotas', '${r['cuotas']} cuotas', textColor),
         _infoLine('Tasa mensual', '${r['tasa_mensual']}%', textColor),
-        _infoLine('Cuota mensual', formatter.format(r['cuota_mensual']), textColor),
-        _infoLine('Total a pagar', formatter.format(r['total_a_pagar']), textColor),
-        _infoLine('Intereses totales', formatter.format(r['intereses_totales']), textColor),
+        _infoLine('Cuota mensual', formatterARS(_asDouble(r['cuota_mensual'])), textColor),
+        _infoLine('Total a pagar', formatterARS(_asDouble(r['total_a_pagar'])), textColor),
+        _infoLine('Intereses totales', formatterARS(_asDouble(r['intereses_totales'])), textColor),
         _infoLine('CFT estimado', '${r['cft_estimado']}%', textColor),
         const Divider(height: 25),
-
-        // 🧭 Tipo francés
         Row(
           children: [
-            Text(
-              'Tipo de préstamo',
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                color: primary,
-                fontSize: 15,
-              ),
-            ),
+            Text('Tipo de préstamo',
+                style: TextStyle(fontWeight: FontWeight.bold, color: primary, fontSize: 15)),
             const SizedBox(width: 6),
-            InfoIcon(
+            const InfoIcon(
               title: 'Préstamo tipo francés',
               message:
-                  'En el sistema francés las cuotas son fijas durante todo el plazo. '
-                  'Cada cuota incluye una parte de interés (que disminuye con el tiempo) '
-                  'y una parte de capital (que aumenta mes a mes).',
+                  'Cuotas fijas; cada cuota combina interés y capital con proporción variable en el tiempo.',
             ),
           ],
         ),
         const SizedBox(height: 10),
-
-        // 🧮 Fórmula de cálculo
-        Row(
-          children: [
-            Text(
-              'Fórmula utilizada',
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                color: primary,
-                fontSize: 15,
-              ),
-            ),
-            const SizedBox(width: 6),
-            InfoIcon(
-              title: 'Fórmula del sistema francés',
-              message:
-                  'La cuota (C) se calcula con la fórmula:\n\n'
-                  'C = P × [i × (1 + i)^n] / [(1 + i)^n − 1]\n\n'
-                  'Donde:\n'
-                  '• C = cuota mensual\n'
-                  '• P = capital solicitado\n'
-                  '• i = tasa mensual\n'
-                  '• n = cantidad de cuotas\n\n'
-                  'Esta fórmula permite mantener cuotas iguales, '
-                  'aunque la proporción entre interés y capital varía cada mes.',
-            ),
-          ],
-        ),
-        const SizedBox(height: 10),
-
-        // 📘 Composición de las cuotas
-        Row(
-          children: [
-            Text(
-              'Cómo se componen las cuotas',
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                color: primary,
-                fontSize: 15,
-              ),
-            ),
-            const SizedBox(width: 6),
-            InfoIcon(
-              title: 'Composición de las cuotas',
-              message:
-                  'Cada cuota se divide en dos partes:\n\n'
-                  '• Una porción de interés, calculada sobre el saldo pendiente.\n'
-                  '• Una porción de capital, que reduce la deuda.\n\n'
-                  'Con el tiempo, los intereses bajan y el capital amortizado sube, '
-                  'manteniendo el valor total de la cuota fijo.',
-            ),
-          ],
-        ),
-        const SizedBox(height: 10),
-
-        // 🔽 Detalle de cuotas
         if (r['detalle_cuotas'] != null && r['detalle_cuotas'] is List) ...[
           const SizedBox(height: 15),
           ExpansionTile(
-            title: Text(
-              "Ver evolución mes a mes",
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                color: primary,
-              ),
-            ),
+            title: Text("Ver evolución mes a mes",
+                style: TextStyle(fontWeight: FontWeight.bold, color: primary)),
             children: [
               SingleChildScrollView(
                 scrollDirection: Axis.horizontal,
@@ -524,15 +366,13 @@ void initState() {
                     DataColumn(label: Text('Saldo')),
                   ],
                   rows: (r['detalle_cuotas'] as List)
-                      .map<DataRow>((c) => DataRow(
-                            cells: [
-                              DataCell(Text('${c['n']}')),
-                              DataCell(Text(formatter.format(c['capital']))),
-                              DataCell(Text(formatter.format(c['interes']))),
-                              DataCell(Text(formatter.format(c['cuota']))),
-                              DataCell(Text(formatter.format(c['saldo']))),
-                            ],
-                          ))
+                      .map<DataRow>((c) => DataRow(cells: [
+                            DataCell(Text('${c['n']}')),
+                            DataCell(Text(formatterARS(_asDouble(c['capital'])))),
+                            DataCell(Text(formatterARS(_asDouble(c['interes'])))),
+                            DataCell(Text(formatterARS(_asDouble(c['cuota'])))),
+                            DataCell(Text(formatterARS(_asDouble(c['saldo'])))),
+                          ]))
                       .toList(),
                 ),
               ),
@@ -541,16 +381,8 @@ void initState() {
         ],
       ],
     );
-
   }
 
-  String _mensajeFinal(Map<String, dynamic> r) {
-    final tipo = r['tipo']?.toString();
-    if (tipo == 'plazo_fijo') {
-      return 'Tu dinero creció con la tasa actual del BCRA.';
-    }
-    return widget.resultado['mensaje'] ?? '';
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -559,7 +391,9 @@ void initState() {
     final surface = theme.colorScheme.surface;
     final textColor = theme.colorScheme.onSurface;
 
-
+    // Elegimos el % a mostrar (si es crypto o PF, usamos rendimiento; si es préstamo, usamos interes/monto)
+    double pctLabel = porcentajeInteres * 100;
+    final isLoss = pctLabel < 0;
 
     return AnimatedBuilder(
       animation: _animation,
@@ -581,16 +415,27 @@ void initState() {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                'Resultado de la simulación',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: primary,
-                ),
+              Row(
+                children: [
+                  Text(
+                    'Resultado de la simulación',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: primary,
+                    ),
+                  ),
+                  const SizedBox(width: 6),
+                  const InfoIcon(
+                    title: 'Qué significa esta simulación',
+                    message:
+                        'El resultado muestra cómo evolucionaría tu inversión según datos reales del mercado. '
+                        'Los valores pueden ser positivos (ganancia) o negativos (pérdida) dependiendo del comportamiento del activo.',
+                  ),
+                ],
               ),
-              const SizedBox(height: 18),
 
+              const SizedBox(height: 18),
               Center(
                 child: Stack(
                   alignment: Alignment.center,
@@ -599,7 +444,7 @@ void initState() {
                       height: 120,
                       width: 120,
                       child: CircularProgressIndicator(
-                        value: _animation.value,
+                        value: _animation.value, // [0..1] (si pérdida, 0)
                         strokeWidth: 10,
                         backgroundColor: primary.withOpacity(0.1),
                         valueColor: AlwaysStoppedAnimation<Color>(primary),
@@ -609,47 +454,30 @@ void initState() {
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Text(
-                          '${(_animation.value * 100).toStringAsFixed(2)}%',
+                          '${pctLabel.toStringAsFixed(2)}%',
                           style: TextStyle(
                             fontSize: 22,
                             fontWeight: FontWeight.bold,
-                            color: textColor,
+                            color: isLoss ? Colors.redAccent.shade200 : textColor,
                           ),
                         ),
-                        Text(
-                          'Interés',
-                          style: TextStyle(
-                            fontSize: 14,
-                            color: textColor.withOpacity(0.7),
-                          ),
-                        ),
+                        Text(isLoss ? 'Pérdida' : 'Interés',
+                            style: TextStyle(
+                                fontSize: 14, color: textColor.withOpacity(0.7))),
                       ],
                     ),
                   ],
                 ),
               ),
-
-              const SizedBox(height: 20),
               const Divider(),
               const SizedBox(height: 10),
-
               _buildDetails(widget.resultado, textColor, primary),
-
               const Divider(height: 25),
-              Text(
-                _mensajeFinal(widget.resultado),
-                style: TextStyle(color: textColor.withOpacity(0.6), fontSize: 13),
-              ),
-              const SizedBox(height: 6),
-              Text(
-                'Fuente: ${widget.resultado['fuente'] ?? 'BCRA'}',
-                style: TextStyle(fontSize: 12, color: textColor.withOpacity(0.6)),
-              ),
+              Text('Fuente: ${widget.resultado['fuente'] ?? 'BCRA'}',
+                  style: TextStyle(fontSize: 12, color: textColor.withOpacity(0.6))),
               if (widget.ultimaActualizacion != null)
-                Text(
-                  'Actualizado: ${_formatDate(widget.ultimaActualizacion)}',
-                  style: TextStyle(fontSize: 12, color: textColor.withOpacity(0.6)),
-                ),
+                Text('Actualizado: ${_formatDate(widget.ultimaActualizacion)}',
+                    style: TextStyle(fontSize: 12, color: textColor.withOpacity(0.6))),
             ],
           ),
         );
@@ -663,27 +491,17 @@ void initState() {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            label,
-            style: TextStyle(
-              color: textColor.withOpacity(0.8),
-              fontWeight: FontWeight.w600,
-              fontSize: 14,
-            ),
-          ),
+          Text(label,
+              style: TextStyle(
+                  color: textColor.withOpacity(0.8),
+                  fontWeight: FontWeight.w600,
+                  fontSize: 14)),
           const SizedBox(height: 3),
-          Text(
-            value,
-            style: TextStyle(
-              color: textColor,
-              fontWeight: FontWeight.bold,
-              fontSize: 15,
-            ),
-          ),
+          Text(value,
+              style: TextStyle(
+                  color: textColor, fontWeight: FontWeight.bold, fontSize: 15)),
         ],
       ),
     );
   }
-
-
 }

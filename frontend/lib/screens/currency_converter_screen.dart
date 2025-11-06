@@ -89,62 +89,54 @@ class _CurrencyConverterScreenState extends State<CurrencyConverterScreen> {
     final textColor = theme.colorScheme.onSurface;
 
     return CustomScaffold(
-      title: 'Conversor',
-      currentRoute: 'currency_converter',
-      body: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: [
-              background.withOpacity(0.97),
-              background.withOpacity(0.85),
-              primary.withOpacity(0.1),
-            ],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
-        ),
-        child: isLoading
-            ? const Center(child: CircularProgressIndicator())
-            : Padding(
-                padding: const EdgeInsets.all(18.0),
-                child: ListView(
-                  physics: const BouncingScrollPhysics(),
-                  children: [
-                    const SizedBox(height: 20),
-                    Center(
-                      child: Text(
-                        'Conversor de monedas',
-                        style: theme.textTheme.headlineSmall?.copyWith(
-                          color: textColor,
-                          fontWeight: FontWeight.bold,
-                          letterSpacing: 0.8,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 25),
+  title: 'Conversor',
+  currentRoute: 'currency_converter',
+  body: isLoading
+      ? const Center(child: CircularProgressIndicator())
+      : Padding(
+          padding: const EdgeInsets.all(18.0),
+          child: ListView(
+            physics: const BouncingScrollPhysics(),
+            children: [
+              const SizedBox(height: 20),
+              Center(
+                child: Text(
+                  'Conversor de monedas',
+                  style: theme.textTheme.headlineSmall?.copyWith(
+                    color: textColor,
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: 0.8,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 25),
 
                     // 💳 Tarjeta translúcida
                     Container(
-                      padding: const EdgeInsets.all(20),
-                      decoration: BoxDecoration(
-                        color: surface.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(20),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.2),
-                            blurRadius: 15,
-                            offset: const Offset(0, 6),
-                          ),
-                        ],
-                      ),
-                      child: Column(
-                        children: [
-                          CurrencyTextField(
-                            controller: amountController,
-                            currencies: currencies,
-                            selectedCurrency: fromCurrency,
-                            label: 'Monto a convertir',
-                            onChanged: (val) {
+  padding: const EdgeInsets.all(20),
+  decoration: BoxDecoration(
+    color: theme.cardColor.withOpacity(0.95), // ✅ usa color global
+    borderRadius: BorderRadius.circular(20),
+    border: Border.all(
+      color: theme.colorScheme.primary.withOpacity(0.15),
+      width: 1,
+    ),
+    boxShadow: [
+      BoxShadow(
+        color: theme.shadowColor.withOpacity(0.25),
+        blurRadius: 15,
+        offset: const Offset(0, 6),
+      ),
+    ],
+  ),
+  child: Column(
+    children: [
+      CurrencyTextField(
+        controller: amountController,
+        currencies: currencies,
+        selectedCurrency: fromCurrency,
+        label: 'Monto a convertir',
+        onChanged: (val) {
                               // 🔹 Ejemplo de debounce si más adelante querés recalcular automáticamente
                               if (_debounce?.isActive ?? false) _debounce!.cancel();
                               _debounce = Timer(const Duration(milliseconds: 600), () {
@@ -252,7 +244,6 @@ class _CurrencyConverterScreenState extends State<CurrencyConverterScreen> {
                   ],
                 ),
               ),
-      ),
     );
   }
 
@@ -264,14 +255,25 @@ class _CurrencyConverterScreenState extends State<CurrencyConverterScreen> {
 
     return Container(
       decoration: BoxDecoration(
-        color: surface.withOpacity(0.08),
-        borderRadius: BorderRadius.circular(12),
+        color: theme.cardColor.withValues(alpha: 0.85), // 👈 contraste sutil
+      borderRadius: BorderRadius.circular(12),
+      border: Border.all(
+        color: primary.withValues(alpha: 0.25),
+        width: 1,
       ),
+      boxShadow: [
+        BoxShadow(
+          color: theme.shadowColor.withValues(alpha: 0.2),
+          blurRadius: 8,
+          offset: const Offset(0, 3),
+        ),
+      ],
+    ),
       padding: const EdgeInsets.symmetric(horizontal: 8),
       child: DropdownButtonHideUnderline(
         child: DropdownButton<Currency>(
           value: isFrom ? fromCurrency : toCurrency,
-          dropdownColor: surface.withOpacity(0.95),
+          dropdownColor: surface.withValues(alpha: 0.8),
           icon: Icon(Icons.arrow_drop_down, color: primary),
           style: TextStyle(color: textColor, fontWeight: FontWeight.w500, fontSize: 15),
           menuMaxHeight: 300,

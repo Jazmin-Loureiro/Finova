@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
+import 'package:animate_do/animate_do.dart';
 import '../services/api_service.dart';
 import 'register_screen.dart';
 import 'home_screen.dart';
@@ -151,216 +152,266 @@ class _LoginScreenState extends State<LoginScreen> {
         child: Center(
           child: SingleChildScrollView(
             padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [ 
-                Container(
-                  padding: const EdgeInsets.all(20),
-                  decoration: BoxDecoration(
-                    color: isDark
-                        ? colorScheme.surface.withOpacity(0.8)
-                        : Colors.white,
-                    borderRadius: BorderRadius.circular(16),
-                  ),
+            child: FadeInUp(
+              duration: const Duration(milliseconds: 700),
+                  child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [ 
+                        Container(
+                          padding: const EdgeInsets.all(20),
+                          decoration: BoxDecoration(
+                            color: isDark
+                                ? colorScheme.surface.withOpacity(0.8)
+                                : Colors.white,
+                            borderRadius: BorderRadius.circular(16),
+                          ),
                   
-                  child: Form(
-                    key: _formKey,
-                    child: Column(
-                      children: [
-                        SvgPicture.asset(
-                          'assets/icon.svg',
-                          height: 100,
-                        ),
-                        const SizedBox(height: 16),
-                         Text(
-                          "¡Hola de nuevo!",
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            fontSize: 32,
-                            fontWeight: FontWeight.w800,
-                            letterSpacing: -0.3,
-                            height: 1.1,
-                            color: isDark
-                                ? Colors.white.withOpacity(0.95)
-                                : colorScheme.onSurface.withOpacity(0.9),
-                          ),
-                        ),
-                        const SizedBox(height: 6),
-                        Text(
-                          " Inicia sesión para continuar.",
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w400,
-                            color: isDark
-                                ? Colors.white.withOpacity(0.7)
-                                : Colors.black.withOpacity(0.6),
-                          ),
-                        ),
-                        const SizedBox(height: 24),
-                        TextFormField(
-                          decoration: const InputDecoration(
-                            labelText: 'Email',
-                            prefixIcon: Icon(Icons.email_outlined),
-                            border: OutlineInputBorder(
-                              borderRadius:
-                                  BorderRadius.all(Radius.circular(12)),
-                            ),
-                          ),
-                          keyboardType: TextInputType.emailAddress,
-                          onChanged: (val) => email = val,
-                          validator: (val) {
-                            if (val == null || val.isEmpty) return 'Obligatorio';
-                            if (!val.contains('@')) return 'Email inválido';
-                            return null;
-                          },
-                        ),
-                        const SizedBox(height: 16),
-                        TextFormField(
-                          obscureText: obscureText,
-                          decoration: InputDecoration(
-                            labelText: 'Contraseña',
-                            prefixIcon: const Icon(Icons.lock_outline),
-                            suffixIcon: IconButton(
-                              icon: Icon(
-                                obscureText
-                                    ? Icons.visibility_off
-                                    : Icons.visibility,
-                              ),
-                              onPressed: () =>
-                                  setState(() => obscureText = !obscureText),
-                            ),
-                            border: const OutlineInputBorder(
-                              borderRadius:
-                                  BorderRadius.all(Radius.circular(12)),
-                            ),
-                          ),
-                          onChanged: (val) => password = val,
-                          validator: (val) =>
-                              val == null || val.isEmpty ? 'Obligatorio' : null,
-                        ),
-                        const SizedBox(height: 20),
-                        ElevatedButton(
-                          onPressed: loginUser,
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: colorScheme.primary,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            minimumSize: const Size(double.infinity, 48),
-                          ),
-                          child:  Text(
-                            'Iniciar Sesión',
-                            style: TextStyle(
-                              color: Theme.of(context).colorScheme.onPrimary,
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: 12),
-                        TextButton(
-                          onPressed: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (_) => const RegisterScreen(),
-                              ),
-                            );
-                          },
-                          child: Text(
-                            '¿No tienes cuenta? Registrate',
-                            style: TextStyle(
-                              color: Theme.of(context).colorScheme.primary,
-                            ),
-                          ),
-                        ),
-                        Divider(color: Colors.grey[400]),
-                         Padding(
-                          padding: const EdgeInsets.only(top: 10),
-                          child: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Wrap(
-                                alignment: WrapAlignment.center,
-                                spacing: 12,
-                                runSpacing: -8, // 🔹 reduce el espacio vertical entre filas
-                                children: [
-                                  TextButton(
-                                    onPressed: () {
-                                      // TODO: recuperar contraseña
-                                    },
-                                    style: TextButton.styleFrom(
-                                      padding: EdgeInsets.zero,
-                                      minimumSize: const Size(0, 30),
-                                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                                    ),
-                                    child: Text(
-                                      'Recuperar contraseña',
-                                      style: TextStyle(
-                                        color: Theme.of(context).colorScheme.primary,
-                                        fontSize: 14,
-                                      ),
+                          child: Form(
+                            key: _formKey,
+                            child: Column(
+                              children: [
+                                FadeInDown(
+                                  duration: const Duration(milliseconds: 800),
+                                  child: SvgPicture.asset(
+                                    'assets/icon.svg',
+                                    height: 100,
+                                  ),
+                                ),
+                                const SizedBox(height: 16),
+                                FadeInUp(
+                                  duration: const Duration(milliseconds: 800),
+                                  child: Text(
+                                    "¡Hola de nuevo!",
+                                    textAlign: TextAlign.center,
+                                    style: TextStyle(
+                                      fontSize: 32,
+                                      fontWeight: FontWeight.w800,
+                                      letterSpacing: -0.3,
+                                      height: 1.1,
+                                      color: isDark
+                                          ? Colors.white.withOpacity(0.95)
+                                          : colorScheme.onSurface
+                                              .withOpacity(0.9),
                                     ),
                                   ),
-                                  TextButton(
-                                    onPressed: () {
-                                      Navigator.push(
-                                        context,
-                                        MaterialPageRoute(
-                                          builder: (_) => const RequestReactivationScreen(),
+                                ),
+                                const SizedBox(height: 6),
+                                FadeInUp(
+                                  delay: const Duration(milliseconds: 200),
+                                  child: Text(
+                                    "Inicia sesión para continuar.",
+                                    textAlign: TextAlign.center,
+                                    style: TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w400,
+                                      color: isDark
+                                          ? Colors.white.withOpacity(0.7)
+                                          : Colors.black.withOpacity(0.6),
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(height: 24),
+                                FadeInUp(
+                                  delay: const Duration(milliseconds: 400),
+                                  child: TextFormField(
+                                    decoration: const InputDecoration(
+                                      labelText: 'Email',
+                                      prefixIcon: Icon(Icons.email_outlined),
+                                      border: OutlineInputBorder(
+                                        borderRadius: BorderRadius.all(
+                                            Radius.circular(12)),
+                                      ),
+                                    ),
+                                    keyboardType: TextInputType.emailAddress,
+                                    onChanged: (val) => email = val,
+                                    validator: (val) {
+                                      if (val == null || val.isEmpty) {
+                                        return 'Obligatorio';
+                                      }
+                                      if (!val.contains('@')) {
+                                        return 'Email inválido';
+                                      }
+                                      return null;
+                                    },
+                                  ),
+                                ),
+                                const SizedBox(height: 16),
+                                FadeInUp(
+                                  delay: const Duration(milliseconds: 600),
+                                  child: TextFormField(
+                                    obscureText: obscureText,
+                                    decoration: InputDecoration(
+                                      labelText: 'Contraseña',
+                                      prefixIcon:
+                                          const Icon(Icons.lock_outline),
+                                      suffixIcon: IconButton(
+                                        icon: Icon(
+                                          obscureText
+                                              ? Icons.visibility_off
+                                              : Icons.visibility,
                                         ),
-                                      );
-                                    },
-                                    style: TextButton.styleFrom(
-                                      padding: EdgeInsets.zero,
-                                      minimumSize: const Size(0, 30),
-                                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                                    ),
-                                    child: Text(
-                                      'Reactivar cuenta',
-                                      style: TextStyle(
-                                        color: Theme.of(context).colorScheme.primary,
-                                        fontSize: 14,
+                                        onPressed: () => setState(() =>
+                                            obscureText = !obscureText),
+                                      ),
+                                      border: const OutlineInputBorder(
+                                        borderRadius: BorderRadius.all(
+                                            Radius.circular(12)),
                                       ),
                                     ),
+                                    onChanged: (val) => password = val,
+                                    validator: (val) => val == null ||
+                                            val.isEmpty
+                                        ? 'Obligatorio'
+                                        : null,
                                   ),
-                                ],
-                              ),
-                              if (showResend)
-                                Padding(
-                                  padding: const EdgeInsets.only(top: 6),
-                                  child: TextButton(
-                                    onPressed: () async {
-                                      await resendEmail(); // reenviar verificación
-                                    },
-                                    style: TextButton.styleFrom(
-                                      padding: EdgeInsets.zero,
-                                      minimumSize: const Size(0, 30),
-                                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                ),
+                                const SizedBox(height: 20),
+                                FadeInUp(
+                                  delay: const Duration(milliseconds: 800),
+                                  child: ElevatedButton(
+                                    onPressed: loginUser,
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: colorScheme.primary,
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(12),
+                                      ),
+                                      minimumSize:
+                                          const Size(double.infinity, 48),
                                     ),
                                     child: Text(
-                                      '¿No recibiste el correo de verificación?',
+                                      'Iniciar Sesión',
                                       style: TextStyle(
-                                        color: colorScheme.primary,
-                                        fontWeight: FontWeight.w600,
-                                        fontSize: 14,
+                                        color: Theme.of(context)
+                                            .colorScheme
+                                            .onPrimary,
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.bold,
                                       ),
                                     ),
                                   ),
                                 ),
-                            ],
+                                const SizedBox(height: 12),
+                                FadeInUp(
+                                  delay: const Duration(milliseconds: 1000),
+                                  child: TextButton(
+                                    onPressed: () {
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (_) =>
+                                              const RegisterScreen(),
+                                        ),
+                                      );
+                                    },
+                                    child: Text(
+                                      '¿No tienes cuenta? Registrate',
+                                      style: TextStyle(
+                                        color: Theme.of(context)
+                                            .colorScheme
+                                            .primary,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                                Divider(color: Colors.grey[400]),
+                                Padding(
+                                  padding: const EdgeInsets.only(top: 10),
+                                  child: Column(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Wrap(
+                                        alignment: WrapAlignment.center,
+                                        spacing: 12,
+                                        runSpacing: -8,
+                                        children: [
+                                          TextButton(
+                                            onPressed: () {
+                                              // TODO: recuperar contraseña
+                                            },
+                                            style: TextButton.styleFrom(
+                                              padding: EdgeInsets.zero,
+                                              minimumSize: const Size(0, 30),
+                                              tapTargetSize:
+                                                  MaterialTapTargetSize
+                                                      .shrinkWrap,
+                                            ),
+                                            child: Text(
+                                              'Recuperar contraseña',
+                                              style: TextStyle(
+                                                color: Theme.of(context)
+                                                    .colorScheme
+                                                    .primary,
+                                                fontSize: 14,
+                                              ),
+                                            ),
+                                          ),
+                                          TextButton(
+                                            onPressed: () {
+                                              Navigator.push(
+                                                context,
+                                                MaterialPageRoute(
+                                                  builder: (_) =>
+                                                      const RequestReactivationScreen(),
+                                                ),
+                                              );
+                                            },
+                                            style: TextButton.styleFrom(
+                                              padding: EdgeInsets.zero,
+                                              minimumSize: const Size(0, 30),
+                                              tapTargetSize:
+                                                  MaterialTapTargetSize
+                                                      .shrinkWrap,
+                                            ),
+                                            child: Text(
+                                              'Reactivar cuenta',
+                                              style: TextStyle(
+                                                color: Theme.of(context)
+                                                    .colorScheme
+                                                    .primary,
+                                                fontSize: 14,
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                      if (showResend)
+                                        Padding(
+                                          padding:
+                                              const EdgeInsets.only(top: 6),
+                                          child: TextButton(
+                                            onPressed: () async {
+                                              await resendEmail();
+                                            },
+                                            style: TextButton.styleFrom(
+                                              padding: EdgeInsets.zero,
+                                              minimumSize: const Size(0, 30),
+                                              tapTargetSize:
+                                                  MaterialTapTargetSize
+                                                      .shrinkWrap,
+                                            ),
+                                            child: Text(
+                                              '¿No recibiste el correo de verificación?',
+                                              style: TextStyle(
+                                                color: colorScheme.primary,
+                                                fontWeight: FontWeight.w600,
+                                                fontSize: 14,
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
                         ),
                       ],
                     ),
                   ),
                 ),
-              ],
+              ),
             ),
-          ),
-        ),
-      ),
     );
   }
 }

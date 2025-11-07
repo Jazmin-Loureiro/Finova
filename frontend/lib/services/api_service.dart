@@ -15,9 +15,9 @@ import '../models/goal.dart';
 //const String baseUrl = "http://192.168.1.113:8000"; //Jaz
 //const String baseUrl = "http://192.168.0.117:8000"; // Jaz 2
 //const String baseUrl = "http://192.168.1.45:8000"; //Jaz 3
-//const String baseUrl = "http://192.168.0.162:8000";// guardo el mio je
+const String baseUrl = "http://192.168.0.162:8000";// guardo el mio je
 //const String baseUrl = "http://127.0.0.1:8000"; //compu local
-const String baseUrl = "http://172.16.195.79:8000"; // IP de la facu
+//const String baseUrl = "http://172.16.195.79:8000"; // IP de la facu
 const String apiUrl = "$baseUrl/api";
 // Instancia de almacenamiento seguro
 final storage = const FlutterSecureStorage();
@@ -549,6 +549,7 @@ Future<void> deleteMoneyMaker(int id) async {
       required String name,
       required String type,
       required String color,
+      required String icon,
     }) async {
        final token = await storage.read(key: 'token'); 
     if (token == null) return false; 
@@ -559,8 +560,10 @@ Future<void> deleteMoneyMaker(int id) async {
           'name': name,
           'type': type,
           'color': color,
+          'icon': icon,
         }),
       );
+      print ('Add category response: ${response.statusCode} - ${response.body}');
       return response.statusCode == 200 || response.statusCode == 201;
     }
 

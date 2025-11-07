@@ -10,29 +10,29 @@ class CategoryService
     {
         $categories = [
             'expense' => [
-                ['name'=>'Supermercado','color'=>'#FF5722'],
-                ['name'=>'Ropa','color'=>'#E91E63'],
-                ['name'=>'Casa','color'=>'#9C27B0'],
-                ['name'=>'Entretenimiento','color'=>'#673AB7'],
-                ['name'=>'Transporte','color'=>'#3F51B5'],
-                ['name'=>'Viaje','color'=>'#2196F3'],
-                ['name'=>'Educación','color'=>'#03A9F4'],
-                ['name'=>'Comida','color'=>'#00BCD4'],
-                ['name'=>'Electrónica','color'=>'#009688'],
-                ['name'=>'Deporte','color'=>'#4CAF50'],
-                ['name'=>'Restaurante','color'=>'#8BC34A'],
-                ['name'=>'Salud','color'=>'#CDDC39'],
-                ['name'=>'Comunicaciones','color'=>'#FFC107'],
-                ['name'=>'Otros','color'=>'#FF9800'],
+                ['name'=>'Supermercado','color'=>'#E53935','icon'=>'shopping_cart'],      // rojo fuerte
+                ['name'=>'Ropa','color'=>'#8E24AA','icon'=>'checkroom'],                 // violeta
+                ['name'=>'Casa','color'=>'#3949AB','icon'=>'home'],                      // azul oscuro
+                ['name'=>'Entretenimiento','color'=>'#5E35B1','icon'=>'theater_comedy'], // púrpura profundo
+                ['name'=>'Transporte','color'=>'#039BE5','icon'=>'commute'],             // celeste brillante
+                ['name'=>'Viaje','color'=>'#00897B','icon'=>'flight'],                   // verde azulado
+                ['name'=>'Educación','color'=>'#43A047','icon'=>'school'],               // verde medio
+                ['name'=>'Comida','color'=>'#FDD835','icon'=>'fastfood'],                // amarillo vibrante
+                ['name'=>'Electrónica','color'=>'#FB8C00','icon'=>'devices'],            // naranja fuerte
+                ['name'=>'Deporte','color'=>'#F4511E','icon'=>'sports'],                 // naranja rojizo
+                ['name'=>'Restaurante','color'=>'#6D4C41','icon'=>'restaurant'],         // marrón cálido
+                ['name'=>'Salud','color'=>'#009688','icon'=>'health_and_safety'],        // verde agua
+                ['name'=>'Comunicaciones','color'=>'#3949AB','icon'=>'phone'],           // azul intenso
+                ['name'=>'Otros','color'=>'#757575','icon'=>'more_horiz'],               // gris neutro
             ],
             'income' => [
-                ['name'=>'General','color'=>'#66BB6A'],
-                ['name'=>'Salario','color'=>'#4CAF50'],
-                ['name'=>'Inversión','color'=>'#8BC34A'],
-                ['name'=>'Recompensa','color'=>'#CDDC39'],
-                ['name'=>'Regalo','color'=>'#FFC107'],
-                ['name'=>'Negocio','color'=>'#FF9800'],
-                ['name'=>'Otro','color'=>'#FF5722'],
+                ['name'=>'General','color'=>'#43A047','icon'=>'account_balance'],        // verde medio
+                ['name'=>'Salario','color'=>'#2E7D32','icon'=>'attach_money'],           // verde oscuro
+                ['name'=>'Inversión','color'=>'#1E88E5','icon'=>'trending_up'],          // azul brillante
+                ['name'=>'Recompensa','color'=>'#7B1FA2','icon'=>'redeem'],              // púrpura intenso
+                ['name'=>'Regalo','color'=>'#FBC02D','icon'=>'card_giftcard'],           // amarillo dorado
+                ['name'=>'Negocio','color'=>'#EF6C00','icon'=>'business'],               // naranja oscuro
+                ['name'=>'Otro','color'=>'#795548','icon'=>'more_horiz'],                // marrón suave
             ],
         ];
 
@@ -42,6 +42,8 @@ class CategoryService
                     'name' => $cat['name'],
                     'type' => $type,
                     'color' => $cat['color'],
+                    'icon' => $cat['icon'],
+                    'active' => true,
                 ]);
             }
         }

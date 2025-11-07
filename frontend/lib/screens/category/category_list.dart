@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:frontend/helpers/icon_utils.dart';
 import 'package:frontend/widgets/loading_widget.dart';
 import '../../services/api_service.dart';
 import 'category_form_screen.dart';
@@ -124,7 +125,11 @@ class _CategoryListScreenState extends State<CategoryListScreen>
                     color: color,
                     shape: BoxShape.circle,
                   ),
-                 
+                  child: Icon(
+                    AppIcons.fromName(c.icon),
+                    color: Colors.white,
+                    size: 22,
+                  ),
                 ),
                 const SizedBox(width: 12),
                 // Nombre 
@@ -137,8 +142,6 @@ class _CategoryListScreenState extends State<CategoryListScreen>
                     ),
                   ),
                 ),
-
-                //Editar
                 IconButton(
                   icon:  Icon(Icons.edit, color: Theme.of(context).colorScheme.primary),
                   onPressed: () {
@@ -150,9 +153,7 @@ class _CategoryListScreenState extends State<CategoryListScreen>
                           category: c,
                         ),
                       ),
-                    ).then((value) {
-                      _fetchCategories();
-                    });
+                    ).then((value) => _fetchCategories());
                   },
                 ),
               ],

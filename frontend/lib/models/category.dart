@@ -4,6 +4,7 @@ class Category {
   final String name;
   final String type; // 'income' o 'expense'
   final String color;
+  final String? icon;
   final DateTime createdAt;
   final DateTime updatedAt;
 
@@ -13,6 +14,7 @@ class Category {
     required this.name,
     required this.type,
     required this.color,
+    this.icon,
     required this.createdAt,
     required this.updatedAt,
   });
@@ -26,6 +28,7 @@ class Category {
       color: json['color'] ?? '#000000',
       createdAt: DateTime.parse(json['created_at']),
       updatedAt: DateTime.parse(json['updated_at']),
+      icon: json['icon'],
     );
   }
 
@@ -35,6 +38,7 @@ class Category {
         'name': name,
         'type': type,
         'color': color,
+        'icon': icon,
         'created_at': createdAt.toIso8601String(),
         'updated_at': updatedAt.toIso8601String(),
       };

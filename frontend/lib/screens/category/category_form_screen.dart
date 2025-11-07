@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:frontend/helpers/icon_utils.dart';
+import 'package:frontend/widgets/buttons/button_delete.dart';
+import 'package:frontend/widgets/buttons/button_save.dart';
+import 'package:frontend/widgets/icon_picker_field.dart';
 import '../../widgets/color_pickerfield.widget.dart';
-import 'package:frontend/widgets/confirm_dialog_widget.dart';
 import '../../services/api_service.dart';
 import 'package:frontend/models/category.dart';
 
@@ -18,8 +21,9 @@ class _CategoryFormScreenState extends State<CategoryFormScreen> {
 
   final TextEditingController nameController = TextEditingController();
   Color? colorSelected;
-
   final _formKey = GlobalKey<FormState>();
+  IconData? selectedIcon;
+  String? selectedIconName;
 
   @override 
   void initState() {
@@ -27,30 +31,58 @@ class _CategoryFormScreenState extends State<CategoryFormScreen> {
     if (widget.category != null) {
       nameController.text = widget.category!.name;
       colorSelected = Color(int.parse(widget.category!.color.substring(1), radix: 16) + 0xFF000000);
+      selectedIcon = Icons.category; 
+      selectedIconName = widget.category!.icon;
+      selectedIcon = AppIcons.fromName(widget.category!.icon);
     }
   }
 
-// Función para guardar la categoría
+  void _showIconPicker() {
+  showModalBottomSheet(
+    context: context,
+    isScrollControlled: true,
+    shape: const RoundedRectangleBorder(
+      borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+    ),
+    builder: (_) {
+      return SizedBox(
+        height: MediaQuery.of(context).size.height * 0.6,
+        child: IconPickerWidget(
+          selectedIcon: selectedIcon,
+          onIconSelected: (icon) {
+            setState(() {
+              selectedIcon = icon;
+                selectedIconName = AppIcons.iconMap.entries.firstWhere((entry) => entry.value == icon).key;
+            });
+          },
+        ),
+      );
+    },
+  );
+}
+
+
   void saveCategory() async {
     if (!_formKey.currentState!.validate()) return;
+    _formKey.currentState!.save();
     final name = nameController.text.trim();
     final colorHex = '#${colorSelected!.toARGB32().toRadixString(16).substring(2)}';
     final data = {
       'name': name,
       'type': widget.type,
       'color': colorHex,
+      'icon': selectedIconName
     };
     bool success = false;
     if (widget.category != null) {
-    // Actualizar categoría existente
     success = await api.updateCategory(id: widget.category!.id, data: data);
   } else {
     // Crear nueva categoría
-    success = await api.addCategory(name: name, type: widget.type, color: colorHex );
+    success = await api.addCategory(name: name, type: widget.type, color: colorHex,icon: selectedIconName!);
   }
   if (!mounted) return;
   if (success) {
-    Navigator.pop(context, data); // devolvemos la categoría recién guardada
+    Navigator.pop(context, data);
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Error al guardar la categoría')),
@@ -88,67 +120,70 @@ class _CategoryFormScreenState extends State<CategoryFormScreen> {
           child: ListView(
             children: [
               // Nombre
-              TextFormField(
-                controller: nameController,
-                decoration: const InputDecoration(
-                  labelText: "Nombre de la categoría",
-                  border: OutlineInputBorder(),
-                ),
-                validator: (val) => val == null || val.trim().isEmpty ? "Ingrese un nombre" : null,
-              ),
-              const SizedBox(height: 16),
-
-              // Selector de color
-           // Selector de color (reutilizable)
-            ColorPickerField(
-              initialColor: colorSelected,
-              onSaved: (color) => colorSelected = color,
-              validator: (color) =>
-                  color == null ? 'Seleccione un color' : null,
-              label: 'Color de la categoría',
-            ),
-              const SizedBox(height: 20),
-
-              // Botón guardar
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: saveCategory,
-                  child: const Text("Guardar"),
-                ),
-              ),
-
-              if (widget.category != null) ...[
-              ElevatedButton.icon(
-                icon: const Icon(Icons.delete),
-                label: const Text('Eliminar Categoría'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Theme.of(context).colorScheme.primary,
-                  foregroundColor: Theme.of(context).colorScheme.onPrimary,
-                ),
-                onPressed: () async {
-                  final confirmed = await showDialog<bool>(
-                    context: context,
-                    barrierDismissible: false,
-                    builder: (_) => const ConfirmDialogWidget(
-                      title: "Eliminar Categoria",
-                      message: "¿Seguro que querés deshabilitar esta categoría?",
-                      confirmText: "Eliminar",
-                      cancelText: "Cancelar",
-                      confirmColor: Colors.red,
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    child: TextFormField(
+                      controller: nameController,
+                      decoration: const InputDecoration(
+                        labelText: "Nombre de la categoria",
+                        border: OutlineInputBorder(),
+                      ),
+                      validator: (val) => val == null || val.trim().isEmpty ? "Ingrese un nombre": null,
                     ),
-                  );
-                  if (confirmed == true) {
-                    _deleteCategory(); // o _deleteGoal() según tu función
-                  }
-                },
+                  ),
+                  const SizedBox(width: 12),
+
+                  // Botón de ícono (redondo)
+                  InkWell(
+                    onTap: _showIconPicker,
+                    borderRadius: BorderRadius.circular(50),
+                    child: CircleAvatar(
+                      radius: 28,
+                      backgroundColor: colorSelected ??
+                          Theme.of(context).colorScheme.primary,
+                      child: Icon(
+                        selectedIcon ?? Icons.category_outlined,
+                        color: Colors.white,
+                        size: 28,
+                      ),
+                    ),
+                  ),
+                ],
               ),
-              ]
+
+              const SizedBox(height: 24),
+
+              //  Selector de color
+              ColorPickerField(
+                initialColor: colorSelected,
+                onSaved: (color) => colorSelected = color,
+                validator: (color) =>
+                    color == null ? 'Seleccione un color' : null,
+                label: 'Color de la categoría',
+              ),
+              const SizedBox(height: 24),
+
+              // Botón Guardar
+                ButtonSave(
+                  title: "Guardar Categoría",
+                  message: "¿Seguro que quieres guardar esta categoría?",
+                  onConfirm: saveCategory, 
+                ),
+              
+              const SizedBox(height: 12),
+
+              // Botón Eliminar
+              if (widget.category != null)
+                ButtonDelete(
+                  title: "Eliminar Categoría",
+                  message: "¿Seguro que quieres deshabilitar esta categoría?",
+                  onConfirm: _deleteCategory, 
+                )
             ],
           ),
-
         ),
-
       ),
     );
   }

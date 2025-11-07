@@ -32,6 +32,7 @@ class CategoryController extends Controller
             'name' => 'required|string|max:255',
             'type' => 'required|string|max:255',
             'color' => 'required|string|max:7', 
+            'icon' => 'required|string|max:255',
         ]);
         //$category = new Category();
         $category = $request->user()->categories()->create([
@@ -39,6 +40,7 @@ class CategoryController extends Controller
         'type' => $request->type,
         'color' => $request->color,
         'active' => true,
+        'icon' => $request->icon,
     ]);
         return response()->json(['message' => 'Categoría creada con éxito', 'data' => $category], 201);
     }
@@ -64,7 +66,8 @@ class CategoryController extends Controller
     public function update(Request $request, $id) {
         $request->validate([
             'name' => 'required|string|max:255',
-            'color' => 'required|string|max:7', 
+            'color' => 'required|string|max:7',
+            'icon' => 'required|string|max:255',
         ]);
         $category = Category::where('id', $id)
             ->where('user_id', $request->user()->id)
@@ -75,6 +78,8 @@ class CategoryController extends Controller
         }
         $category->name = $request->name;
         $category->color = $request->color;
+        $category->icon = $request->icon;
+        $category->updated_at = now();
         $category->save();
         return response()->json(['message' => 'Categoría actualizada con éxito', 'data' => $category], 200);
     }

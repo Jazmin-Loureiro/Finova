@@ -20,6 +20,7 @@ return new class extends Migration
             $table->string('type');
             $table->string('color');
             $table->boolean('active')->default(true);
+            $table->string('icon');
             $table->timestamps();
         });
     }

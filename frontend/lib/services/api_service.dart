@@ -12,7 +12,7 @@ import '../models/register.dart';
 import '../models/goal.dart';
 
 // URLs base
-//const String baseUrl = "http://192.168.1.113:8000"; //Jaz
+const String baseUrl = "http://192.168.1.113:8000"; //Jaz
 //const String baseUrl = "http://192.168.0.117:8000"; // Jaz 2
 //const String baseUrl = "http://192.168.1.45:8000"; //Jaz 3
 const String baseUrl = "http://192.168.0.162:8000";// guardo el mio je

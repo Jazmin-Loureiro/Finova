@@ -34,7 +34,7 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'Finova',
 
-      //  Tema claro ()
+      //  Tema claro
       theme: ThemeData(
         colorScheme: const ColorScheme.light(
           primary: Color(0xFF7D2FFF), // Violeta Finova
@@ -44,11 +44,10 @@ class MyApp extends StatelessWidget {
           surface: Color(0xFFFFFFFF), // Tarjetas
           onSurface: Color(0xFF141414), // Texto principal
         ),
-       
         scaffoldBackgroundColor: Color(0xFFF8F8F8), // Fondo claro general
         cardColor: Color(0xFFFFFFFF), // Fondo secundario
         shadowColor: Color(0xFFE0E0E0), // Bordes/sombras suaves
-         textTheme: TextTheme(
+        textTheme: TextTheme(
           bodyLarge: GoogleFonts.poppins(fontSize: 16, color: Color(0xFF141414)),
           bodyMedium: GoogleFonts.poppins(fontSize: 14, color: Color(0xFF141414)),
           titleLarge: GoogleFonts.spaceGrotesk(
@@ -59,7 +58,7 @@ class MyApp extends StatelessWidget {
         useMaterial3: true,
       ),
 
-      // Tema oscuro ()
+      // Tema oscuro
       darkTheme: ThemeData(
         colorScheme: const ColorScheme.dark(
           primary: Color(0xFF7D2FFF), // Violeta Finova
@@ -70,16 +69,16 @@ class MyApp extends StatelessWidget {
           onSurface: Color(0xFFFFFFFF), // Texto principal
         ),
         scaffoldBackgroundColor: Color(0xFF0A0A0A), // Fondo principal
-        cardColor: Color(0xFF151515), // Fondo secundario
-        shadowColor: Color(0xFF303030), // Bordes/íconos suaves
-          textTheme: TextTheme(
-            bodyLarge: GoogleFonts.poppins(fontSize: 16, color: Colors.white),
-            bodyMedium: GoogleFonts.poppins(fontSize: 14, color: Color(0xFFB3B3B3)),
-            titleLarge: GoogleFonts.spaceGrotesk(
-                fontSize: 22, fontWeight: FontWeight.bold, color: Color(0xFF7D2FFF)),
-            headlineMedium: GoogleFonts.spaceGrotesk(
-                fontSize: 18, fontWeight: FontWeight.w600, color: Color(0xFF00FF4C)),
-          ),
+        cardColor: Color.fromARGB(255, 39, 39, 39), // Fondo secundario
+        shadowColor: Color.fromARGB(255, 89, 89, 89), // Bordes/íconos suaves
+        textTheme: TextTheme(
+          bodyLarge: GoogleFonts.poppins(fontSize: 16, color: Colors.white),
+          bodyMedium: GoogleFonts.poppins(fontSize: 14, color: Color(0xFFB3B3B3)),
+          titleLarge: GoogleFonts.spaceGrotesk(
+              fontSize: 22, fontWeight: FontWeight.bold, color: Color(0xFF7D2FFF)),
+          headlineMedium: GoogleFonts.spaceGrotesk(
+              fontSize: 18, fontWeight: FontWeight.w600, color: Color(0xFF00FF4C)),
+        ),
         useMaterial3: true,
       ),
 
@@ -96,10 +95,28 @@ class MyApp extends StatelessWidget {
         GlobalCupertinoLocalizations.delegate,
       ],
 
+      // 🕐 Fuerza formato 24 horas + fondo global degradado
       builder: (context, child) {
-        return MediaQuery(
-          data: MediaQuery.of(context).copyWith(alwaysUse24HourFormat: true),
-          child: child!,
+        final theme = Theme.of(context);
+        final primary = theme.colorScheme.primary;
+        final background = theme.scaffoldBackgroundColor;
+
+        return Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [
+                background.withOpacity(0.97),
+                background.withOpacity(0.9),
+                primary.withOpacity(0.08),
+              ],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+          ),
+          child: MediaQuery(
+            data: MediaQuery.of(context).copyWith(alwaysUse24HourFormat: true),
+            child: child!,
+          ),
         );
       },
 
@@ -145,6 +162,7 @@ class _SplashScreenState extends State<SplashScreen> {
   @override
   Widget build(BuildContext context) {
     return const Scaffold(
+      backgroundColor: Colors.transparent, // 👈 Deja ver el fondo global
       body: Center(child: LoadingWidget()),
     );
   }

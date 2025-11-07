@@ -80,8 +80,8 @@ class InvestmentService
             'monto_final_estimado'   => round($montoFinal, 2),
             'rendimiento_estimado_%' => round($rendimiento * 100, 2),
             'comparativa'            => $comparativa,
-            'fuente'                 => 'BCRA (cache interno)',
-            'descripcion'            => 'Cálculo basado en la TNA promedio cacheada o recién actualizada del BCRA.',
+            'fuente'                 => 'BCRA',
+            'descripcion'            => 'Cálculo basado en la TNA promedio del BCRA.',
             'ultima_actualizacion'   => optional($cachedTna?->updated_at)->toIso8601String(),
         ];
     }
@@ -139,7 +139,7 @@ class InvestmentService
                 'resultado'   => round($resultado, 2),
                 'estado'      => $estado,
                 'fuente'      => 'Finova Cache',
-                'descripcion' => 'Comparativa TNA vs inflación mensual (cacheada).',
+                'descripcion' => 'Comparativa TNA vs inflación mensual.',
                 'params'      => [
                     'tna'       => round($tnaReal, 2),
                     'inflacion' => round($inflacionVal, 2),
@@ -155,7 +155,7 @@ class InvestmentService
             'resultado'   => round($resultado, 2),
             'estado'      => $estado,
             'fuente'      => 'Finova Cache',
-            'descripcion' => 'Comparativa TNA vs inflación mensual (cacheada).',
+            'descripcion' => 'Comparativa TNA vs inflación mensual.',
             'ultima_actualizacion' => optional($comparativa?->updated_at)->toIso8601String(),
         ];
     }
@@ -163,57 +163,102 @@ class InvestmentService
 
 
     /* ============================================================
-    ₿ CRIPTO (CoinGecko con interés compuesto y fallback)
-    ============================================================ */
-    public function simulateCrypto(float $monto = 1000, string $coin = 'bitcoin', int $dias = 30, string $monedaBase = 'USD'): ?array
-    {
+   ₿ CRIPTO (CoinGecko con ajuste por días y moneda base del usuario)
+   ============================================================ */
+    public function simulateCrypto(
+        float $monto = 1000,
+        string $coin = 'bitcoin',
+        int $dias = 30
+    ): ?array {
         $cacheKey = "market_cripto_{$coin}";
         $data = DataApi::where('name', $cacheKey)->first();
 
+        // 🔹 Si no hay datos en cache, refrescar desde el servicio
         if (!$data || !$data->balance) {
             $cache = app(CacheService::class);
             $market = app(MarketService::class);
             $data = $cache->rememberOrRefresh($cacheKey, 'cripto', 3, fn() => $market->getQuote('cripto', $coin));
         }
 
-        if (!$data || !$data->balance) return null;
+        if (!$data || !$data->balance) {
+            return null; // No se pudo obtener la cotización
+        }
 
         $params = $data->params ?? [];
         $priceUsd = (float) $data->balance;
+        $currency = app(\App\Services\CurrencyService::class);
 
-        // 🔹 Conversión a USD si el usuario ingresó en otra moneda
-        $currency = app(CurrencyService::class);
-        $montoUsd = strtoupper($monedaBase) !== 'USD'
+        /* ============================================================
+            💱 Determinar la moneda base del usuario autenticado
+        ============================================================ */
+        $user = auth()->user();
+        $monedaBase = strtoupper($user?->currency?->code ?? 'ARS'); // fallback a ARS
+
+        // 🔹 Si la moneda base NO es USD, convertir el monto inicial a USD
+        $montoUsd = $monedaBase !== 'USD'
             ? $currency->convert($monto, $monedaBase, 'USD')
             : $monto;
 
-        // 🔹 Variación preferente (30d > 7d > 24h)
-        $var = $params['change_percent_30d']
-            ?? $params['change_percent_7d']
-            ?? $params['change_percent']
-            ?? 0;
+        /* ============================================================
+            📈 Seleccionar variación según los días simulados
+        ============================================================ */
+        $var24h = $params['change_percent'] ?? null;
+        $var7d  = $params['change_percent_7d'] ?? null;
+        $var30d = $params['change_percent_30d'] ?? null;
 
-        $cantidad = $priceUsd > 0 ? $montoUsd / $priceUsd : 0;
-        $rendimiento = $var / 100 * ($dias / 30);
-        $valorFinalUsd = $montoUsd * (1 + $rendimiento);
-        $valorFinalArs = $currency->convert($valorFinalUsd, 'USD', 'ARS');
+        if ($dias <= 2 && $var24h !== null) {
+            $var = $var24h;
+            $varLabel = '24h';
+            $periodoBase = 1;
+        } elseif ($dias <= 8 && $var7d !== null) {
+            $var = $var7d;
+            $varLabel = '7d';
+            $periodoBase = 7;
+        } else {
+            $var = $var30d ?? ($var7d ?? ($var24h ?? 0));
+            $varLabel = '30d';
+            $periodoBase = 30;
+        }
 
+        /* ============================================================
+        💹 Cálculo del rendimiento proporcional a los días simulados
+        ============================================================ */
+        $cantidad = $priceUsd > 0 ? $monto / $priceUsd : 0; // monto ya en USD
+        $rendimiento = ($var / 100) * ($dias / $periodoBase);
+        $valorFinalUsd = $monto * (1 + $rendimiento);
+
+        /* ============================================================
+        💰 Conversión SOLO informativa a la moneda base del usuario
+        ============================================================ */
+        $montoInicialBase = $monedaBase !== 'USD'
+            ? $currency->convert($monto, 'USD', $monedaBase)
+            : $monto;
+
+        $valorFinalBase = $monedaBase !== 'USD'
+            ? $currency->convert($valorFinalUsd, 'USD', $monedaBase)
+            : $valorFinalUsd;
+
+        /* ============================================================
+        📦 Retornar resultado completo
+        ============================================================ */
         return [
-            'tipo'                   => 'cripto',
-            'activo'                 => strtoupper($coin),
-            'precio_usd'             => $priceUsd,
-            'variacion_%'            => round($var, 2),
-            'dias'                   => $dias,
-            'monto_inicial'          => round($montoUsd, 2),
-            'monto_inicial_ars'      => round($currency->convert($montoUsd, 'USD', 'ARS'), 2),
-            'cantidad_comprada'      => round($cantidad, 6),
-            'monto_final_estimado_usd' => round($valorFinalUsd, 2),
-            'monto_final_estimado_ars' => round($valorFinalArs, 2),
-            'rendimiento_estimado_%' => round($rendimiento * 100, 2),
-            'fuente'                 => $data->fuente ?? 'CoinGecko',
-            'descripcion'            => 'Simulación basada en variación 30d/7d/24h real cacheada con cantidad comprada y conversión ARS↔USD.',
-            'ultima_actualizacion'   => optional($data?->updated_at)->toIso8601String(),
-            'extras'                 => $params, // 🔹 Todos los datos extendidos
+            'tipo'                      => 'cripto',
+            'activo'                    => strtoupper($coin),
+            'precio_usd'                => $priceUsd,
+            'variacion_%'               => round($var, 2),
+            'periodo_base'              => $varLabel,
+            'dias'                      => $dias,
+            'monto_inicial'             => round($monto, 2), // 💵 monto en USD ingresado
+            'monto_inicial_base'        => round($montoInicialBase, 2), // 💰 equivalente informativo
+            'moneda_base'               => $monedaBase,
+            'cantidad_comprada'         => round($cantidad, 6),
+            'monto_final_estimado_usd'  => round($valorFinalUsd, 2),
+            'monto_final_estimado_base' => round($valorFinalBase, 2),
+            'rendimiento_estimado_%'    => round($rendimiento * 100, 2),
+            'fuente'                    => $data->fuente ?? 'CoinGecko',
+            'descripcion'               => "Simulación basada en variación {$varLabel} real, ajustada a {$dias} días, con conversión a {$monedaBase}.",
+            'ultima_actualizacion'      => optional($data?->updated_at)->toIso8601String(),
+            'extras'                    => $params,
         ];
     }
 

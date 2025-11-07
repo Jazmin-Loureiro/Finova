@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:frontend/screens/registers/register_list_screen.dart';
+import 'package:frontend/widgets/empty_state_widget.dart';
+import 'package:frontend/widgets/info_icon_widget.dart';
+import 'package:frontend/widgets/register_item_widget.dart';
 import 'package:intl/intl.dart';
 import '../../widgets/custom_scaffold.dart';
 import '../../models/money_maker.dart';
@@ -9,7 +12,7 @@ import 'package:provider/provider.dart';
 import '../../providers/register_provider.dart';
 
 class MoneyMakerListScreen extends StatefulWidget {
-  final int? initialMoneyMakerId; // <-- ID del MoneyMaker a enfocar cuando se crea uno
+  final int? initialMoneyMakerId; 
   const MoneyMakerListScreen({super.key, this.initialMoneyMakerId});
 
   @override
@@ -31,7 +34,7 @@ class _MoneyMakerListScreenState extends State<MoneyMakerListScreen> {
   void initState() {
     super.initState();
     pageController = PageController(viewportFraction: 0.85);
-    _loadMoneyMakers(); // usa el provider para cargar las fuentes de dinero
+    _loadMoneyMakers(); 
   }
 
   @override
@@ -84,7 +87,7 @@ Widget build(BuildContext context) {
               if (!mounted) return;
               setState(() => selectedIndex = newIndex);
 
-              // ⚡ Esperar a que se monte el PageView
+              //  Esperar a que se monte el PageView
               WidgetsBinding.instance.addPostFrameCallback((_) {
                 if (pageController != null && pageController!.hasClients) {
                   pageController!.animateToPage(
@@ -102,8 +105,12 @@ Widget build(BuildContext context) {
       body: isLoading
           ? const LoadingWidget(message: "Cargando fuentes de dinero...")
           : moneyMakers.isEmpty
-              ? const Center(child: Text("No hay fuentes de dinero"))
-              : Column(
+              ? const EmptyStateWidget(
+                  icon: Icons.account_balance_wallet_outlined,
+                  title: "No hay fuentes de dinero",
+                  message:
+                      "Agrega una fuente de dinero para comenzar a gestionar tus finanzas.",
+                ): Column(
                   children: [
                     const SizedBox(height: 10),
                     if (pageController != null)
@@ -117,85 +124,129 @@ Widget build(BuildContext context) {
                             await context.read<RegisterProvider>().loadRegisters(moneyMakers[index].id);
                           },
                           itemBuilder: (context, index) {
-                            final m = moneyMakers[index];
-                            final isSelected = selectedIndex == index;
+                          final m = moneyMakers[index];
+                          final isSelected = selectedIndex == index;
 
-                            return AnimatedContainer(
-                              duration: const Duration(milliseconds: 300),
-                              margin: EdgeInsets.symmetric(
-                                horizontal: isSelected ? 8 : 12,
-                                vertical: isSelected ? 0 : 10,
-                              ),
-                              decoration: BoxDecoration(
-                                gradient: LinearGradient(
-                                  colors: [fromHex(m.color), fromHex(m.color)],
-                                  begin: Alignment.topLeft,
-                                  end: Alignment.bottomRight,
-                                ),
-                                borderRadius: BorderRadius.circular(22),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: fromHex(m.color).withAlpha(100),
-                                  blurRadius: 10,
-                                  offset: const Offset(0, 6),
-                                )
-                              ],
+                          //  Detectar color base y definir contraste
+                          final baseColor = fromHex(m.color);
+                          bool isColorDark(Color color) {
+                            double luminance = (0.299 * color.red + 0.587 * color.green + 0.114 * color.blue) / 255;
+                            return luminance < 0.5;
+                          }
+
+                          final isDark = isColorDark(baseColor);
+                          final textColor = isDark ? Colors.white : Colors.black87;
+                          final subTextColor = isDark ? Colors.white.withOpacity(0.9) : Colors.black54;
+
+                          return AnimatedContainer(
+                            duration: const Duration(milliseconds: 350),
+                            curve: Curves.easeOut,
+                            margin: EdgeInsets.symmetric(
+                              horizontal: isSelected ? 8 : 14,
+                              vertical: isSelected ? 5 : 10,
                             ),
+                            decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: [
+                              baseColor.withOpacity(0.9),
+                              baseColor.withOpacity(0.6),
+                            ],
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                          ),
+                          borderRadius: BorderRadius.circular(22),
+                          //  Borde dinámico según el brillo del color
+                          border: Border.all(
+                            color: isDark
+                                ? Colors.white.withOpacity(0.6)   // borde blanco sobre fondo oscuro
+                                : Colors.black.withOpacity(0.5),  // borde negro sobre fondo claro
+                            width: 1,
+                          ),
+                        ),
                             child: Stack(
                               children: [
-                              Padding(
-                                padding: const EdgeInsets.all(16),
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  mainAxisAlignment: MainAxisAlignment.start,
-                                  children: [
-                                    // Nombre de la fuente
-                                    Text(
-                                      m.name,
-                                      style: TextStyle(
-                                        color: Theme.of(context).colorScheme.onPrimary,
-                                        fontSize: 20,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                    const SizedBox(height: 5),
+                                // Fondo decorativo
+                                Positioned(
+                                  bottom: -40,
+                                  right: -30,
+                                  child: Icon(
+                                    Icons.blur_on,
+                                    size: 160,
+                                    color: isDark
+                                        ? Colors.white.withOpacity(0.08)
+                                        : Colors.black.withOpacity(0.05),
+                                  ),
+                                ),
 
-                                    // Nombre de la moneda
-                                    Text(
-                                      m.type ,
-                                      style: TextStyle(
-                                        color: Theme.of(context).colorScheme.onPrimary,
-                                        fontSize: 18,
-                                        fontWeight: FontWeight.w500,
-                                      ),
-                                    ),
-                                    const SizedBox(height: 6),
-                                    // Balance principal 
-                                        Text(
-                                          '${m.currency?.symbol}${m.balance.toStringAsFixed(2)} ${m.currency?.code}',
-                                          style: TextStyle(
-                                            color: Theme.of(context).colorScheme.onPrimary,
-                                            fontSize: 20,
-                                            fontWeight: FontWeight.bold,
-                                          ),
-                                        ),
-                                        const SizedBox(width: 6),
-                                        if (currencyBase != m.currency?.code)
+                                Padding(
+                                  padding: const EdgeInsets.all(20),
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Row(
+                                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                        children: [
                                           Text(
-                                            '≈ $currencySymbol${m.balanceConverted.toStringAsFixed(2)} $currencyBase',
+                                            m.name,
                                             style: TextStyle(
-                                              color: Theme.of(context).colorScheme.onPrimary,
-                                              fontSize: 20,
+                                              color: textColor,
+                                              fontSize: 22,
+                                              fontWeight: FontWeight.w600,                     
                                             ),
                                           ),
-                                                                              const SizedBox(width: 8),
-                                                                        // Balance reservado
+                                        ],
+                                      ),
+                                      const SizedBox(height: 1),
+
+                                      Text(
+                                        m.type.toUpperCase(),
+                                        style: TextStyle(
+                                          color: subTextColor,
+                                          fontSize: 14,
+                                          fontWeight: FontWeight.w400,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 1),
+
+                                      Text(
+                                        '${m.currency?.symbol}${m.balance.toStringAsFixed(2)} ${m.currency!.code}',
+                                        style: TextStyle(
+                                          color: textColor,
+                                          fontSize: 28,
+                                          fontWeight: FontWeight.bold,
+                                          letterSpacing: 0.5,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 2),
+
+                                      if (currencyBase != m.currency?.code)
+                                        Row(
+                                          children: [
+                                            Text(
+                                              '≈ $currencySymbol${m.balanceConverted.toStringAsFixed(2)} $currencyBase',
+                                              style: TextStyle(
+                                                color: subTextColor,
+                                                fontSize: 16,
+                                              ),
+                                            ),
+                                            const SizedBox(width: 6),
+                                            InfoIcon(
+                                              title: 'Conversión de moneda',
+                                              message: 
+                                                  'Fuente: Open Exchange Rates\n'
+                                                  'Última actualización: ${DateFormat('dd/MM/yyyy').format(m.currency!.updatedAt!)}\n\n'
+                                                  'Este valor es un estimativo. Las tasas pueden variar según el mercado y el momento de la conversión.',
+                                              iconSize: 18,
+                                            ),
+                                          ],
+                                        ),
+                                      const Spacer(),
                                       if (m.balance_reserved > 0)
                                         Text(
                                           'Reservado: ${m.currency?.symbol}${m.balance_reserved.toStringAsFixed(2)}',
                                           style: TextStyle(
-                                            fontSize: 18,
-                                            color: Theme.of(context).colorScheme.onPrimary,
+                                            color: subTextColor,
+                                            fontSize: 16,
                                             fontWeight: FontWeight.w500,
                                           ),
                                         ),
@@ -211,33 +262,27 @@ Widget build(BuildContext context) {
                                       Navigator.push(
                                         context,
                                         MaterialPageRoute(
-                                          builder: (context) =>
-                                              MoneyMakerFormScreen(
-                                            moneyMaker: m,
-                                          ),
+                                          builder: (context) => MoneyMakerFormScreen(moneyMaker: m),
                                         ),
                                       ).then((_) async {
                                         await _loadMoneyMakers();
                                         if (moneyMakers.isNotEmpty) {
-                                          await context.read<RegisterProvider>().loadRegisters(moneyMakers[selectedIndex].id);
+                                          await context
+                                              .read<RegisterProvider>()
+                                              .loadRegisters(moneyMakers[selectedIndex].id);
                                         }
                                       });
                                     },
                                     child: Container(
                                       decoration: BoxDecoration(
+                                        color: isDark ? Colors.white.withOpacity(0.15) : Colors.black12,
                                         shape: BoxShape.circle,
-                                        boxShadow: [
-                                          BoxShadow(
-                                            color: scheme.primary,
-                                          ),
-                                        ],
+                                        border: Border.all(
+                                          color: isDark ? Colors.white30 : Colors.black26,
+                                        ),
                                       ),
-                                      padding: const EdgeInsets.all(6),
-                                      child:  Icon(
-                                        Icons.edit,
-                                        size: 20,
-                                         color: Theme.of(context).colorScheme.onSecondary,
-                                      ),
+                                      padding: const EdgeInsets.all(8),
+                                      child: Icon(Icons.edit, color: textColor, size: 18),
                                     ),
                                   ),
                                 ),
@@ -291,121 +336,26 @@ Widget build(BuildContext context) {
                   ),
         
                   // Lista de registros
-                  Expanded(
-                    child: registers.isEmpty
-                        ? const Center(child: Text("Sin registros"))
-                        : ListView.builder(
-                            padding:
-                                const EdgeInsets.symmetric(horizontal: 10),
-                            //itemCount: registers.length,
-                            itemCount: registers.length > 4 ? 4 : registers.length,
-                            itemBuilder: (context, index) {
-                              final r = registers[index];
-                              final tipo =
-                                  r.type == "income" ? "Ingreso" : "Gasto";
-                              return Card(
-                                elevation: 3,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(16),
-                                ),
-                                child: Padding(
-                                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                                  child: Row(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      // Icono principal
-                                      Container(
-                                        padding: const EdgeInsets.all(10),
-                                        decoration: BoxDecoration(
-                                          color: r.type == "income"
-                                              ? Colors.green.withOpacity(0.15)
-                                              : Colors.red.withOpacity(0.15),
-                                          shape: BoxShape.circle,
-                                        ),
-                                        child: Icon(
-                                          r.type == "income" ? Icons.arrow_downward : Icons.arrow_upward,
-                                          color: r.type == "income" ? Colors.green : Colors.red,
-                                          size: 22,
-                                        ),
-                                      ),
-                                      const SizedBox(width: 12),
-
-                                      // Contenido principal
-                                      Expanded(
-                                        child: Column(
-                                          crossAxisAlignment: CrossAxisAlignment.start,
-                                          children: [
-                                            // Fila: Nombre + Tipo/Categoría a la izquierda, Fecha a la derecha
-                                            Row(
-                                              crossAxisAlignment: CrossAxisAlignment.start,
-                                              children: [
-                                                // Nombre + Tipo/Categoría
-                                                Expanded(
-                                                  child: Column(
-                                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                                    children: [
-                                                      Text(
-                                                        r.name,
-                                                        style: const TextStyle(
-                                                          fontWeight: FontWeight.bold,
-                                                          fontSize: 16,
-                                                        ),
-                                                        overflow: TextOverflow.ellipsis,
-                                                      ),
-                                                      const SizedBox(height: 2),
-                                                      Text(
-                                                        '$tipo • ${r.category.name}',
-                                                        style: TextStyle(
-                                                          fontSize: 12,
-                                                          color: Theme.of(context).colorScheme.onSurface,
-                                                        ),
-                                                      ),
-                                                    ],
-                                                  ),
-                                                ),
-
-                                                // Fecha a la derecha
-                                                Text(
-                                                  dateFormat.format(r.created_at),
-                                                  style: TextStyle(
-                                                    fontSize: 12,
-                                                    color: Colors.grey[500],
-                                                  ),
-                                                ),
-                                              ],
-                                            ),
-
-                                            const SizedBox(height: 4),
-
-                                            // Meta asociada (opcional)
-                                            if (r.goal != null)
-                                              Text(
-                                                'Meta: ${r.goal!.name} - Reservado: ${r.currency.symbol}${r.reserved_for_goal}',
-                                                style: TextStyle(
-                                                  fontSize: 12,
-                                                  color: Theme.of(context).colorScheme.primary,
-                                                  fontWeight: FontWeight.w600,
-                                                ),
-                                              ),
-
-                                            const SizedBox(height: 4),
-
-                                            // Monto
-                                            Text(
-                                              '${r.currency.symbol}${r.balance.toStringAsFixed(2)} ${r.currency.code}',
-                                              style: TextStyle(fontSize: 14),
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              );
-
-                            },
-                          ),
-                  ),
+                 Expanded(
+                child: registers.isEmpty
+                    ? const EmptyStateWidget(
+                        icon: Icons.account_balance_wallet_outlined,
+                        title: "No hay transacciones",
+                        message: "Agrega un registro de dinero para comenzar a gestionar tus finanzas.",
+                      )
+                    : ListView.builder(
+                        padding: const EdgeInsets.symmetric(horizontal: 10),
+                        itemCount: registers.length > 4 ? 4 : registers.length,
+                        itemBuilder: (context, index) {
+                          final r = registers[index];
+                          return RegisterItemWidget(
+                            register: r,
+                            dateFormat: dateFormat,
+                            fromHex: fromHex,
+                          );
+                        },
+                      ),
+              ),
                 ],
               ),
   );

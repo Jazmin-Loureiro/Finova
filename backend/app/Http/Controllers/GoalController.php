@@ -149,7 +149,7 @@ class GoalController extends Controller
     }
 
     public function fetchRegistersByGoal(Goal $goal) {
-        $registers = $goal->registers()->with('moneyMaker', 'category', 'currency')->get();
+        $registers = $goal->registers()->with('moneyMaker', 'category', 'currency','goal')->get();
         return response()->json(['registers' => $registers], 200);
     }
 }

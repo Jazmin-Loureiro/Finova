@@ -3,6 +3,7 @@ import 'package:frontend/widgets/category_summary_chart_widget.dart';
 import 'package:frontend/widgets/empty_state_widget.dart';
 import 'package:frontend/widgets/loading_widget.dart';
 import 'package:frontend/widgets/month_header_widget.dart';
+import 'package:frontend/widgets/register_item_widget.dart';
 import '../../services/api_service.dart';
 import '../../models/register.dart';
 import 'package:intl/intl.dart';
@@ -87,169 +88,69 @@ class _RegisterListScreenState extends State<RegisterListScreen> {
         ),
       ],
       body: isLoading
-          ? const Center(child: LoadingWidget())
-          : Column(
-                  children: [
-                    MonthHeaderWidget(
-                      date: selectedDate,
-                      onPrevious: () {
-                        setState(() {
-                          selectedDate = DateTime(
-                            selectedDate.year,
-                            selectedDate.month - 1,
-                          );
-                        });
-                        _fetchRegisters(); // recarga del backend
-                      },
-                      onNext: () {
-                        setState(() {
-                          selectedDate = DateTime(
-                            selectedDate.year,
-                            selectedDate.month + 1,
-                          );
-                        });
-                        _fetchRegisters(); // recarga del backend
-                      },
-                    ),
+    ? const Center(child: LoadingWidget())
+    : Column(
+        children: [
+          //  Encabezado con selector de mes
+          MonthHeaderWidget(
+            date: selectedDate,
+            onPrevious: () {
+              setState(() {
+                selectedDate = DateTime(
+                  selectedDate.year,
+                  selectedDate.month - 1,
+                );
+              });
+              _fetchRegisters();
+            },
+            onNext: () {
+              setState(() {
+                selectedDate = DateTime(
+                  selectedDate.year,
+                  selectedDate.month + 1,
+                );
+              });
+              _fetchRegisters();
+            },
+          ),
 
-                    const SizedBox(height: 10),
-                    if (hasData) ...[
-                     CategorySummaryChartWidget(
-                        totals: totals,
-                        colorsMap: colorsMap,
-                      ),
-                    ],
-                    const SizedBox(height: 8),
+          const SizedBox(height: 10),
+          //  Gráfico de resumen por categoría (si hay datos)
+          if (hasData)
+            CategorySummaryChartWidget(
+              totals: totals,
+              colorsMap: colorsMap,
+            ),
+          const SizedBox(height: 8),
 
-                    registers.isEmpty ? EmptyStateWidget(
-                          title: "Aún no hay registros.",
-                          message:
-                              "No has reservado ninguna cantidad aún.",
-                          icon: Icons.receipt_long,
-                        ) : 
-                    /// LISTA DE REGISTROS
-                    Expanded(
-                      child: ListView.builder(
-                        itemCount: registers.length,
-                        itemBuilder: (context, index) {
-                          final r = registers[index];
-                          final tipo =
-                              r.type == "income" ? "Ingreso" : "Gasto";
-                          final category = r.category.name;
-
-                          return Card(
-                            elevation: 3,
-                            margin: const EdgeInsets.symmetric(
-                                horizontal: 12, vertical: 6),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(16),
-                            ),
-                            child: Padding(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 12, vertical: 10),
-                              child: Row(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  // Icono principal
-                                  Container(
-                                    padding: const EdgeInsets.all(10),
-                                    decoration: BoxDecoration(
-                                      color: r.type == "income"
-                                          ? Colors.green.withOpacity(0.15)
-                                          : Colors.red.withOpacity(0.15),
-                                      shape: BoxShape.circle,
-                                    ),
-                                    child: Icon(
-                                      r.type == "income"
-                                          ? Icons.arrow_downward
-                                          : Icons.arrow_upward,
-                                      color: r.type == "income"
-                                          ? Colors.green
-                                          : Colors.red,
-                                      size: 24,
-                                    ),
-                                  ),
-                                  const SizedBox(width: 12),
-
-                                  // Contenido principal
-                                  Expanded(
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        Row(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.start,
-                                          children: [
-                                            Expanded(
-                                              child: Column(
-                                                crossAxisAlignment:
-                                                    CrossAxisAlignment.start,
-                                                children: [
-                                                  Text(
-                                                    r.name,
-                                                    style: const TextStyle(
-                                                      fontWeight:
-                                                          FontWeight.bold,
-                                                      fontSize: 16,
-                                                    ),
-                                                    overflow:
-                                                        TextOverflow.ellipsis,
-                                                  ),
-                                                  const SizedBox(height: 2),
-                                                  Text(
-                                                    '$tipo • $category',
-                                                    style: TextStyle(
-                                                      fontSize: 12,
-                                                      color:
-                                                          Colors.grey.shade700,
-                                                    ),
-                                                  ),
-                                                ],
-                                              ),
-                                            ),
-                                            Text(
-                                              dateFormat.format(r.created_at),
-                                              style: TextStyle(
-                                                fontSize: 12,
-                                                color: Colors.grey.shade500,
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-
-                                        const SizedBox(height: 4),
-
-                                        if (r.goal != null)
-                                          Text(
-                                            'Meta: ${r.goal!.name} - Reservado: ${r.currency.symbol}${r.reserved_for_goal}',
-                                            style: TextStyle(
-                                              fontSize: 12,
-                                              color: Theme.of(context)
-                                                  .colorScheme
-                                                  .primary,
-                                              fontWeight: FontWeight.w600,
-                                            ),
-                                          ),
-
-                                        const SizedBox(height: 4),
-                                        Text(
-                                          '${r.currency.symbol}${r.balance.toStringAsFixed(2)} ${r.currency.code}',
-                                          style: const TextStyle(fontSize: 14),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          );
+          // Lista o estado vacío
+          Expanded(
+            child: registers.isEmpty
+                ? const EmptyStateWidget(
+                    title: "Aún no hay registros.",
+                    message:
+                        "No has reservado ninguna cantidad aún.",
+                    icon: Icons.receipt_long,
+                  )
+                : ListView.builder(
+                    padding: const EdgeInsets.symmetric(horizontal: 10),
+                    itemCount: registers.length,
+                    itemBuilder: (context, index) {
+                      final r = registers[index];
+                      return RegisterItemWidget(
+                        register: r,
+                        dateFormat: dateFormat,
+                        fromHex: (hex) {
+                          hex = hex.toUpperCase().replaceAll("#", "");
+                          if (hex.length == 6) hex = "FF$hex";
+                          return Color(int.parse(hex, radix: 16));
                         },
-                      ),
-                    ),
-                  ],
-                ),
+                      );
+                    },
+                  ),
+          ),
+        ],
+      ),
     );
   }
-
 }

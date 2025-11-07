@@ -5,6 +5,7 @@ import 'package:frontend/screens/goals/goal_form_screen.dart';
 import 'package:frontend/services/api_service.dart';
 import 'package:frontend/widgets/custom_scaffold.dart';
 import 'package:frontend/widgets/empty_state_widget.dart';
+import 'package:frontend/widgets/register_item_widget.dart';
 import 'package:intl/intl.dart';
 
 class GoalDetailScreen extends StatefulWidget  {
@@ -142,8 +143,8 @@ Future<void> _fetchRegistersGoal() async {
                             borderRadius: BorderRadius.circular(10),
                             backgroundColor: Colors.grey[300],
                             color: widget.goal.balance >= widget.goal.targetAmount
-                                ? Colors.green
-                                : Colors.blueAccent,
+                                ? Theme.of( context).colorScheme.secondary
+                                : Colors.blue,
                           ),
                           const SizedBox(height: 12),
                           Row(
@@ -165,7 +166,7 @@ Future<void> _fetchRegistersGoal() async {
                       ),
                     ),
                   ),
-                 //  Lista de registros asociados por ahora simple 
+                 //  Lista de registros asociados 
                   const SizedBox(height: 24),
                   Text(
                     'Registros Asociados (${registers.length})',
@@ -174,29 +175,28 @@ Future<void> _fetchRegistersGoal() async {
                   ),
                   const SizedBox(height: 12),
                   hasRegisters
-                      ? ListView.builder(
-                          shrinkWrap: true,
-                          physics: const NeverScrollableScrollPhysics(),
-                          itemCount: registers.length,
-                          itemBuilder: (context, index) {
-                            final register = registers[index];
-                            return Card(
-                              child: ListTile(
-                                title: Text(register.name),
-                                subtitle: Text(
-                                    'Reservado: ${register.currency.symbol}${register.balance.toStringAsFixed(2)} ${register.currency.code}'),
-                                trailing: Text(
-                                    'Creado: ${dateFormat.format(register.created_at.toLocal())}'),
-                              ),
-                            );
+                      ? ListView.builder( 
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      itemCount: registers.length,
+                      itemBuilder: (context, index) {
+                        final r = registers[index];
+                        return RegisterItemWidget(
+                          register: r,
+                          dateFormat: dateFormat,
+                          fromHex: (hex) {
+                            hex = hex.toUpperCase().replaceAll("#", "");
+                            if (hex.length == 6) hex = "FF$hex";
+                            return Color(int.parse(hex, radix: 16));
                           },
-                        )
-                      :   EmptyStateWidget(
-                          title: "Aún no hay registros.",
-                          message:
-                              "No has reservado ninguna cantidad aún.",
-                          icon: Icons.receipt_long,
-                        )
+                        );
+                      },
+                    )
+                  : const EmptyStateWidget(
+                      title: "Aún no hay registros.",
+                      message: "No has reservado ninguna cantidad aún.",
+                      icon: Icons.receipt_long,
+                    )
                 ],
               ),
             ),

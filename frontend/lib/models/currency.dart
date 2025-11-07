@@ -4,12 +4,14 @@ class Currency {
   final String name;   // Nombre en español, ej: Dólar estadounidense
   final String symbol; // Símbolo, ej: $
   final double? rate;  // Tasa de cambio respecto a una moneda base (opcional)
+  final DateTime? updatedAt; // Fecha de la última actualización
 
   Currency({
     required this.id,
     required this.code,
     required this.name,
     required this.symbol,
+    this.updatedAt,
     this.rate,
   });
 
@@ -24,6 +26,9 @@ class Currency {
               ? (json['rate'] as num).toDouble()
               : double.tryParse(json['rate'].toString()) ?? 0.0)
           : null,
+      updatedAt: json['updated_at'] != null
+          ? DateTime.parse(json['updated_at'])
+          : null,
     );
   }
    Map<String, dynamic> toJson() {
@@ -33,6 +38,7 @@ class Currency {
       'name': name,
       'symbol': symbol,
       'rate': rate,
+      'updatedAt': updatedAt?.toIso8601String(),
     };
 }
 }

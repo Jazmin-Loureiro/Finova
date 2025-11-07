@@ -200,7 +200,7 @@ class _GoalsListScreenState extends State<GoalsListScreen>
                     LinearProgressIndicator(
                       value: progress,
                       backgroundColor: Colors.grey[300],
-                      color: progress >= 1 ? Colors.green : Colors.blueAccent,
+                      color: progress >= 1 ? Theme.of(context).colorScheme.secondary : Colors.blue,
                       minHeight: 6,
                       borderRadius: BorderRadius.circular(10),
                     ),

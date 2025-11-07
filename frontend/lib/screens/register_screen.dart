@@ -35,7 +35,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   List<Currency> currencyBases = [];
   bool isLoadingCurrencies = true;
   bool isLoading = false;
-
+  bool obscureText = true;
   final ImagePicker _picker = ImagePicker();
 
   @override
@@ -346,25 +346,35 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             ),
                             const SizedBox(height: 16),
 
-                            FadeInUp(
-                              delay: const Duration(milliseconds: 600),
-                              child: TextFormField(
-                                decoration: const InputDecoration(
-                                  labelText: 'Contraseña',
-                                  prefixIcon: Icon(Icons.lock_outline),
-                                  border: OutlineInputBorder(
-                                    borderRadius:
-                                        BorderRadius.all(Radius.circular(12)),
-                                  ),
-                                ),
-                                obscureText: true,
-                                onChanged: (val) => password = val,
-                                validator: (val) =>
-                                    val == null || val.isEmpty
+                             FadeInUp(
+                                  delay: const Duration(milliseconds: 600),
+                                  child: TextFormField(
+                                    obscureText: obscureText,
+                                    decoration: InputDecoration(
+                                      labelText: 'Contraseña',
+                                      prefixIcon:
+                                          const Icon(Icons.lock_outline),
+                                      suffixIcon: IconButton(
+                                        icon: Icon(
+                                          obscureText
+                                              ? Icons.visibility_off
+                                              : Icons.visibility,
+                                        ),
+                                        onPressed: () => setState(() =>
+                                            obscureText = !obscureText),
+                                      ),
+                                      border: const OutlineInputBorder(
+                                        borderRadius: BorderRadius.all(
+                                            Radius.circular(12)),
+                                      ),
+                                    ),
+                                    onChanged: (val) => password = val,
+                                    validator: (val) => val == null ||
+                                            val.isEmpty
                                         ? 'Obligatorio'
                                         : null,
-                              ),
-                            ),
+                                  ),
+                                ),
                             const SizedBox(height: 16),
 
                              FadeInUp(

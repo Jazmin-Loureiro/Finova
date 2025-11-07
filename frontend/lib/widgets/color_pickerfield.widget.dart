@@ -25,7 +25,9 @@ class ColorPickerField extends FormField<Color> {
             return InputDecorator(
               decoration: InputDecoration(
                 labelText: label,
-                border: OutlineInputBorder(),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.all(
+                  Radius.circular(12))),
                 errorText: state.errorText,
               ),
               child: InkWell(
@@ -154,34 +156,37 @@ class ColorPickerField extends FormField<Color> {
                     },
                   );
                 },
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Row(
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        CircleAvatar(
-                          backgroundColor:
-                              colorSelected ?? Colors.grey[300],
-                          radius: 18,
-                          child: colorSelected == null
-                              ? const Icon(Icons.color_lens_outlined,
-                                  size: 16, color: Colors.grey)
-                              : null,
-                        ),
-                        const SizedBox(width: 12),
-                        Text(
-                          colorSelected == null
-                              ? 'Seleccionar color'
-                              : '#${colorSelected.value.toRadixString(16).padLeft(8, '0').substring(2).toUpperCase()}',
-                          style: TextStyle(
-                            color: colorSelected == null
-                                ? Colors.grey[600]
-                                : Colors.black87,
-                            fontWeight: FontWeight.w500,
+                        Expanded(
+                          child: Row(
+                            children: [
+                              // Circulito de vista previa (icono o color)
+                              CircleAvatar(
+                                backgroundColor:Colors.grey[300],
+                                radius: 18,
+                                child:  const Icon(Icons.color_lens_outlined,size: 16, color: Colors.grey)
+                              ),
+                              const SizedBox(width: 12),
+
+                              Expanded(
+                                child: colorSelected == null
+                                    ? const Text(
+                                        'Seleccionar color',
+                                        style: TextStyle(fontSize: 16),
+                                      )
+                                    : Container(
+                                        height: 26,
+                                        decoration: BoxDecoration(
+                                          color: colorSelected,
+                                          borderRadius: BorderRadius.circular(6),
+                                        ),
+                                      ),
+                              ),
+                            ],
                           ),
                         ),
-                      ],
-                    ),
                     const Icon(Icons.arrow_drop_down, color: Colors.grey),
                   ],
                 ),

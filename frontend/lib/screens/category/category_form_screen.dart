@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:frontend/helpers/icon_utils.dart';
 import 'package:frontend/widgets/buttons/button_delete.dart';
 import 'package:frontend/widgets/buttons/button_save.dart';
+import 'package:frontend/widgets/custom_scaffold.dart';
 import 'package:frontend/widgets/icon_picker_field.dart';
 import '../../widgets/color_pickerfield.widget.dart';
 import '../../services/api_service.dart';
@@ -35,6 +36,8 @@ class _CategoryFormScreenState extends State<CategoryFormScreen> {
       selectedIconName = widget.category!.icon;
       selectedIcon = AppIcons.fromName(widget.category!.icon);
     }
+    selectedIcon ??= Icons.category_outlined;
+    selectedIconName ??= 'category';
   }
 
   void _showIconPicker() {
@@ -107,12 +110,11 @@ class _CategoryFormScreenState extends State<CategoryFormScreen> {
       "expense": "Gasto",
     };
 
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(widget.category != null
+    return CustomScaffold(
+      title: widget.category != null
                 ? 'Editar ${typeLabels[widget.type]}: ${widget.category!.name}'
-                : 'Nueva Categoria ${typeLabels[widget.type]}')
-      ),
+                : 'Nueva Categoria ${typeLabels[widget.type]}',
+      currentRoute: '/category_form',
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Form(
@@ -127,9 +129,13 @@ class _CategoryFormScreenState extends State<CategoryFormScreen> {
                     child: TextFormField(
                       controller: nameController,
                       decoration: const InputDecoration(
-                        labelText: "Nombre de la categoria",
-                        border: OutlineInputBorder(),
-                      ),
+                        labelText: "Nombre",
+                        border: OutlineInputBorder( 
+                          borderRadius: BorderRadius.all(
+                              Radius.circular(12))),
+                                   counterText: '', // opcional: oculta el contador visual
+                              ),
+                                maxLength: 20, // máximo 20 caracteres                                                 
                       validator: (val) => val == null || val.trim().isEmpty ? "Ingrese un nombre": null,
                     ),
                   ),
@@ -153,7 +159,7 @@ class _CategoryFormScreenState extends State<CategoryFormScreen> {
                 ],
               ),
 
-              const SizedBox(height: 24),
+              const SizedBox(height: 15),
 
               //  Selector de color
               ColorPickerField(
@@ -163,7 +169,7 @@ class _CategoryFormScreenState extends State<CategoryFormScreen> {
                     color == null ? 'Seleccione un color' : null,
                 label: 'Color de la categoría',
               ),
-              const SizedBox(height: 24),
+              const SizedBox(height: 15),
 
               // Botón Guardar
                 ButtonSave(

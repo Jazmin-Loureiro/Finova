@@ -21,6 +21,7 @@ class ButtonDelete extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     return ElevatedButton.icon(
       icon: Icon(icon),
       label: Text(label),
@@ -28,9 +29,17 @@ class ButtonDelete extends StatelessWidget {
         backgroundColor: color,
         foregroundColor: Colors.white,
         minimumSize: const Size(double.infinity, 48),
+        padding: const EdgeInsets.symmetric(vertical: 16),
+         textStyle: const TextStyle(
+           fontWeight: FontWeight.bold,
+           fontSize: 16,
+           letterSpacing: 0.5,
+         ),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(14),
         ),
+        shadowColor: colorScheme.primary.withOpacity(0.4),
+        elevation: 8,
       ),
       onPressed: () async {
         final confirmed = await showDialog<bool>(

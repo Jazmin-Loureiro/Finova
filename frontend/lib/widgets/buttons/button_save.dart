@@ -21,13 +21,12 @@ class ButtonSave extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
-
     return ElevatedButton.icon(
-
       label: Text(label),
       style: ElevatedButton.styleFrom(
         backgroundColor: colorScheme.primary,
         foregroundColor: Colors.white,
+        minimumSize: const Size(double.infinity, 48),
         padding: const EdgeInsets.symmetric(vertical: 16),
          textStyle: const TextStyle(
            fontWeight: FontWeight.bold,

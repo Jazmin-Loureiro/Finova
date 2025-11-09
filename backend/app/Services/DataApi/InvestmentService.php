@@ -191,8 +191,15 @@ class InvestmentService
         /* ============================================================
             💱 Determinar la moneda base del usuario autenticado
         ============================================================ */
-        $user = auth()->user();
-        $monedaBase = strtoupper($user?->currency?->code ?? 'ARS'); // fallback a ARS
+        $user = auth()->user()?->load('currency');
+        $monedaBase = strtoupper($user?->currency?->code ?? 'ARS');
+
+        \Log::info('💱 Usuario detectado', [
+            'id' => $user?->id,
+            'currency_id' => $user?->currency_id,
+            'currency_code' => $user?->currency?->code,
+        ]);
+
 
         // 🔹 Si la moneda base NO es USD, convertir el monto inicial a USD
         $montoUsd = $monedaBase !== 'USD'

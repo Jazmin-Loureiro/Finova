@@ -218,6 +218,9 @@ class _SimulationResultCardState extends State<SimulationResultCard>
       final double gananciaBase = montoFinalBase - montoInicialBase;
       final bool gananciaPositiva = gananciaUsd >= 0;
 
+      // 👇 Mostrar equivalencias solo si la moneda base no es USD
+      final bool showBase = baseCode != 'USD';
+
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -236,24 +239,31 @@ class _SimulationResultCardState extends State<SimulationResultCard>
           const SizedBox(height: 10),
           _infoLine('Activo', '${r['activo'] ?? 'N/D'}', textColor),
           _infoLine('Cotización actual', _fmt(precioUsd, 'USD'), textColor),
+
           Row(
             children: [
               Expanded(
                 child: _infoLine(
                   'Monto invertido',
-                  '${_fmt(montoInicialUsd, "USD")} (${_fmt(montoInicialBase, baseCode)})',
+                  showBase
+                      ? '${_fmt(montoInicialUsd, "USD")} (${_fmt(montoInicialBase, baseCode)})'
+                      : _fmt(montoInicialUsd, "USD"),
                   textColor,
                 ),
               ),
-              const InfoIcon(
+              InfoIcon(
                 title: 'Monto invertido',
-                message:
-                    'Las criptomonedas cotizan globalmente en dólares (USD). '
-                    'El valor entre paréntesis muestra el equivalente en tu moneda local según la cotización actual.',
+                message: showBase
+                    ? 'Las criptomonedas cotizan globalmente en dólares (USD). '
+                      'El valor entre paréntesis muestra el equivalente en tu moneda local según la cotización actual.'
+                    : 'Las criptomonedas cotizan globalmente en dólares (USD). '
+                      'En tu caso, la moneda base también es USD, por lo que no se muestra conversión adicional.',
               ),
             ],
           ),
+
           _infoLine('Cantidad adquirida', '$cantidad ${r['activo'] ?? ''}', textColor),
+
           Row(
             children: [
               Expanded(
@@ -271,6 +281,7 @@ class _SimulationResultCardState extends State<SimulationResultCard>
               ),
             ],
           ),
+
           Row(
             children: [
               Expanded(
@@ -290,37 +301,49 @@ class _SimulationResultCardState extends State<SimulationResultCard>
               ),
             ],
           ),
+
           const Divider(height: 20),
+
           Row(
             children: [
               Expanded(
                 child: _infoLine(
                   'Ganancia estimada',
-                  '${_fmt(gananciaUsd, "USD")} (${_fmt(gananciaBase, baseCode)})',
+                  showBase
+                      ? '${_fmt(gananciaUsd, "USD")} (${_fmt(gananciaBase, baseCode)})'
+                      : _fmt(gananciaUsd, "USD"),
                   gananciaPositiva
                       ? Colors.greenAccent.shade400
                       : Colors.redAccent.shade200,
                 ),
               ),
-              const InfoIcon(
+              InfoIcon(
                 title: 'Ganancia estimada',
-                message:
-                    'Este valor refleja cuánto ganarías o perderías si el precio del activo variara según el período elegido. '
-                    'Es una estimación basada en datos recientes del mercado y puede cambiar con la volatilidad.',
+                message: showBase
+                    ? 'Este valor refleja cuánto ganarías o perderías si el precio del activo variara según el período elegido. '
+                      'Se muestra tanto en USD como en tu moneda local.'
+                    : 'Este valor refleja cuánto ganarías o perderías si el precio del activo variara según el período elegido. '
+                      'Tu moneda base es USD, por lo que se muestra solo en dólares.',
               ),
             ],
           ),
+
           _infoLine(
             'Monto estimado final',
-            '${_fmt(montoFinalUsd, "USD")} (${_fmt(montoFinalBase, baseCode)})',
+            showBase
+                ? '${_fmt(montoFinalUsd, "USD")} (${_fmt(montoFinalBase, baseCode)})'
+                : _fmt(montoFinalUsd, "USD"),
             textColor,
           ),
+
           const SizedBox(height: 12),
-          Text(r['descripcion'] ?? '', style: TextStyle(color: textColor.withOpacity(0.7))),
+          Text(r['descripcion'] ?? '',
+              style: TextStyle(color: textColor.withOpacity(0.7))),
           const SizedBox(height: 8),
         ],
       );
     }
+
 
     // -------------------- PRÉSTAMO --------------------
     final formatterARS = (double v) => _fmt(v, 'ARS');

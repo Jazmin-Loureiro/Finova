@@ -4,6 +4,7 @@ import '../widgets/custom_scaffold.dart';
 import '../widgets/simulation_result_card_widget.dart';
 import '../widgets/loading_widget.dart';
 import '../widgets/info_icon_widget.dart';
+import '../widgets/empty_state_widget.dart';
 
 class InvestmentSimulatorScreen extends StatefulWidget {
   const InvestmentSimulatorScreen({super.key});
@@ -44,10 +45,14 @@ class _InvestmentSimulatorScreenState extends State<InvestmentSimulatorScreen>
   String? fuenteCrypto;
   DateTime? lastUpdateCrypto;
 
+  int? userCurrencyId;
+  bool isLoadingCurrency = true;
+
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: _tabs.length, vsync: this);
+    _checkCurrency();
 
     _tabController.addListener(() {
       if (_tabController.indexIsChanging) {
@@ -60,6 +65,15 @@ class _InvestmentSimulatorScreenState extends State<InvestmentSimulatorScreen>
       }
     });
   }
+
+  Future<void> _checkCurrency() async {
+    final id = await api.getUserCurrency();
+    setState(() {
+      userCurrencyId = id;
+      isLoadingCurrency = false;
+    });
+  }
+
 
   // Carga cotización cripto
   Future<void> _loadQuote(String coin) async {
@@ -100,6 +114,7 @@ class _InvestmentSimulatorScreenState extends State<InvestmentSimulatorScreen>
       setState(() => isLoadingPf = false);
     }
   }
+  
 
   @override
   Widget build(BuildContext context) {
@@ -155,7 +170,22 @@ class _InvestmentSimulatorScreenState extends State<InvestmentSimulatorScreen>
 
 
   Widget _buildPlazoFijo(
-      ThemeData theme, Color surface, Color textColor, Color primary) {
+    ThemeData theme, Color surface, Color 
+    textColor, Color primary) {
+      if (isLoadingCurrency) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    if (userCurrencyId != 3) {
+      return const EmptyStateWidget(
+        icon: Icons.savings_rounded,
+        title: "Simulador no disponible",
+        message:
+            "El simulador de Plazo Fijo solo está habilitado para usuarios con moneda base ARS. "
+            "Podés cambiarla desde tu perfil si querés acceder a esta herramienta.",
+      );
+    }
+
     return ListView(
       physics: const BouncingScrollPhysics(),
       children: [

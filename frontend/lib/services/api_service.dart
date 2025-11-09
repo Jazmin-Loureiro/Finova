@@ -16,7 +16,7 @@ import '../models/goal.dart';
 //const String baseUrl = "http://192.168.1.113:8000"; //Jaz
 //const String baseUrl = "http://192.168.0.117:8000"; // Jaz 2
 //const String baseUrl = "http://192.168.1.45:8000"; //Jaz 3
-const String baseUrl = "http://192.168.0.162:8000";// guardo el mio je
+//const String baseUrl = "http://192.168.0.162:8000";// guardo el mio je
 //const String baseUrl = "http://127.0.0.1:8000"; //compu local
 //const String baseUrl = "http://172.16.195.79:8000"; // IP de la facu
 const String apiUrl = "$baseUrl/api";
@@ -910,22 +910,29 @@ Future<List<Register>> fetchRegistersByGoal(int goalId) async {
     }
   }
 
-  // 🔹 Cripto (POST con body JSON)
+  // 🔹 Criptomonedas (POST con body JSON)
   Future<Map<String, dynamic>?> simulateCrypto({
     required double monto,
     required int dias,
     String coin = 'bitcoin',
   }) async {
     try {
+      final token = await storage.read(key: 'token');
+
       final res = await http.post(
         Uri.parse('$apiUrl/simulate/crypto'),
-        headers: jsonHeaders(),
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          if (token != null) 'Authorization': 'Bearer $token', // 👈 agregamos token si existe
+        },
         body: jsonEncode({'monto': monto, 'dias': dias, 'coin': coin}),
       );
+
       return res.statusCode == 200
           ? jsonDecode(res.body)
           : {'error': 'No se pudo realizar la simulación'};
-    } catch (_) {
+    } catch (e) {
       return {'error': 'Error de conexión con el servidor'};
     }
   }
@@ -937,18 +944,26 @@ Future<List<Register>> fetchRegistersByGoal(int goalId) async {
     String symbol = 'AAPL',
   }) async {
     try {
+      final token = await storage.read(key: 'token');
+
       final res = await http.post(
         Uri.parse('$apiUrl/simulate/stock'),
-        headers: jsonHeaders(),
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          if (token != null) 'Authorization': 'Bearer $token',
+        },
         body: jsonEncode({'monto': monto, 'dias': dias, 'symbol': symbol}),
       );
+
       return res.statusCode == 200
           ? jsonDecode(res.body)
           : {'error': 'No se pudo realizar la simulación'};
-    } catch (_) {
+    } catch (e) {
       return {'error': 'Error de conexión con el servidor'};
     }
   }
+
 
   // 🔹 Bonos (POST con body JSON)
   Future<Map<String, dynamic>?> simulateBond({
@@ -957,18 +972,26 @@ Future<List<Register>> fetchRegistersByGoal(int goalId) async {
     String bono = 'TLT',
   }) async {
     try {
+      final token = await storage.read(key: 'token');
+
       final res = await http.post(
         Uri.parse('$apiUrl/simulate/bond'),
-        headers: jsonHeaders(),
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          if (token != null) 'Authorization': 'Bearer $token',
+        },
         body: jsonEncode({'monto': monto, 'dias': dias, 'bono': bono}),
       );
+
       return res.statusCode == 200
           ? jsonDecode(res.body)
           : {'error': 'No se pudo realizar la simulación'};
-    } catch (_) {
+    } catch (e) {
       return {'error': 'Error de conexión con el servidor'};
     }
   }
+
 
   // 🔹 Cotización actual (GET, correcto)
   Future<Map<String, dynamic>?> marketQuote({

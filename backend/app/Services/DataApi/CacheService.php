@@ -9,18 +9,24 @@ use Illuminate\Support\Facades\DB;
 
 class CacheService
 {
-    public function rememberOrRefresh(string $name, string $type, int $ttlHours, \Closure $fetch): DataApi
-    {
-        $normName = trim(strtolower($name));
+    public function rememberOrRefresh(string $name, string $type, int $ttlHours, \Closure $fetch, bool $force = false): DataApi
+{
+    $normName = trim(strtolower($name));
 
-        // 1️⃣ Cache actual válido (usa TTL)
-        $current = DataApi::where('name', $normName)->first();
-        if ($current && Carbon::parse($current->updated_at)->diffInHours(now()) < $ttlHours) {
+    // 🔸 Evita refrescar si el TTL no venció, a menos que forcemos
+    $current = DataApi::where('name', $normName)->first();
+    if (!$force && $current) {
+        $lastCheck = $current->last_fetched_at
+            ? \Illuminate\Support\Carbon::parse($current->last_fetched_at)
+            : \Illuminate\Support\Carbon::parse($current->updated_at);
+
+        if ($lastCheck->diffInHours(now()) < $ttlHours) {
             return $current;
         }
+    }
 
-        // 2️⃣ Ejecutar función fetch() → obtiene array del MarketService o BcraService
-        $payload = $fetch() ?? [];
+
+    $payload = $fetch() ?? [];
 
         // ✅ Extraer datos principales del payload
         $balanceValue = $payload['balance'] ?? null;

@@ -243,7 +243,7 @@ Widget build(BuildContext context) {
                                       const Spacer(),
                                       if (m.balance_reserved > 0)
                                         Text(
-                                          'Reservado: ${m.currency?.symbol}${m.balance_reserved.toStringAsFixed(2)}',
+                                          'Reservado: ${m.currency?.symbol}${m.balance_reserved}',
                                           style: TextStyle(
                                             color: subTextColor,
                                             fontSize: 16,

@@ -7,6 +7,7 @@ class ButtonSave extends StatelessWidget {
   final VoidCallback onConfirm; 
   final String label;         
   final Color color;           
+  final GlobalKey<FormState>? formKey; 
 
   const ButtonSave({
     super.key,
@@ -15,7 +16,7 @@ class ButtonSave extends StatelessWidget {
     required this.onConfirm,
     this.label = "Guardar",
     this.color = Colors.green,
-    
+    this.formKey,
   });
 
   @override
@@ -40,6 +41,10 @@ class ButtonSave extends StatelessWidget {
           elevation: 8,
       ),
       onPressed: () async {
+        if (formKey != null) {
+          final isValid = formKey!.currentState?.validate() ?? false;
+          if (!isValid) return; 
+        }
         final confirmed = await showDialog<bool>(
           context: context,
           barrierDismissible: false,

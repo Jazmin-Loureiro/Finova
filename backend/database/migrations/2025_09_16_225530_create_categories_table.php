@@ -21,6 +21,7 @@ return new class extends Migration
             $table->string('color');
             $table->boolean('active')->default(true);
             $table->string('icon');
+            $table->boolean('is_default')->default(false);
             $table->timestamps();
         });
     }

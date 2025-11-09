@@ -55,5 +55,10 @@ class Register extends Model
     {
         return $this->belongsTo(Goal::class);
     }
+    public function getFileAttribute($value)
+{
+    return $value ? asset( $value) : null;
+}
+
 
 }

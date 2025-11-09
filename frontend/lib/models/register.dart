@@ -1,6 +1,7 @@
 import 'currency.dart';
 import 'category.dart';
 import 'goal.dart';
+import 'money_maker.dart';
 
 class Register {
   final int id;
@@ -12,7 +13,9 @@ class Register {
   final Currency currency; 
   final Category category; // 
   final int moneyMakerId;
+  final MoneyMaker? moneyMaker; //
   final Goal? goal;
+  final String? file;
 
   Register({
     required this.id,
@@ -24,29 +27,39 @@ class Register {
     required this.currency,
     required this.category,
     required this.moneyMakerId,
+    this.moneyMaker,
+    this.file,
     this.goal,
   });
 
   factory Register.fromJson(Map<String, dynamic> json) {
+    final data = json['register'] ?? json;
     return Register(
-      id: json['id'] is int ? json['id'] : int.tryParse(json['id'].toString()) ?? 0,
-      name: json['name'] ?? '',
-      type: json['type'] ?? '',
-      balance: json['balance'] is num
-          ? (json['balance'] as num).toDouble()
-          : double.tryParse(json['balance'].toString()) ?? 0.0,
-      reserved_for_goal: json['reserved_for_goal'] is num
-          ? (json['reserved_for_goal'] as num).toDouble()
-          : double.tryParse(json['reserved_for_goal'].toString()) ?? 0.0,
-      created_at: DateTime.parse(json['created_at']),
-      currency: Currency.fromJson(json['currency']),   // 
-      category: Category.fromJson(json['category']),   // 
-      moneyMakerId: json['moneyMaker_id'] is int
-          ? json['moneyMaker_id']
-          : int.tryParse(json['moneyMaker_id'].toString()) ?? 0,
-      goal: json['goal'] != null ? Goal.fromJson(json['goal']) : null,
+      id: data['id'] ?? 0,
+      name: data['name'] ?? '',
+      type: data['type'] ?? '',
+      balance: double.tryParse(data['balance']?.toString() ?? '0') ?? 0.0,
+      reserved_for_goal: data['reserved_for_goal'] != null
+          ? double.tryParse(data['reserved_for_goal'].toString())
+          : null,
+      created_at: data['created_at'] != null
+          ? DateTime.tryParse(data['created_at']) ?? DateTime.now()
+          : DateTime.now(),
+      file: data['file'],
+      category: 
+           Category.fromJson(data['category']),
+      currency: Currency.fromJson(data['currency']),
+      moneyMakerId: data['moneyMaker_id'] is int
+          ? data['moneyMaker_id']
+          : int.tryParse(data['moneyMaker_id']?.toString() ?? '0') ?? 0,
+      moneyMaker: data['money_maker'] != null
+          ? MoneyMaker.fromJson(data['money_maker'])
+          : null,
+      goal: data['goal'] != null ? Goal.fromJson(data['goal']) : null,
     );
-  }
+  
+}
+
 
   Map<String, dynamic> toJson() {
     return {
@@ -54,11 +67,14 @@ class Register {
       'name': name,
       'type': type,
       'balance': balance,
+      'reserved_for_goal': reserved_for_goal,
       'created_at': created_at.toIso8601String(),
       'currency': currency.toJson(),
       'category': category.toJson(),
       'moneyMakerId': moneyMakerId,
+      'moneyMaker': moneyMaker?.toJson(),
       'goal': goal?.toJson(),
+      'file': file,
     };
   }
 }

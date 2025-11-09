@@ -5,6 +5,7 @@ class Category {
   final String type; // 'income' o 'expense'
   final String color;
   final String? icon;
+  final bool isDefault; 
   final DateTime createdAt;
   final DateTime updatedAt;
 
@@ -15,6 +16,7 @@ class Category {
     required this.type,
     required this.color,
     this.icon,
+    this.isDefault = false,
     required this.createdAt,
     required this.updatedAt,
   });
@@ -29,6 +31,7 @@ class Category {
       createdAt: DateTime.parse(json['created_at']),
       updatedAt: DateTime.parse(json['updated_at']),
       icon: json['icon'],
+      isDefault: json['is_default'] == true || json['is_default'] == 1, // 👈 robusto
     );
   }
 
@@ -39,6 +42,7 @@ class Category {
         'type': type,
         'color': color,
         'icon': icon,
+        'is_default': isDefault,
         'created_at': createdAt.toIso8601String(),
         'updated_at': updatedAt.toIso8601String(),
       };

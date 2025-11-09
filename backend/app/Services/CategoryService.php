@@ -26,7 +26,7 @@ class CategoryService
                 ['name'=>'Otros','color'=>'#757575','icon'=>'more_horiz'],               // gris neutro
             ],
             'income' => [
-                ['name'=>'General','color'=>'#43A047','icon'=>'category_outlined'],        // verde medio
+                ['name'=>'General','color'=>'#43A047','icon'=>'category_outlined','is_default'=>true],        // verde medio
                 ['name'=>'Salario','color'=>'#2E7D32','icon'=>'attach_money'],           // verde oscuro
                 ['name'=>'Inversión','color'=>'#1E88E5','icon'=>'trending_up'],          // azul brillante
                 ['name'=>'Recompensa','color'=>'#7B1FA2','icon'=>'redeem'],              // púrpura intenso
@@ -44,6 +44,7 @@ class CategoryService
                     'color' => $cat['color'],
                     'icon' => $cat['icon'],
                     'active' => true,
+                    'is_default' => $cat['is_default'] ?? false,
                 ]);
             }
         }

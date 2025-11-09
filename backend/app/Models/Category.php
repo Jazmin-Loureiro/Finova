@@ -18,6 +18,8 @@ class Category extends Model
         'type',
         'color',
         'icon',
+        'active',
+        'is_default',
     ];
 
     /**

@@ -1,5 +1,6 @@
 import 'dart:io';
 //import 'package:flutter/material.dart';
+import 'package:frontend/models/category.dart';
 import 'package:frontend/models/investment_rate.dart';
 import 'package:path/path.dart';
 import 'dart:convert';
@@ -12,7 +13,7 @@ import '../models/register.dart';
 import '../models/goal.dart';
 
 // URLs base
-const String baseUrl = "http://192.168.1.113:8000"; //Jaz
+//const String baseUrl = "http://192.168.1.113:8000"; //Jaz
 //const String baseUrl = "http://192.168.0.117:8000"; // Jaz 2
 //const String baseUrl = "http://192.168.1.45:8000"; //Jaz 3
 const String baseUrl = "http://192.168.0.162:8000";// guardo el mio je
@@ -447,7 +448,22 @@ Future<List<Register>> getRegistersByMoneyMaker(int moneyMakerId) async {
   return [];
 }
 
+Future<Register?> getDataRegister(int id) async {
+  final token = await storage.read(key: 'token');
+  if (token == null) return null;
 
+  final res = await http.get(
+    Uri.parse('$apiUrl/transactions/$id'),
+    headers: jsonHeaders(token),
+  );
+  print('🟢 RESPONSE BODY: ${jsonEncode(res.body)}'); // 👈 imprime todo el JSON crudo
+
+  if (res.statusCode == 200) {
+  return Register.fromJson(jsonDecode(res.body)); // ✅ sin ['register']
+  }
+
+  return null;
+}
 
 ///////////////////////////////////////////////////////////// Obtener lista de fuentes de dinero + moneda base
 Future<Map<String, dynamic>> getMoneyMakersFull() async {
@@ -545,27 +561,32 @@ Future<void> deleteMoneyMaker(int id) async {
 /////////////////////////////////////////////////////
 
    ///////////////////////////////////////////////// // Agregar nueva categoría
-    Future<bool> addCategory({
-      required String name,
-      required String type,
-      required String color,
-      required String icon,
-    }) async {
-       final token = await storage.read(key: 'token'); 
-    if (token == null) return false; 
-      final response = await http.post(
-        Uri.parse('$apiUrl/categories'),
-        headers: jsonHeaders(token),
-        body: jsonEncode({
-          'name': name,
-          'type': type,
-          'color': color,
-          'icon': icon,
-        }),
-      );
-      print ('Add category response: ${response.statusCode} - ${response.body}');
-      return response.statusCode == 200 || response.statusCode == 201;
-    }
+   Future<Category?> addCategory({
+  required String name,
+  required String type,
+  required String color,
+  required String icon,
+}) async {
+  final token = await storage.read(key: 'token');
+  if (token == null) return null;
+
+  final response = await http.post(
+    Uri.parse('$apiUrl/categories'),
+    headers: jsonHeaders(token),
+    body: jsonEncode({
+      'name': name,
+      'type': type,
+      'color': color,
+      'icon': icon,
+    }),
+  );
+  if (response.statusCode == 200 || response.statusCode == 201) {
+    final data = jsonDecode(response.body);
+    return Category.fromJson(data['data']); 
+  }
+
+  return null;
+}
 
 //////////////////////////////////////////// Obtener lista de categorías por tipo (ingreso/gasto)
   Future<List<Map<String, dynamic>>> getCategories({String? type}) async {
@@ -608,7 +629,6 @@ Future<bool> deleteCategory(int id) async {
     Uri.parse('$apiUrl/categories/$id'),
     headers: jsonHeaders(token),
   );
-  print ('Delete category response: ${response.statusCode} - ${response.body}');
   return response.statusCode == 200;
 }
 

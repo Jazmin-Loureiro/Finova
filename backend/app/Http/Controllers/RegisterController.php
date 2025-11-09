@@ -37,7 +37,7 @@ class RegisterController extends Controller {
             'goal_id' => 'nullable|exists:goals,id',
             'repetition' => 'nullable|integer|min:0',
             'frequency_repetition' => 'nullable|integer|min:0',
-            'file' => 'nullable|file|max:5120',
+            'file' => 'nullable|file|mimes:jpg,jpeg,png,pdf,doc,docx',
             'name' => 'nullable|string|max:255',
         ]);
 
@@ -74,10 +74,18 @@ class RegisterController extends Controller {
      * @param  \App\Models\Register  $register
      * @return \Illuminate\Http\Response
      */
-    public function show(Register $register)
-    {
-        //
+    public function show(Register $register) {
+        $user = auth()->user();
+        $register = Register::with(['category', 'goal', 'currency', 'moneyMaker'])
+            ->where('id', $register->id)
+            ->where('user_id', $user->id)
+            ->first();
+        if (!$register) {
+            return response()->json(['message' => 'Registro no encontrado'], 404);
+        }
+    return response()->json(['register' => $register]);
     }
+
 
     public function getByMoneyMaker($moneyMakerId) {
         $user = auth()->user();

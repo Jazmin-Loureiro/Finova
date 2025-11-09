@@ -76,6 +76,11 @@ class CategoryController extends Controller
         if (!$category) {
             return response()->json(['message' => 'Categoría no encontrada'], 404);
         }
+         if ($category->is_default) {
+        return response()->json([
+            'error' => 'Esta categoría no puede ser editada.'
+        ], 403);
+    }
         $category->name = $request->name;
         $category->color = $request->color;
         $category->icon = $request->icon;
@@ -98,6 +103,12 @@ class CategoryController extends Controller
         if (!$category) {
             return response()->json(['message' => 'Categoría no encontrada'], 404);
         }
+        if ($category->is_default) {
+        return response()->json([
+            'error' => 'Esta categoría no puede ser eliminada.'
+        ], 403);
+    }
+
        $category->active = false;
        $category->updated_at = now();
        $category->save();

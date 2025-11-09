@@ -142,6 +142,7 @@ class _CategoryListScreenState extends State<CategoryListScreen>
                     ),
                   ),
                 ),
+                if (!c.isDefault) ...[
                 IconButton(
                   icon:  Icon(Icons.edit, color: Theme.of(context).colorScheme.primary),
                   onPressed: () {
@@ -156,6 +157,7 @@ class _CategoryListScreenState extends State<CategoryListScreen>
                     ).then((value) => _fetchCategories());
                   },
                 ),
+                ]
               ],
             ),
           ),

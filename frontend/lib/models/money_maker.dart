@@ -56,5 +56,20 @@ class MoneyMaker {
   @override
   int get hashCode => id.hashCode;
 
+Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'name': name,
+      'type': type,
+      'balance': balance,
+      'balanceConverted': balanceConverted,
+      'balance_reserved': balance_reserved,
+      'color': color,
+      'currency': currency?.toJson(),
+     // 'currencyBase': currencyBase,
+      'currencySymbol': currencySymbol,
+      'registers': registers.map((r) => r.toJson()).toList(),
+    };
+  }
 
 }

@@ -54,6 +54,8 @@ class MyApp extends StatelessWidget {
               fontSize: 22, fontWeight: FontWeight.bold, color: Color(0xFF7D2FFF)),
           headlineMedium: GoogleFonts.spaceGrotesk(
               fontSize: 18, fontWeight: FontWeight.w600, color: Color(0xFF3A00FF)),
+          titleMedium: GoogleFonts.poppins(
+              fontSize: 16, fontWeight: FontWeight.w600, color: Color(0xFF141414)),
         ),
         useMaterial3: true,
       ),

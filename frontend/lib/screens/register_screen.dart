@@ -377,18 +377,24 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                 ),
                             const SizedBox(height: 16),
 
-                             FadeInUp(
+                                  FadeInUp(
                                     delay:
                                         const Duration(milliseconds: 700),
                                     child: DropdownButtonFormField<Currency>(
+                                      isExpanded: true, 
                                       value: currencyBase,
-                                      items: currencyBases
-                                          .map((c) => DropdownMenuItem(
-                                                value: c,
-                                                child: Text(
-                                                    '${c.symbol} ${c.code} - ${c.name}'),
-                                              ))
-                                          .toList(),
+                                      items: currencyBases.map((c) {
+                                        return DropdownMenuItem(
+                                          value: c,
+                                          child: SizedBox(
+                                            width: double.infinity, 
+                                            child: Text('${c.symbol} ${c.code} - ${c.name}',
+                                              overflow: TextOverflow.ellipsis,
+                                              maxLines: 1,
+                                            ),
+                                          ),
+                                        );
+                                      }).toList(),
                                       onChanged: (val) =>
                                           setState(() => currencyBase = val),
                                       decoration: const InputDecoration(

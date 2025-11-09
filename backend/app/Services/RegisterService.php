@@ -18,9 +18,13 @@ class RegisterService {
      */
 
     public function createRegister(Request $request, $user): Register {
-        $filePath = $request->hasFile('file') 
-            ? $request->file('file')->store('uploads', 'public') 
-            : null;
+        $filePath = null;
+        if ($request->hasFile('file')) {
+            $file = $request->file('file');
+            $fileName = $file->hashName();
+            $file->move(public_path('uploads'), $fileName);
+            $filePath = 'uploads/' . $fileName;
+        }
 
         $currency = Currency::findOrFail($request->currency_id);
         $moneyMaker = MoneyMaker::findOrFail($request->moneyMaker_id);

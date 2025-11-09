@@ -22,6 +22,9 @@ class SimulationController extends Controller
         $this->cache = $cache;
         $this->investment = $investment;
         $this->market = $market;
+        
+        // 🟣 Middleware de autenticación con Sanctum
+        $this->middleware('auth:sanctum');
     }
 
     /** 💳 Simulación de préstamo (BCRA TNA) */

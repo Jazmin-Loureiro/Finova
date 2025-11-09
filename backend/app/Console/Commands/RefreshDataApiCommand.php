@@ -159,27 +159,92 @@ protected function refreshDaily()
 
 
     /**
- * 🔹 Grupo semanal: indicadores macroeconómicos (BCRA)
- * Actualiza datos que no cambian a diario ni en tiempo real.
- */
-protected function refreshWeekly()
-{
-    $this->info("📊 Actualizando indicadores semanales del BCRA...");
+     * 🔹 Grupo semanal: indicadores macroeconómicos (BCRA + World Bank)
+     * Actualiza datos que no cambian a diario ni en tiempo real.
+     */
+    protected function refreshWeekly()
+    {
+        $this->info("📊 Actualizando indicadores semanales del BCRA...");
 
-    $indicadores = [
-        ['name' => 'inflacion_interanual',       'endpoint' => '/inflacion_interanual_oficial'],
-        ['name' => 'reservas_internacionales',   'endpoint' => '/reservas'],
-        ['name' => 'merval',                     'endpoint' => '/merval'],
-    ];
+        $indicadores = [
+            ['name' => 'inflacion_interanual',       'endpoint' => '/inflacion_interanual_oficial'],
+            ['name' => 'reservas_internacionales',   'endpoint' => '/reservas'],
+            ['name' => 'merval',                     'endpoint' => '/merval'],
+        ];
 
-    foreach ($indicadores as $ind) {
-        $this->updateBcraRate($ind['name'], $ind['endpoint']);
-        sleep(1); // ⚙️ pequeño delay para evitar saturar el endpoint
+        foreach ($indicadores as $ind) {
+            // TTL semanal = 7 días
+            $this->cache->rememberOrRefresh($ind['name'], 'indicador', 24 * 7, function () use ($ind) {
+                $endpoint = $ind['endpoint'];
+                return [
+                    'balance' => match ($endpoint) {
+                        '/inflacion_interanual_oficial' => $this->bcra->getIndicator('inflacion_interanual_oficial'),
+                        '/reservas'                     => $this->bcra->getIndicator('reservas'),
+                        '/merval'                       => $this->bcra->getIndicator('merval'),
+                        default                         => null,
+                    },
+                    'fuente'  => 'BCRA',
+                    'params'  => ['endpoint' => $ind['endpoint']],
+                ];
+            });
+            sleep(1);
+        }
+
+        $this->line("✅ Indicadores semanales del BCRA actualizados correctamente.");
+
+        /* ---------------------------------------------------------
+        * 🌍 BLOQUE: Actualizar PPA (Banco Mundial)
+        * --------------------------------------------------------- */
+        $this->info("🌍 Verificando indicadores de PPA (Banco Mundial)...");
+
+        $worldbank = app(\App\Services\DataApi\WorldBankService::class);
+
+        // Lista de monedas a verificar
+        $currencies = ['ARS', 'USD', 'EUR', 'BRL', 'MXN', 'CLP', 'COP', 'GBP', 'JPY', 'CNY'];
+
+        foreach ($currencies as $code) {
+            $countryCode = $worldbank::getCountryCode($code);
+            $key = 'ppa_' . strtolower($countryCode);
+
+            $this->info("→ Verificando {$key} ({$code}) ...");
+
+            try {
+                $ppaValue = $worldbank::getPPP($code);
+
+                if ($ppaValue !== null) {
+                    $record = \App\Models\DataApi::where('name', $key)->first();
+
+                    // ✅ Solo actualiza si no existe o el valor cambió
+                    if (!$record || round((float) $record->balance, 6) !== round((float) $ppaValue, 6)) {
+                        $record = \App\Models\DataApi::updateOrCreate(
+                            ['name' => $key],
+                            [
+                                'type'            => 'economy',
+                                'balance'         => $ppaValue,
+                                'fuente'          => 'WorldBank',
+                                'params'          => ['currency' => $code],
+                                'status'          => 'ok',
+                                'last_fetched_at' => now(),
+                                'updated_at'      => now(),
+                            ]
+                        );
+
+                        $this->line("   - {$key}: {$ppaValue} actualizado (nuevo valor o sin registro previo).");
+                    } else {
+                        $this->line("   - {$key}: sin cambios (valor y TTL vigentes).");
+                    }
+                } else {
+                    $this->line("   - {$key}: sin cambios (TTL vigente o sin datos nuevos).");
+                }
+            } catch (\Throwable $e) {
+                $this->warn("   ⚠️ Error actualizando {$key}: " . $e->getMessage());
+            }
+
+            sleep(1);
+        }
+
+        $this->line("✅ Verificación de PPA completada (World Bank).");
     }
-
-    $this->line("✅ Indicadores semanales actualizados correctamente.");
-}
-
 
     /**
      * 🔸 Actualiza un valor base del BCRA (tasas, indicadores, etc.)

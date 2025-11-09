@@ -3,6 +3,7 @@ import '../services/api_service.dart';
 import '../widgets/custom_scaffold.dart';
 import '../widgets/simulation_result_card_widget.dart';
 import '../widgets/loading_widget.dart';
+import '../widgets/empty_state_widget.dart';
 
 class LoanSimulatorScreen extends StatefulWidget {
   const LoanSimulatorScreen({super.key});
@@ -39,6 +40,24 @@ class _LoanSimulatorScreenState extends State<LoanSimulatorScreen> {
     });
   }
 
+  int? userCurrencyId;
+  bool isLoadingCurrency = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _checkCurrency();
+  }
+
+  Future<void> _checkCurrency() async {
+    final id = await api.getUserCurrency();
+    setState(() {
+      userCurrencyId = id;
+      isLoadingCurrency = false;
+    });
+  }
+
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -46,6 +65,28 @@ class _LoanSimulatorScreenState extends State<LoanSimulatorScreen> {
     final background = theme.scaffoldBackgroundColor;
     final surface = theme.colorScheme.surface;
     final textColor = theme.colorScheme.onSurface;
+
+  if (isLoadingCurrency) {
+    return const Scaffold(
+      body: Center(child: CircularProgressIndicator()),
+      );
+    }
+
+    // ⚠️ Bloquear si la moneda no es ARS (id = 3)
+    if (userCurrencyId != 3) {
+      return CustomScaffold(
+    title: 'Simulador',
+    currentRoute: 'loan_simulation',
+    body: const EmptyStateWidget(
+      icon: Icons.block,
+      title: "Función no disponible",
+      message:
+          "Esta sección solo puede usarse si tu moneda base es el Peso Argentino (ARS). "
+          "Podés cambiarla desde tu perfil si querés acceder al simulador de préstamos.",
+    ),
+  );
+  }
+
 
     return CustomScaffold(
       title: 'Simulador',

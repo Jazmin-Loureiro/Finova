@@ -23,12 +23,13 @@ class RegisterItemWidget extends StatelessWidget {
 
     return InkWell(
       borderRadius: BorderRadius.circular(16),
-      onTap: () {
-              Navigator.push(context, MaterialPageRoute(
-                  builder: (context) => RegisterDetailScreen(register: r),
-                ),
-              );
-            },
+      onTap: () async {
+         final updated =  await RegisterDetailSheet.show(context, r);
+          if (updated == true) {
+            // Si se devolvió un registro actualizado, refrescá la UI
+            Navigator.pop(context, true); // notifica a la pantalla padre
+          }
+      },
       child: Card(
         elevation: 3,
         shape: RoundedRectangleBorder(

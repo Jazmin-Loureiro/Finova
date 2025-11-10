@@ -63,6 +63,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/transactions/moneyMaker/{moneyMakerId}', [RegisterController::class, 'getByMoneyMaker']);
     // Obtener un ingreso o gasto específico
     Route::get('/transactions/{register}', [RegisterController::class, 'show']);
+    //cancelar reserva
+    Route::post('/reservations/{register}', [RegisterController::class, 'cancelReservation']);
 ////////////////////////////////////////////////////////////////////////////////
     //Registrar Fuente de Dinero
     Route::post('/moneyMakers', [MoneyMakerController::class, 'store']);

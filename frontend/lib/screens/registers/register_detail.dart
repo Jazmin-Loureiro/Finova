@@ -157,9 +157,9 @@ Future<bool> _cancelReserve() async {
                    Container(
                   padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
                     decoration: BoxDecoration(
-                      color: Colors.grey.shade100, // Color de fondo del contenedor
+                      color: Theme.of(context).colorScheme.surface, // Color de fondo del contenedor
                       border: Border.all(
-                        color: Colors.grey.shade300, // Color del borde
+                        color: Theme.of(context).colorScheme.onSurface.withOpacity(0.2), // Color del borde
                         width: 1,                  // Grosor del borde
                       ),
                       borderRadius: BorderRadius.circular(10), // Bordes redondeados
@@ -227,7 +227,7 @@ Future<bool> _cancelReserve() async {
                                 width: 32,
                                 height: 32,
                                 decoration: BoxDecoration(
-                                  color: Colors.grey.shade200,
+                                  color: Theme.of(context).colorScheme.primary.withOpacity(0.15),
                                   shape: BoxShape.circle,
                                 ),
                                 child:  Icon(
@@ -316,7 +316,7 @@ Future<bool> _cancelReserve() async {
                                 width: 32,
                                 height: 32,
                                 decoration: BoxDecoration(
-                                  color: Colors.grey.shade200,
+                                  color: _getMoneyMakerColor().withOpacity(0.15),
                                   shape: BoxShape.circle,
                                 ),
                                 child:  Icon(

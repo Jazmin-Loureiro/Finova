@@ -92,30 +92,52 @@ class GoalController extends Controller
      * @param  \App\Models\Goal  $goal
      * @return \Illuminate\Http\Response
      */
-        public function delete(Goal $goal, Request $request) {
-        // Liberar el dinero reservado usando la función existente
-        $request->merge(['goal_id' => $goal->id]);
-        $this->assignReservedToMoneyMakers($request);
+        public function delete(Goal $goal, Request $request)
+        {
+            // 🧩 1️⃣ Si es meta creada por un desafío, fallar el desafío vinculado
+            if ($goal->is_challenge_goal && $goal->id) {
+                $userChallenge = \App\Models\UserChallenge::where('goal_id', $goal->id)
+                    ->where('state', 'in_progress')
+                    ->first();
 
-        // Desvincular registros de la meta y limpiar reserved_for_goal
-        foreach ($goal->registers as $register) {
-          //  $register->goal_id = null;
-            $register->reserved_for_goal = 0;
-            $register->save();
+                if ($userChallenge) {
+                    $payload = $userChallenge->payload ?? [];
+                    if (is_string($payload)) {
+                        $payload = json_decode($payload, true) ?: [];
+                    }
+
+                    $payload['cancel_reason'] = 'goal_deleted';
+
+                    $userChallenge->update([
+                        'state' => 'failed',
+                        'end_date' => now(),
+                        'progress' => 0,
+                        'payload' => $payload,
+                    ]);
+                }
+            }
+
+            // 🧩 2️⃣ Liberar dinero reservado (mantiene tu lógica actual)
+            $request->merge(['goal_id' => $goal->id]);
+            $this->assignReservedToMoneyMakers($request);
+
+            // 🧩 3️⃣ Desvincular registros
+            foreach ($goal->registers as $register) {
+                $register->reserved_for_goal = 0;
+                $register->save();
+            }
+
+            // 🧩 4️⃣ Desactivar la meta
+            $goal->active = false;
+            $goal->state = 'disabled';
+            $goal->save();
+
+            return response()->json([
+                'message' => 'Meta eliminada con éxito' .
+                    ($goal->is_challenge_goal ? ' y desafío marcado como fallido.' : '.'),
+                'data' => $goal,
+            ], 200);
         }
-
-        // Desactivar la meta
-        $goal->active = false;
-        $goal->state = 'disabled';
-        $goal->save();
-
-        return response()->json([
-            'message' => 'Meta deshabilitada con éxito',
-            'data' => $goal
-        ], 200);
-    }
-
-
 
     /**
      * Asignar el dinero reservado de una meta a las fuentes de dinero correspondientes

@@ -240,7 +240,11 @@ Widget build(BuildContext context) {
                 if (widget.goal != null)
                   ButtonDelete(
                     title: "Eliminar Meta",
-                    message: "¿Seguro que quieres deshabilitar esta meta?",
+                    message: widget.goal!.isChallengeGoal
+                        ? "⚠️ Esta meta pertenece a un desafío activo.\n\n"
+                          "Si la eliminás, el desafío será marcado como fallido y perderás su progreso.\n\n"
+                          "¿Querés continuar?"
+                        : "¿Seguro que querés deshabilitar esta meta?",
                     onConfirm: _deleteGoal,
                   ),
               ],

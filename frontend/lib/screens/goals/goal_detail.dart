@@ -156,6 +156,34 @@ Future<void> _fetchRegistersGoal() async {
                                 : Colors.blue,
                           ),
                           const SizedBox(height: 12),
+
+                          // 🔹 Aviso si la meta es parte de un desafío
+                          if (widget.goal.isChallengeGoal)
+                            Padding(
+                              padding: const EdgeInsets.only(bottom: 8.0),
+                              child: Row(
+                                crossAxisAlignment: CrossAxisAlignment.center,
+                                children: [
+                                  Icon(
+                                    Icons.flag_rounded,
+                                    color: Theme.of(context).colorScheme.secondary,
+                                    size: 18,
+                                  ),
+                                  const SizedBox(width: 6),
+                                  Expanded(
+                                    child: Text(
+                                      'Esta meta está vinculada a un desafío activo.',
+                                      style: TextStyle(
+                                        color: Theme.of(context).colorScheme.secondary,
+                                        fontSize: 13.5,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [

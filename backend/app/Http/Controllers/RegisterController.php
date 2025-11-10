@@ -121,4 +121,55 @@ class RegisterController extends Controller {
     {
         //
     }
+
+   // Nueva función para cancelar una reserva
+    public function cancelReservation($id) {
+        $user = auth()->user();
+        try {
+            $register = Register::where('id', $id)
+                ->where('user_id', $user->id)
+                ->with(['goal', 'moneyMaker'])
+                ->firstOrFail();
+
+            if (!$register->goal) {
+                return response()->json(['message' => 'Este registro no tiene una meta asociada'], 400);
+            }
+
+            if ($register->goal->state !== 'in_progress' || $register->reserved_for_goal <= 0) {
+                return response()->json(['message' => 'La meta ya está completada o no hay monto reservado para liberar'], 400);
+            }
+
+            //  Actualizar balances
+            $reserved = (float) $register->reserved_for_goal;
+            $goal     = $register->goal;
+            $source   = $register->moneyMaker;
+
+            $goal->decrement('balance', $reserved);
+            $source->update([
+                'balance_reserved' => $source->balance_reserved - $reserved,
+                'balance'          => $source->balance + $reserved,
+                'updated_at'       => now(),
+            ]);
+
+            //  Liberar la reserva
+            $register->update([
+                'reserved_for_goal' => 0,
+                'goal_id'           => null,
+                'updated_at'        => now(),
+            ]);
+
+            return response()->json([
+                'message'  => 'Reserva cancelada con éxito',
+                'register' => $register->fresh(['goal', 'moneyMaker']),
+            ], 200);
+
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            return response()->json(['message' => 'Registro no encontrado'], 404);
+        } catch (\Throwable $e) {
+            return response()->json([
+                'error'   => 'No se pudo cancelar la reserva',
+                'details' => $e->getMessage(),
+            ], 500);
+        }
+    }
 }

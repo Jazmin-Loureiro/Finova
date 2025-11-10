@@ -16,7 +16,7 @@ import '../models/goal.dart';
 const String baseUrl = "http://192.168.1.113:8000"; //Jaz
 //const String baseUrl = "http://192.168.0.117:8000"; // Jaz 2
 //const String baseUrl = "http://192.168.1.45:8000"; //Jaz 3
-//const String baseUrl = "http://192.168.0.162:8000";// guardo el mio je
+const String baseUrl = "http://192.168.0.162:8000";// guardo el mio je
 //const String baseUrl = "http://127.0.0.1:8000"; //compu local
 //const String baseUrl = "http://172.16.195.79:8000"; // IP de la facu
 const String apiUrl = "$baseUrl/api";
@@ -456,10 +456,8 @@ Future<Register?> getDataRegister(int id) async {
     Uri.parse('$apiUrl/transactions/$id'),
     headers: jsonHeaders(token),
   );
-  print('🟢 RESPONSE BODY: ${jsonEncode(res.body)}'); // 👈 imprime todo el JSON crudo
-
   if (res.statusCode == 200) {
-  return Register.fromJson(jsonDecode(res.body)); // ✅ sin ['register']
+  return Register.fromJson(jsonDecode(res.body)); 
   }
 
   return null;
@@ -799,6 +797,29 @@ Future<Map<String, dynamic>> getTransactionFormData(String type) async {
     }
   }
  
+ ///cancelar reserva
+Future<bool> cancelReserve(int registerId) async {
+  final token = await storage.read(key: 'token');
+  if (token == null) throw Exception('Usuario no logueado');
+
+  try {
+    final res = await http.post(
+      Uri.parse('$apiUrl/reservations/$registerId'),
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+    );
+    if (res.statusCode == 200) {
+      return true;
+    }
+  } catch (e) {
+    throw Exception('Error de conexión con el servidor');
+  }
+  return false;
+}
+
   /////////////////////////////////////////////////////////////
   ///Metas
   /////////////////////////////////////////////////////////////

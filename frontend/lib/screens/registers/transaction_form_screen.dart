@@ -110,12 +110,6 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
     });
   }
 
-  Future<void> _pickFile() async {
-    final result = await FilePicker.platform.pickFiles();
-    if (result != null && result.files.single.path != null) {
-      setState(() => attachedFile = File(result.files.single.path!));
-    }
-  }
 
   Future<void> _showRewardsDialog(List rewards) async {
     if (rewards.isEmpty) return;
@@ -264,53 +258,6 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
                           : null,
                     ),
                     const SizedBox(height: 16),
-
-                    // Monto
-                    Row(
-                      children: [
-                        Expanded(
-                          flex: 3,
-                          child: CurrencyTextField(
-                            controller: amountController,
-                            currencies: currencies,
-                            selectedCurrency: selectedCurrency,
-                            label: 'Monto',
-                            validator: (val) {
-                              if (val == null || val.trim().isEmpty) {
-                                return 'Ingrese un monto';
-                              }
-                              final parsed = double.tryParse(
-                                      val.replaceAll(',', '.')) ??
-                                  0;
-                              if (parsed <= 0) return 'Ingrese un monto válido';
-                              if (widget.type == 'expense' &&
-                                  parsed > selectedMoneyMaker!.balance) {
-                                return 'El gasto supera el monto disponible (${selectedMoneyMaker!.balance.toStringAsFixed(2)})';
-                              }
-                              return null;
-                            },
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          flex: 1,
-                          child: TextField(
-                            decoration: const InputDecoration(
-                              labelText: 'Moneda',
-                              border: OutlineInputBorder(
-                                borderRadius:
-                                    BorderRadius.all(Radius.circular(12)),
-                              ),
-                            ),
-                            controller: TextEditingController(
-                                text: selectedCurrency?.code),
-                            readOnly: true,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 16),
-
                     // Fuente de dinero
                     Row(
                       children: [
@@ -356,6 +303,51 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
                               });
                             }
                           },
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                    // Monto
+                    Row(
+                      children: [
+                        Expanded(
+                          flex: 3,
+                          child: CurrencyTextField(
+                            controller: amountController,
+                            currencies: currencies,
+                            selectedCurrency: selectedCurrency,
+                            label: 'Monto',
+                            validator: (val) {
+                              if (val == null || val.trim().isEmpty) {
+                                return 'Ingrese un monto';
+                              }
+                              final parsed = double.tryParse(
+                                      val.replaceAll(',', '.')) ??
+                                  0;
+                              if (parsed <= 0) return 'Ingrese un monto válido';
+                              if (widget.type == 'expense' &&
+                                  parsed > selectedMoneyMaker!.balance) {
+                                return 'El gasto supera el monto disponible (${selectedMoneyMaker!.balance.toStringAsFixed(2)})';
+                              }
+                              return null;
+                            },
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          flex: 1,
+                          child: TextField(
+                            decoration: const InputDecoration(
+                              labelText: 'Moneda',
+                              border: OutlineInputBorder(
+                                borderRadius:
+                                    BorderRadius.all(Radius.circular(12)),
+                              ),
+                            ),
+                            controller: TextEditingController(
+                                text: selectedCurrency?.code),
+                            readOnly: true,
+                          ),
                         ),
                       ],
                     ),

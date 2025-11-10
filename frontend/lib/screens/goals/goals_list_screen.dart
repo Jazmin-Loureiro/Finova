@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:frontend/helpers/format_utils.dart';
 import 'package:frontend/models/goal.dart';
 import 'package:frontend/screens/goals/goal_detail.dart';
 import 'package:frontend/screens/goals/goal_form_screen.dart';
@@ -196,28 +197,48 @@ class _GoalsListScreenState extends State<GoalsListScreen>
                   const SizedBox(height: 8),
 
                   // Progreso visual
-                  if (goal.active)
+                  if (goal.active) ...[
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          'Progreso:',
+                          style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
+                        ),
+                        Text(
+                          '${(progress * 100).toStringAsFixed(0)}%',
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            color: progress >= 1
+                                ? Theme.of(context).colorScheme.secondary
+                                : Colors.blue,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 4),
                     LinearProgressIndicator(
                       value: progress,
                       backgroundColor: Colors.grey[300],
-                      color: progress >= 1 ? Theme.of(context).colorScheme.secondary : Colors.blue,
+                      color: progress >= 1
+                          ? Theme.of(context).colorScheme.secondary
+                          : Colors.blue,
                       minHeight: 6,
                       borderRadius: BorderRadius.circular(10),
                     ),
                   const SizedBox(height: 8),
+                  ],
+                  SizedBox(height: 8),
 
                   // Monto y saldo
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                 Column(
+                  crossAxisAlignment: CrossAxisAlignment.start  ,
                     children: [
-                      if (goal.active)
-                        Text(
-                          'Saldo: ${goal.currency?.symbol ?? ''}${goal.balance.toStringAsFixed(2)}',
-                          style: const TextStyle(fontSize: 14),
-                        ),
-                      Text(
-                        'Objetivo: ${goal.currency?.symbol ?? ''}${goal.targetAmount.toStringAsFixed(2)}',
-                        style: const TextStyle(fontSize: 14),
+                      Text('Objetivo: ${goal.currency?.symbol ?? ''}${formatCurrency(goal.targetAmount, goal.currency?.code ?? '')} ${goal.currency?.code ?? ''}',
+                        style: const TextStyle(fontSize: 15),
+                      ),
+                      Text('Saldo: ${goal.currency?.symbol ?? ''}${formatCurrency(goal.balance, goal.currency?.code ?? '')} ${goal.currency?.code ?? ''}',
+                        style: const TextStyle(fontSize: 15),
                       ),
                     ],
                   ),

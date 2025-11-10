@@ -26,6 +26,7 @@ class _RegisterListScreenState extends State<RegisterListScreen> {
   final ApiService api = ApiService();
   bool isLoading = true;
   List<Register> registers = [];
+  String? symbol = '';
 
   //  agregamos una variable de estado para el mes actual
   DateTime selectedDate = DateTime.now();
@@ -34,6 +35,7 @@ class _RegisterListScreenState extends State<RegisterListScreen> {
   void initState() {
     super.initState();
     _fetchRegisters();
+    getSymbol();
   }
 
   Future<void> _fetchRegisters() async {
@@ -50,6 +52,15 @@ class _RegisterListScreenState extends State<RegisterListScreen> {
       setState(() => isLoading = false);
     }
   }
+
+  Future<void> getSymbol() async {
+  final user = await api.getUser(); // <-- devuelve Map<String, dynamic>
+  // obtenemos el símbolo desde el mapa
+  final currencySymbol = user?['currency_symbol'];
+  setState(() {
+    symbol = currencySymbol?.toString(); // <-- guardamos en el estado
+  });
+}
 
   // Totales por categoría
   Map<String, double> getTotalsByCategory() {
@@ -120,6 +131,7 @@ class _RegisterListScreenState extends State<RegisterListScreen> {
             CategorySummaryChartWidget(
               totals: totals,
               colorsMap: colorsMap,
+              symbol: symbol,
             ),
           const SizedBox(height: 8),
 

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:frontend/models/goal.dart';
+import 'package:frontend/helpers/format_utils.dart';
 import 'package:frontend/models/register.dart';
 import 'package:frontend/screens/goals/goal_form_screen.dart';
 import 'package:frontend/services/api_service.dart';
@@ -126,16 +127,24 @@ Future<void> _fetchRegistersGoal() async {
                               ),
                             ],
                           ),
-                          const SizedBox(height: 12),
-                          Text(
-                            'Objetivo: $currencySymbol${widget.goal.targetAmount.toStringAsFixed(2)}',
-                            style: const TextStyle(fontSize: 16),
+                          
+                         const SizedBox(height: 10),
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start, // ← alinea a la izquierda
+                            children: [
+                              Text(
+                                'Objetivo: $currencySymbol${formatCurrency(widget.goal.targetAmount, widget.goal.currency?.code ?? '')} ${widget.goal.currency?.code ?? ''}',
+                                style: const TextStyle(fontSize: 15),
+                              ),
+                              const SizedBox(height: 6), // ← separación entre ambos textos
+                              Text(
+                                'Saldo actual: $currencySymbol${formatCurrency(widget.goal.balance, widget.goal.currency?.code ?? '')} ${widget.goal.currency?.code ?? ''}',
+                                style: const TextStyle(fontSize: 15),
+                              ),
+                            ],
                           ),
-                          Text(
-                            'Saldo actual: $currencySymbol${widget.goal.balance.toStringAsFixed(2)} ${widget.goal.currency?.code ?? ''}',
-                            style: const TextStyle(fontSize: 16),
-                          ),
-                          const SizedBox(height: 8),
+                          
+                          const SizedBox(height: 10),
                           LinearProgressIndicator(
                             value: (widget.goal.balance / widget.goal.targetAmount)
                                 .clamp(0.0, 1.0),

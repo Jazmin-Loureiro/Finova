@@ -4,6 +4,7 @@ import 'package:frontend/widgets/empty_state_widget.dart';
 import 'package:frontend/widgets/info_icon_widget.dart';
 import 'package:frontend/widgets/register_item_widget.dart';
 import 'package:intl/intl.dart';
+import 'package:frontend/helpers/format_utils.dart';
 import '../../widgets/custom_scaffold.dart';
 import '../../models/money_maker.dart';
 import 'money_maker_form_screen.dart';
@@ -23,6 +24,7 @@ class _MoneyMakerListScreenState extends State<MoneyMakerListScreen> {
   bool isLoading = true;
   int selectedIndex = 0;
   PageController? pageController;
+  bool isPageLoading = false;
 
   Color fromHex(String hexColor) {
     hexColor = hexColor.toUpperCase().replaceAll("#", "");
@@ -121,7 +123,11 @@ Widget build(BuildContext context) {
                           itemCount: moneyMakers.length,
                           onPageChanged: (index) async {
                             setState(() => selectedIndex = index);
+                            isPageLoading = true;
                             await context.read<RegisterProvider>().loadRegisters(moneyMakers[index].id);
+                             if (mounted) {
+                              setState(() => isPageLoading = false);
+                            }
                           },
                           itemBuilder: (context, index) {
                           final m = moneyMakers[index];
@@ -136,14 +142,14 @@ Widget build(BuildContext context) {
 
                           final isDark = isColorDark(baseColor);
                           final textColor = isDark ? Colors.white : Colors.black87;
-                          final subTextColor = isDark ? Colors.white.withOpacity(0.9) : Colors.black54;
+                          final subTextColor = isDark ? Colors.white.withOpacity(0.9) : Colors.black;
 
                           return AnimatedContainer(
-                            duration: const Duration(milliseconds: 350),
+                            duration: const Duration(milliseconds: 400),
                             curve: Curves.easeOut,
                             margin: EdgeInsets.symmetric(
-                              horizontal: isSelected ? 8 : 14,
-                              vertical: isSelected ? 5 : 10,
+                              horizontal: isSelected ? 0 : 10,
+                          //    vertical: isSelected ? 5 : 10,
                             ),
                             decoration: BoxDecoration(
                           gradient: LinearGradient(
@@ -209,24 +215,23 @@ Widget build(BuildContext context) {
                                       const SizedBox(height: 1),
 
                                       Text(
-                                        '${m.currency?.symbol}${m.balance.toStringAsFixed(2)} ${m.currency!.code}',
+                                        '${m.currency?.symbol}${formatCurrency(m.balance, m.currency?.code ?? currencyBase)}${m.currency?.code ?? ''}',
                                         style: TextStyle(
                                           color: textColor,
-                                          fontSize: 28,
+                                          fontSize: 24,
                                           fontWeight: FontWeight.bold,
-                                          letterSpacing: 0.5,
                                         ),
                                       ),
-                                      const SizedBox(height: 2),
+                                      const SizedBox(height: 4),
 
                                       if (currencyBase != m.currency?.code)
                                         Row(
                                           children: [
                                             Text(
-                                              '≈ $currencySymbol${m.balanceConverted.toStringAsFixed(2)} $currencyBase',
+                                              '≈ $currencySymbol${formatCurrency(m.balanceConverted, currencyBase)} ${m.currency?.code ?? ''}',
                                               style: TextStyle(
                                                 color: subTextColor,
-                                                fontSize: 16,
+                                                fontSize: 17,
                                               ),
                                             ),
                                             const SizedBox(width: 6),
@@ -243,7 +248,7 @@ Widget build(BuildContext context) {
                                       const Spacer(),
                                       if (m.balance_reserved > 0)
                                         Text(
-                                          'Reservado: ${m.currency?.symbol}${m.balance_reserved}',
+                                          'Reservado: ${m.currency?.symbol}${formatCurrency(m.balance_reserved, m.currency?.code ?? currencyBase)}${m.currency?.code ?? ''}',
                                           style: TextStyle(
                                             color: subTextColor,
                                             fontSize: 16,
@@ -337,7 +342,9 @@ Widget build(BuildContext context) {
         
                   // Lista de registros
                  Expanded(
-                child: registers.isEmpty
+                child: isPageLoading
+                  ? const Center (child: CircularProgressIndicator())
+                    : registers.isEmpty
                     ? const EmptyStateWidget(
                         icon: Icons.account_balance_wallet_outlined,
                         title: "No hay transacciones",

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:frontend/widgets/confirm_dialog_widget.dart';
 import '../services/api_service.dart';
 import 'login_screen.dart';
 import '../widgets/casa_widget.dart';
@@ -39,9 +40,11 @@ class _HomeScreenState extends State<HomeScreen> {
   void logout() async {
     await api.logout();
     if (!mounted) return;
-    Navigator.pushReplacement(
+    await storage.delete(key: 'token'); // Elimina el token almacenado
+    Navigator.pushAndRemoveUntil( // Navega al login y elimina el historial
       context,
       MaterialPageRoute(builder: (_) => const LoginScreen()),
+      (route) => false, // Elimina todas las rutas anteriores
     );
   }
 
@@ -60,7 +63,22 @@ class _HomeScreenState extends State<HomeScreen> {
         actions: [
           IconButton(
             icon: const Icon(Icons.logout),
-            onPressed: logout,
+            onPressed: () async {
+              final confirmed = await showDialog<bool>(
+                context: context,
+                builder: (_) => ConfirmDialogWidget(
+                  title: 'Cerrar sesión',
+                  message: '¿Estás seguro de que deseas cerrar sesión?',
+                  confirmText: 'Cerrar sesión',
+                  cancelText: 'Cancelar',
+                  confirmColor: Colors.red,
+                ),
+              );
+
+              if (confirmed == true) {
+                logout(); // tu método logout()
+              }
+            },
           ),
         ],
         body: Stack(

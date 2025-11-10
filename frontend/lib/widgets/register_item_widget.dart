@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:frontend/screens/registers/register_detail.dart';
 import 'package:intl/intl.dart';
 import 'package:frontend/helpers/icon_utils.dart';
+import 'package:frontend/helpers/format_utils.dart';
 import 'package:frontend/models/register.dart';
 
 class RegisterItemWidget extends StatelessWidget {
@@ -104,7 +105,7 @@ class RegisterItemWidget extends StatelessWidget {
                     // Meta asociada (opcional)
                     if (r.goal != null)
                       Text(
-                        'Meta: ${r.goal!.name} - Reservado: ${r.currency.symbol}${r.reserved_for_goal}',
+                        'Reservado: ${r.currency.symbol}${formatCurrency(r.reserved_for_goal, r.currency.code)} ${r.currency.code}',
                         style: TextStyle(
                           fontSize: 12,
                           color: Theme.of(context).colorScheme.primary,
@@ -116,7 +117,7 @@ class RegisterItemWidget extends StatelessWidget {
 
                     //  Monto
                     Text(
-                      '${r.currency.symbol}${r.balance.toStringAsFixed(2)} ${r.currency.code}',
+                      '${r.currency.symbol}${formatCurrency(r.balance, r.currency.code)} ${r.currency.code}',
                       style: const TextStyle(fontSize: 14),
                     ),
                   ],

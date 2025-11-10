@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:frontend/widgets/confirm_dialog_widget.dart';
 import 'package:intl/intl.dart';
 import 'package:frontend/helpers/icon_utils.dart';
+import 'package:frontend/helpers/format_utils.dart';
 import 'package:frontend/models/register.dart';
 import 'package:frontend/services/api_service.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -155,20 +156,11 @@ Future<bool> _cancelReserve() async {
 
                     // Monto
                    Container(
-                  padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
-                    decoration: BoxDecoration(
-                      color: Theme.of(context).colorScheme.surface, // Color de fondo del contenedor
-                      border: Border.all(
-                        color: Theme.of(context).colorScheme.onSurface.withOpacity(0.2), // Color del borde
-                        width: 1,                  // Grosor del borde
-                      ),
-                      borderRadius: BorderRadius.circular(10), // Bordes redondeados
-                    ),
                     child: Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         CircleAvatar(
-                          radius: 26,
+                          radius: 20,
                           backgroundColor: (isIncome ? Colors.green : Colors.red).withOpacity(0.15),
                           child: Icon(
                             isIncome ? Icons.arrow_upward : Icons.arrow_downward,
@@ -182,7 +174,7 @@ Future<bool> _cancelReserve() async {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                '${currencySymbol}${register.balance.toStringAsFixed(2)} ${register.currency.code}',
+                                '${currencySymbol}${formatCurrency(register.balance, register.currency.code)}${register.currency.code}',
                                 style: TextStyle(
                                   fontSize: 24,
                                   fontWeight: FontWeight.bold,
@@ -249,7 +241,7 @@ Future<bool> _cancelReserve() async {
                                       ),
                                     ),
                                     Text(
-                                      '${register.goal?.name} - ${currencySymbol}${register.reserved_for_goal} ${register.currency.code}',
+                                      '${register.goal?.name} - ${currencySymbol}${formatCurrency(register.reserved_for_goal, register.currency.code)}${register.currency.code}',
                                       style: TextStyle(
                                         fontSize: 15,
                                         fontWeight: FontWeight.w600,

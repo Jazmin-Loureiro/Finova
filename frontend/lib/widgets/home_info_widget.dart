@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/house_provider.dart';
 import '../services/api_service.dart';
+import 'package:frontend/helpers/format_utils.dart';
 
 class HomeInfoWidget extends StatefulWidget {
   const HomeInfoWidget({super.key});
@@ -14,6 +15,7 @@ class _HomeInfoWidgetState extends State<HomeInfoWidget> {
   final ApiService api = ApiService();
   double? dolarValue;
   String? userCurrencyCode;
+  String? userCurrencySymbol;
   bool isLoadingDolar = true;
 
   @override
@@ -37,6 +39,7 @@ class _HomeInfoWidgetState extends State<HomeInfoWidget> {
       setState(() {
         dolarValue = valor;
         userCurrencyCode = userCurrency.code;
+        userCurrencySymbol = userCurrency.symbol;
         isLoadingDolar = false;
       });
     } catch (e) {
@@ -125,7 +128,7 @@ class _HomeInfoWidgetState extends State<HomeInfoWidget> {
                     color: balanceColor,
                   ),
                   children: [
-                    TextSpan(text: "$currencySymbol${balance.toStringAsFixed(2)} "),
+                    TextSpan(text: "$currencySymbol${formatCurrency(balance, currencyCode)}"),
                     TextSpan(
                       text: currencyCode,
                       style: TextStyle(
@@ -177,7 +180,7 @@ class _HomeInfoWidgetState extends State<HomeInfoWidget> {
                         )
                       else if (dolarValue != null && userCurrencyCode != null)
                         Text(
-                          "1 USD = ${dolarValue!.toStringAsFixed(2)} $userCurrencyCode",
+                          "1 USD = $userCurrencySymbol ${formatCurrency(dolarValue!, userCurrencyCode!)}",
                           style: const TextStyle(
                               fontSize: 13, color: Colors.black54),
                         )

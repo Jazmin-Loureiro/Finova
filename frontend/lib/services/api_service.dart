@@ -13,7 +13,7 @@ import '../models/register.dart';
 import '../models/goal.dart';
 
 // URLs base
-//const String baseUrl = "http://192.168.1.113:8000"; //Jaz
+const String baseUrl = "http://192.168.1.113:8000"; //Jaz
 //const String baseUrl = "http://192.168.0.117:8000"; // Jaz 2
 //const String baseUrl = "http://192.168.1.45:8000"; //Jaz 3
 //const String baseUrl = "http://192.168.0.162:8000";// guardo el mio je
@@ -879,9 +879,14 @@ Future<List<Register>> fetchRegistersByGoal(int goalId) async {
     required int cuotas,
   }) async {
     try {
+      final token = await storage.read(key: 'token');
       final res = await http.post(
         Uri.parse('$apiUrl/simulate/loan'),
-        headers: jsonHeaders(),
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          if (token != null) 'Authorization': 'Bearer $token',
+        },
         body: jsonEncode({'capital': capital, 'cuotas': cuotas}),
       );
       return res.statusCode == 200
@@ -892,15 +897,21 @@ Future<List<Register>> fetchRegistersByGoal(int goalId) async {
     }
   }
 
+
   // 🔹 Plazo fijo (GET, tal como tu backend)
   Future<Map<String, dynamic>?> simulatePlazoFijo({
     required double monto,
     required int dias,
   }) async {
     try {
+      final token = await storage.read(key: 'token');
       final res = await http.get(
         Uri.parse('$apiUrl/simulate/plazo-fijo?monto=$monto&dias=$dias'),
-        headers: jsonHeaders(),
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json',
+          if (token != null) 'Authorization': 'Bearer $token',
+        },
       );
       return res.statusCode == 200
           ? jsonDecode(res.body)
@@ -909,6 +920,7 @@ Future<List<Register>> fetchRegistersByGoal(int goalId) async {
       return {'error': 'Error de conexión con el servidor'};
     }
   }
+
 
   // 🔹 Criptomonedas (POST con body JSON)
   Future<Map<String, dynamic>?> simulateCrypto({

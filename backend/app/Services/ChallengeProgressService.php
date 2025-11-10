@@ -121,81 +121,84 @@ if (!empty($pivot->end_date)) {
                 $baseline = (float)($pivot->balance ?? 0.0);
                 $startDate = $pivot->start_date ?? $pivot->created_at ?? now();
 
-                // 🔹 Solo ingresos de tipo “Ahorro”
-                $ahorros = $user->registers()
-                    ->where('type', 'income')
-                    ->whereHas('moneyMaker', function ($q) {
-                        $q->whereRaw('LOWER(type) LIKE ?', ['%ahorro%']);
-                    })
-                    ->where('created_at', '>=', $startDate)
-                    ->when(isset($payload['challenge_uid']), function ($q) use ($payload) {
-                        // si en el payload guardás un ID único del desafío, filtrás solo ese
-                        $q->where('description', 'like', '%' . $payload['challenge_uid'] . '%');
-                    })
-                    ->get();
+                // 🧩 1️⃣ Verificar si hay una meta vinculada
+                $goalId = $pivot->goal_id ?? null;
+                $linkedGoal = $goalId ? \App\Models\Goal::find($goalId) : null;
 
+                // 🧾 Variables base
                 $toCode = optional($user->currency)->code ?? 'ARS';
-                $totalAhorro = 0.0;
+                $goalTarget = (float)($pivot->target_amount ?? $pivot->payload['amount'] ?? 100.0);
+                $goalBalance = 0.0;
 
-                foreach ($ahorros as $r) {
-                    $fromCode = optional($r->currency)->code ?? $toCode;
-                    $rate = $fromCode === $toCode
-                        ? 1.0
-                        : \App\Services\CurrencyService::getRate($fromCode, $toCode);
-                    $totalAhorro += (float)$r->balance * $rate;
+                // 🧩 2️⃣ Si hay meta vinculada, usar su progreso
+                if ($linkedGoal) {
+                    $goalTarget = (float)$linkedGoal->target_amount;
+                    $goalBalance = (float)$linkedGoal->balance;
+                } 
+                // 🧩 3️⃣ Si no hay meta (modo legacy), usar registros de ahorro
+                else {
+                    $ahorros = $user->registers()
+                        ->where('type', 'income')
+                        ->whereHas('moneyMaker', function ($q) {
+                            $q->whereRaw('LOWER(type) LIKE ?', ['%ahorro%']);
+                        })
+                        ->where('created_at', '>=', $startDate)
+                        ->get();
+
+                    foreach ($ahorros as $r) {
+                        $fromCode = optional($r->currency)->code ?? $toCode;
+                        $rate = $fromCode === $toCode ? 1.0 : \App\Services\CurrencyService::getRate($fromCode, $toCode);
+                        $goalBalance += (float)$r->balance * $rate;
+                    }
                 }
 
-                // Meta objetivo
-                $goal = (float)($payload['amount'] ?? $target ?? 100.0);
-                if ($goal <= 0) $goal = 100.0;
+                // 🧩 4️⃣ Calcular progreso
+                $progress = min(100, (int)round(($goalBalance / max(1, $goalTarget)) * 100));
 
-                // 🔹 Duración (random según payload)
-                $durationDays = (int)($payload['duration_days'] ?? 30);
-                $endDate = Carbon::parse($startDate)->addDays($durationDays);
+                // 🧩 5️⃣ Guardar progreso en el payload
+                $payload['total_ahorro'] = round($goalBalance, 2);
+                $payload['goal_amount']  = round($goalTarget, 2);
 
-                \Log::info('SAVE_AMOUNT debug', [
-                'user_id' => $user->id,
-                'goal' => $goal,
-                'total_ahorro' => $totalAhorro,
-                'rate' => $rate ?? null,
-                'currency_user' => $toCode,
-                'ahorros' => $ahorros->map(fn($r) => [
-                    'id' => $r->id,
-                    'balance' => $r->balance,
-                    'moneyMaker_type' => $r->moneyMaker?->type,
-                    'currency' => $r->currency?->code,
-                ]),
-            ]);
-
-
-                // 🔹 Calcular progreso y guardar ahorro real
-            $progress = min(100, (int)round(($totalAhorro / max(1, $goal)) * 100));
-
-            // 🔹 Actualizar payload con el monto real ahorrado
-            $payload['total_ahorro'] = round($totalAhorro, 2);
-            $payload['goal_amount']  = round($goal, 2);
-
-            // 🔹 Guardar progreso y payload
-            $pivot->update([
-                'progress' => $progress,
-                'payload'  => $payload,
-            ]);
-
-            // 🔹 Si ya pasó el tiempo y no completó → marcar como fallido
-            if (now()->greaterThanOrEqualTo($endDate) && $progress < 100) {
                 $pivot->update([
-                    'state' => 'failed',
-                    'end_date' => now(),
                     'progress' => $progress,
                     'payload'  => $payload,
                 ]);
-                return null;
+
+                // 🧩 6️⃣ Control de tiempo límite
+                $durationDays = (int)($payload['duration_days'] ?? 30);
+                $endDate = Carbon::parse($startDate)->addDays($durationDays);
+
+                if (now()->greaterThanOrEqualTo($endDate) && $progress < 100) {
+                    $pivot->update([
+                        'state' => 'failed',
+                        'end_date' => now(),
+                        'progress' => $progress,
+                    ]);
+
+                    // Si hay meta, también marcarla como fallida
+                    if ($linkedGoal) {
+                        $linkedGoal->state = 'failed';
+                        $linkedGoal->active = false;
+                        $linkedGoal->save();
+                    }
+                    return null;
+                }
+
+                // 🧩 7️⃣ Si completó el desafío, actualizar también la meta
+                if ($progress >= 100 && $pivot->state !== 'completed') {
+                    $pivot->update([
+                        'state' => 'completed',
+                        'end_date' => now(),
+                    ]);
+
+                    if ($linkedGoal) {
+                        $linkedGoal->state = 'completed';
+                        $linkedGoal->save();
+                    }
+                }
+
+                break;
             }
-
-            break;
-
-            }
-
 
             /**
              * 📉 Reducir gastos (REDUCE_SPENDING_PERCENT)

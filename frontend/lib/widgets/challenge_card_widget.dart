@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../helpers/challenge_utils.dart';
 import 'meta_chips_widget.dart';
+import 'info_icon_widget.dart';
 
 class ChallengeCardWidget extends StatelessWidget {
   final Map<String, dynamic> challenge;
@@ -29,13 +30,31 @@ class ChallengeCardWidget extends StatelessWidget {
         ),
       ),
       child: ListTile(
-        title: Text(
-          ch['name'] ?? '',
-          style: TextStyle(
-            color: cs.onSurface,
-            fontWeight: FontWeight.w600,
-          ),
+        title: Row(
+          children: [
+            Expanded(
+              child: Text(
+                ch['name'] ?? '',
+                style: TextStyle(
+                  color: cs.onSurface,
+                  fontWeight: FontWeight.w600,
+                  fontSize: 16,
+                ),
+              ),
+            ),
+
+            // 🔹 Ícono de información solo para desafíos de ahorro
+            if (ch['type'] == 'SAVE_AMOUNT')
+              InfoIcon(
+                title: 'Desafío de ahorro',
+                message:
+                    'Este desafío se completa ahorrando dentro de la meta creada automáticamente. '
+                    'Cada vez que sumes dinero a esa meta, tu progreso se actualizará en esta sección.',
+                iconSize: 20,
+              ),
+          ],
         ),
+
         subtitle: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [

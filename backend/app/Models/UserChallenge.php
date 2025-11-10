@@ -17,6 +17,7 @@ class UserChallenge extends Model
     protected $fillable = [
         'user_id',
         'challenge_id',
+        'goal_id',
         'balance',
         'state',
         'progress',
@@ -46,5 +47,10 @@ class UserChallenge extends Model
     public function challenge()
     {
         return $this->belongsTo(Challenge::class);
+    }
+
+    public function goal()
+    {
+        return $this->belongsTo(Goal::class);
     }
 }

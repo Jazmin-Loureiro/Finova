@@ -104,6 +104,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/gamification/profile', [GamificationController::class, 'profile']);
 ////////////////////////////////////////////////////////////////
     //Metas
+    Route::get('goals/expired', [GoalController::class, 'getExpiredGoals']);
+
     Route::get('goals', [GoalController::class, 'index']);
     Route::post('goals', [GoalController::class, 'store']);
     Route::post('goals/assign-reserved', [GoalController::class, 'assignReservedToMoneyMakers']);

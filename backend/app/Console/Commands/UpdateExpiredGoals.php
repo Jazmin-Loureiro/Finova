@@ -13,8 +13,9 @@ class UpdateExpiredGoals extends Command
     public function handle() {
         // Actualizar metas vencidas
         $expiredGoals = Goal::where('date_limit', '<', now())
-            ->whereColumn('balance', '<', 'target_amount')
-            ->get();
+        ->whereColumn('balance', '<', 'target_amount')
+        ->whereIn('state', ['in_progress']) //solo metas activas
+        ->get();
 
         foreach ($expiredGoals as $goal) {
             $goal->disableGoal();

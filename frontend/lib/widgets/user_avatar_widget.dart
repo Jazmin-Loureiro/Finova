@@ -8,6 +8,7 @@ class UserAvatarWidget extends StatelessWidget {
   final String? avatarSeed;   // valor que viene del backend (puede ser ruta o seed)
   final double radius;
   final VoidCallback? onTap;
+  
 
   const UserAvatarWidget({
     super.key,

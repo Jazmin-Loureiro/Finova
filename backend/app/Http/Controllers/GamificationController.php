@@ -20,15 +20,30 @@ class GamificationController extends Controller
         // 🔄 Recalcular progreso y cerrar automáticamente (failed/completed + recompensas)
         app(\App\Services\ChallengeProgressService::class)->recomputeForUserWithRewards($user);
 
-        // 🏅 Insignias
-        $badges = $user->badges()->get([
-            'badges.id as badge_id',
-            'badges.name',
-            'badges.slug',
-            'badges.icon',
-            'badges.tier',
-            'badges.description',
+        // 🏅 Insignias: todas, pero marcando las desbloqueadas del usuario
+        $allBadges = \App\Models\Badge::all([
+            'id as badge_id',
+            'name',
+            'slug',
+            'icon',
+            'tier',
+            'description',
         ]);
+
+        $unlockedIds = $user->badges()->pluck('badges.id')->toArray();
+
+        $badges = $allBadges->map(function ($badge) use ($unlockedIds) {
+            return [
+                'badge_id' => $badge->badge_id,
+                'name' => $badge->name,
+                'slug' => $badge->slug,
+                'icon' => $badge->icon,
+                'tier' => $badge->tier,
+                'description' => $badge->description,
+                'unlocked' => in_array($badge->badge_id, $unlockedIds),
+            ];
+        });
+
 
         // Helper general
         $map = function ($q) {

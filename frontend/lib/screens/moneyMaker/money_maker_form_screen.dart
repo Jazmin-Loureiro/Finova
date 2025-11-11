@@ -111,10 +111,10 @@ class _MoneyMakerFormScreenState extends State<MoneyMakerFormScreen> {
     if (!mounted) return;
     await showDialog(
       context: context,
-      builder: (_) => ConfirmDialogWidget(
+      builder: (_) => SuccessDialogWidget(
+        isFailure: true,
         title: "No se pudo eliminar",
         message: e.toString().replaceAll("Exception: ", ""),
-        confirmText: "Aceptar",
       ),
     );
   }

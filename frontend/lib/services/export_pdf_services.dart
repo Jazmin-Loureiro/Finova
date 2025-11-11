@@ -6,6 +6,8 @@ import 'package:pdf/widgets.dart' as pw; // Widgets PDF con alias pw
 import 'package:path_provider/path_provider.dart'; // Para obtener directorios
 import 'package:open_filex/open_filex.dart'; // Para abrir archivos
 import '../models/money_maker.dart'; // Modelo MoneyMaker
+import '../helpers/format_utils.dart';
+
 
 class ExportPdfServices {
   static Future<void> exportPDF({
@@ -119,7 +121,7 @@ class ExportPdfServices {
                           r.name,
                           r.category.name,
                           r.type == 'income' ? 'Ingreso' : 'Gasto',
-                          '${moneyMaker.currency?.symbol ?? ''} ${r.balance.toStringAsFixed(2)} ${r.currency.code}',
+                          '${formatCurrency(r.balance, moneyMaker.currency?.code ?? '', symbolOverride: moneyMaker.currency?.symbol ?? '')} ${r.currency.code}',
                         ];
                         return pw.TableRow(
                           children: [
@@ -147,7 +149,7 @@ class ExportPdfServices {
                   pw.Container(
                     alignment: pw.Alignment.centerRight,
                     child: pw.Text(
-                      'Total (${moneyMaker.currency?.symbol ?? ''}): ${totalLocal.toStringAsFixed(2)} ${moneyMaker.currency?.code ?? ''}',
+                      'Total: ${formatCurrency(totalLocal, moneyMaker.currency?.code ?? '', symbolOverride: moneyMaker.currency?.symbol ?? '')} ${moneyMaker.currency?.code ?? ''}',
                       style: pw.TextStyle(
                         fontSize: 12,
                         fontWeight: pw.FontWeight.bold,

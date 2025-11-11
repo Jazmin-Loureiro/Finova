@@ -78,6 +78,7 @@ class _ExportReportsScreenState extends State<ExportReportsScreen> {
       showDialog(
         context: context,
         builder: (context) => SuccessDialogWidget(
+          isFailure: true,
           title: 'Error',
           message: 'Seleccioná ambas fechas',
           buttonText: 'Aceptar',
@@ -92,6 +93,7 @@ class _ExportReportsScreenState extends State<ExportReportsScreen> {
         showDialog(
         context: context,
         builder: (context) => SuccessDialogWidget(
+          isFailure: true,
           title: 'Advertencia',
           message: 'No hay movimientos en el rango seleccionado',
           buttonText: 'Aceptar',

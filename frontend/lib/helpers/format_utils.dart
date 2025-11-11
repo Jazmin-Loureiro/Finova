@@ -1,30 +1,42 @@
 import 'package:intl/intl.dart';
 
-/// Formatea valores numéricos según el código de moneda del usuario.
-/// `formatCurrency(12345.6, 'USD')` -> "12,345.60 USD"
-/// `formatCurrency(12345.6, 'ARS')` -> "12.345,60 ARS"
+/// Formatea valores numéricos según la moneda.
+/// Usa formato normal hasta 1.000 millones, y compacto por encima.
+/// Siempre asegura que el símbolo esté pegado al número, sin espacios invisibles.
 String formatCurrency(double? value, String currencyCode, {String? symbolOverride}) {
   if (value == null) return '-';
 
   try {
-    // Detectar locale según moneda
     final locale = _getLocaleForCurrency(currencyCode);
+    String formatted;
 
-    // Crear formateador con símbolo o sin él
-    final formatter = NumberFormat.currency(
-      locale: locale,
-      symbol: symbolOverride ?? '',
-      name: currencyCode,
-      decimalDigits: _getDecimalDigitsForCurrency(currencyCode),
-    );
+    //  Compacto (≥ 1.000 millones)
+    if (value.abs() >= 1e9) {
+      final compactFormatter = NumberFormat.compact(locale: locale);
+      formatted = compactFormatter.format(value);
+      formatted = formatted.replaceAll(RegExp(r'[\u00A0\u202F\s]'), '');
+    } 
+    // Normal (menos de 1.000 millones)
+    else {
+      final formatter = NumberFormat.currency(
+        locale: locale,
+        symbol: '', // no dejamos que ponga su símbolo
+        decimalDigits: _getDecimalDigitsForCurrency(currencyCode),
+      );
+      formatted = formatter.format(value);
+    }
 
-    return formatter.format(value);
+    //  Limpieza final
+    formatted = formatted.replaceAll(RegExp(r'[\u00A0\u202F]'), '').trim();
+
+    //  Retorno uniforme para todos los casos
+    return '${symbolOverride ?? ''}$formatted';
   } catch (e) {
-    return '$value $currencyCode';
+    return '${symbolOverride ?? ''}$value ';
   }
 }
 
-/// Devuelve un locale apropiado según la moneda.
+/// Devuelve el locale apropiado según la moneda.
 String _getLocaleForCurrency(String currencyCode) {
   switch (currencyCode.toUpperCase()) {
     case 'USD':
@@ -42,14 +54,14 @@ String _getLocaleForCurrency(String currencyCode) {
     case 'MXN':
       return 'es_MX';
     default:
-      return 'en_US'; // fallback
+      return 'en_US';
   }
 }
 
-/// Ajusta cuántos decimales mostrar según la moneda.
+/// Ajusta los decimales según la moneda.
 int _getDecimalDigitsForCurrency(String currencyCode) {
   switch (currencyCode.toUpperCase()) {
-    case 'JPY': // yenes no usan decimales
+    case 'JPY':
     case 'CLP':
       return 0;
     default:

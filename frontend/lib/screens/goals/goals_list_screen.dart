@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:frontend/widgets/info_icon_widget.dart';
 import 'package:frontend/widgets/success_dialog_widget.dart';
 import 'package:intl/intl.dart';
 import 'package:frontend/helpers/format_utils.dart';
@@ -135,12 +136,28 @@ Future<void> _checkExpiredGoals() async {
       title: 'Metas',
       currentRoute: 'goals_list',
       actions: [
+        InfoIcon(
+          title: 'Metas financieras',
+          message:
+              'Las metas financieras te ayudan a planificar y administrar tu dinero para alcanzar objetivos concretos.\n\n'
+              'Establecé un monto y un plazo estimado, y al generar una transacción, Finova reservará automáticamente el dinero que asignes a esa meta para ayudarte a cumplirla.',
+          iconSize: 25,
+        ),
+        /*
         IconButton(
           icon: const Icon(Icons.refresh),
           onPressed: _fetchGoals,
         ),
-        IconButton(
-          icon: const Icon(Icons.add),
+        */
+         Container(
+          margin: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            color: Theme.of(context).colorScheme.primary,
+            shape: BoxShape.circle,
+          ),
+          child: IconButton(
+            icon: Icon(Icons.add, color: Theme.of(context).colorScheme.onPrimary),
+            tooltip: 'Agregar nueva meta',
           onPressed: () {
             Navigator.push(context, 
               MaterialPageRoute(builder: (context) => const GoalFormScreen())
@@ -151,6 +168,7 @@ Future<void> _checkExpiredGoals() async {
             });
           },
         )
+      ),
       ],
       body: isLoading
     ? const LoadingWidget(message: 'Cargando metas...')

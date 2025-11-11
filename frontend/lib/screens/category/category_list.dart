@@ -66,13 +66,23 @@ class _CategoryListScreenState extends State<CategoryListScreen>
       title: 'Categorías',
       currentRoute: 'categories_list',
       actions: [
+        /*
         IconButton(
           icon: const Icon(Icons.refresh),
           onPressed: _fetchCategories,
         ),
-        IconButton(
-          icon: const Icon(Icons.add),
+        */
+         Container(
+          margin: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            color: Theme.of(context).colorScheme.primary,
+            shape: BoxShape.circle,
+          ),
+          child: IconButton(
+            icon: Icon(Icons.add, color: Theme.of(context).colorScheme.onPrimary),
+            tooltip: 'Agregar nueva categoría',
           onPressed: _navigateToAddCategory,
+        ),
         ),
       ],
       body: Column(

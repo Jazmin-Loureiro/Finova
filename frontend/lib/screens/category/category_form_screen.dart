@@ -83,7 +83,7 @@ void saveCategory() async {
       await showDialog(
         context: context,
         builder: (_) => const SuccessDialogWidget(
-          title: 'Actualizada con éxito',
+          title: 'Éxito',
           message: 'La categoría se ha actualizado correctamente.',
         ),
       );
@@ -106,7 +106,7 @@ void saveCategory() async {
     await showDialog(
       context: context,
       builder: (_) => const SuccessDialogWidget(
-        title: 'Guardada con éxito',
+        title: 'Exito',
         message: 'La nueva categoría se ha creado correctamente.',
       ),
     );
@@ -125,7 +125,7 @@ void saveCategory() async {
       await showDialog(
         context: context,
         builder: (_) => const SuccessDialogWidget(
-          title: 'Eliminada con éxito',
+          title: 'Exito',
           message: 'La categoría se ha eliminado correctamente.',
         ),
       );

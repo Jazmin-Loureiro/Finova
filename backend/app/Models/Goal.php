@@ -45,15 +45,8 @@ class Goal extends Model
         return $this->hasMany(Register::class);
     }
 
-    public function disableGoal()
-    {
-        $request = new Request(['goal_id' => $this->id]);
-
-        app(\App\Http\Controllers\GoalController::class)
-            ->assignReservedToMoneyMakers($request);
-
-        $this->state = 'disabled';
-        $this->active = false;
+   public function disableGoal() {
+        $this->state = 'disabled_pending_release';
         $this->save();
     }
 }

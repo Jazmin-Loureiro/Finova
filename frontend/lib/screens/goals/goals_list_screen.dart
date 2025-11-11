@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:frontend/widgets/info_icon_widget.dart';
+import 'package:frontend/widgets/success_dialog_widget.dart';
 import 'package:intl/intl.dart';
 import 'package:frontend/helpers/format_utils.dart';
 import 'package:frontend/models/goal.dart';
@@ -35,12 +37,94 @@ class _GoalsListScreenState extends State<GoalsListScreen>
     try {
       final data = await api.getGoals();
       setState(() => goals = data);
+       // Verificar si hay metas vencidas
+    await _checkExpiredGoals();
     } catch (e) {
       debugPrint('Error al cargar metas: $e');
     } finally {
       setState(() => isLoading = false);
     }
   }
+
+Future<void> _checkExpiredGoals() async {
+  try {
+    final expiredGoals = await api.getExpiredGoals();
+
+    if (expiredGoals.isNotEmpty) {
+      for (final goal in expiredGoals) {
+        //  Diálogo "Meta vencida" — animación desde arriba
+        await showGeneralDialog(
+          context: context,
+          barrierLabel: "expiredGoal",
+          barrierDismissible: false,
+          transitionDuration: const Duration(milliseconds: 400),
+          pageBuilder: (_, __, ___) => const SizedBox.shrink(),
+          transitionBuilder: (context, animation, secondaryAnimation, child) {
+            final curved =
+                CurvedAnimation(parent: animation, curve: Curves.easeOutCubic);
+
+            return SlideTransition(
+              position: Tween<Offset>(
+                begin: const Offset(0, -0.25), // desde arriba
+                end: Offset.zero,
+              ).animate(curved),
+              child: FadeTransition(
+                opacity: curved,
+                child: SuccessDialogWidget(
+                  isFailure: true,
+                  title: 'Meta Vencida',
+                  message:
+                      'Tu meta "${goal['name']}" ha vencido.\nLos fondos serán liberados automáticamente.',
+                  buttonText: 'Entiendo',
+                ),
+              ),
+            );
+          },
+        );
+
+        // 🧹 Liberar meta en backend
+        await api.deleteGoal(goal['id']);
+
+        // Diálogo "Meta liberada" — animación desde abajo
+        await showGeneralDialog(
+          context: context,
+          barrierLabel: "goalReleased",
+          barrierDismissible: true,
+          transitionDuration: const Duration(milliseconds: 500),
+          pageBuilder: (_, __, ___) => const SizedBox.shrink(),
+          transitionBuilder: (context, animation, secondaryAnimation, child) {
+            final curved = CurvedAnimation(
+              parent: animation,
+              curve: Curves.elasticOut,
+            );
+
+            return SlideTransition(
+              position: Tween<Offset>(
+                begin: const Offset(0, 0.4), // desde abajo con rebote
+                end: Offset.zero,
+              ).animate(curved),
+              child: FadeTransition(
+                opacity: CurvedAnimation(
+                  parent: animation,
+                  curve: Curves.easeInOut,
+                ),
+                child: SuccessDialogWidget(
+                  title: 'Meta liberada',
+                  message:
+                      'Los fondos de la meta "${goal['name']}" han sido liberados correctamente.',
+                ),
+              ),
+            );
+          },
+        );
+
+        await _fetchGoals();
+      }
+    }
+  } catch (e) {
+    debugPrint('Error al verificar metas vencidas: $e');
+  }
+}
 
   List<Goal> _filterGoals(String state) {
     return goals.where((g) => g.state == state).toList();
@@ -52,12 +136,28 @@ class _GoalsListScreenState extends State<GoalsListScreen>
       title: 'Metas',
       currentRoute: 'goals_list',
       actions: [
+        InfoIcon(
+          title: 'Metas financieras',
+          message:
+              'Las metas financieras te ayudan a planificar y administrar tu dinero para alcanzar objetivos concretos.\n\n'
+              'Establecé un monto y un plazo estimado, y al generar una transacción, Finova reservará automáticamente el dinero que asignes a esa meta para ayudarte a cumplirla.',
+          iconSize: 25,
+        ),
+        /*
         IconButton(
           icon: const Icon(Icons.refresh),
           onPressed: _fetchGoals,
         ),
-        IconButton(
-          icon: const Icon(Icons.add),
+        */
+         Container(
+          margin: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            color: Theme.of(context).colorScheme.primary,
+            shape: BoxShape.circle,
+          ),
+          child: IconButton(
+            icon: Icon(Icons.add, color: Theme.of(context).colorScheme.onPrimary),
+            tooltip: 'Agregar nueva meta',
           onPressed: () {
             Navigator.push(context, 
               MaterialPageRoute(builder: (context) => const GoalFormScreen())
@@ -68,6 +168,7 @@ class _GoalsListScreenState extends State<GoalsListScreen>
             });
           },
         )
+      ),
       ],
       body: isLoading
     ? const LoadingWidget(message: 'Cargando metas...')
@@ -106,7 +207,7 @@ class _GoalsListScreenState extends State<GoalsListScreen>
       return EmptyStateWidget(
             title: "Aún no tenés metas.",
             message:
-                "Las metas te ayudan a organizar y alcanzar tus objetivos financieros.",
+                "Creá metas para reservar dinero y avanzar hacia tus objetivos financieros.",
             icon: Icons.flag,
           );
     }

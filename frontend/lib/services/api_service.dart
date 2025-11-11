@@ -428,6 +428,20 @@ Future<Map<String, dynamic>> assignReservedToMoneyMakers(int goalId) async {
     throw Exception('Error al asignar dinero reservado: ${response.body}');
   }
 }
+// Obtener metas vencidas 
+
+Future<List<dynamic>> getExpiredGoals() async {
+  final token = await storage.read(key: 'token');
+  final response = await http.get(
+    Uri.parse('$apiUrl/goals/expired'),
+    headers: jsonHeaders(token),
+  );
+  if (response.statusCode == 200) {
+    final data = jsonDecode(response.body);
+    return data['expired_goals'] ?? [];
+  }
+  return [];
+}
 
 Future<List<Register>> getRegistersByMoneyMaker(int moneyMakerId) async {
   final token = await storage.read(key: 'token');

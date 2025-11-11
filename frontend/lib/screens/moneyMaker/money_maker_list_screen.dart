@@ -70,39 +70,52 @@ Widget build(BuildContext context) {
     title: 'Fuentes de Dinero',
     currentRoute: 'money_makers',
     actions: [
-       IconButton(
-        icon: const Icon(Icons.add),
-        onPressed: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) => const MoneyMakerFormScreen()),
-          ).then((value) async {
-            if (value != null && value is MoneyMaker) {
-              await _loadMoneyMakers();
+     InfoIcon(
+        title: 'Fuentes de dinero',
+        message:
+            'Las fuentes de dinero representan tus cuentas, billeteras o medios de pago.\n\n'
+            'Finova te permite gestionar múltiples fuentes para tener un control total de tus finanzas.\n\n'
+            'Además, podés asignar una moneda específica a cada fuente y administrar distintos tipos de divisas con el tipo de cambio actualizado en tiempo real.',
+        iconSize: 25,
+      ),
 
-              final provider = context.read<RegisterProvider>();
-              final updatedMoneyMakers = provider.moneyMakers;
-
-              int newIndex = updatedMoneyMakers.indexWhere((m) => m.id == value.id);
-              if (newIndex == -1) newIndex = updatedMoneyMakers.length - 1;
-
-              if (!mounted) return;
-              setState(() => selectedIndex = newIndex);
-
-              //  Esperar a que se monte el PageView
-              WidgetsBinding.instance.addPostFrameCallback((_) {
-                if (pageController != null && pageController!.hasClients) {
-                  pageController!.animateToPage(
-                    newIndex,
-                    duration: const Duration(milliseconds: 300),
-                    curve: Curves.easeInOut,
-                  );
+       Container(
+          margin: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            color: Theme.of(context).colorScheme.primary,
+            shape: BoxShape.circle,
+          ),
+          child: IconButton(
+            icon: Icon(Icons.add, color: Theme.of(context).colorScheme.onPrimary),
+            tooltip: 'Agregar nueva fuente de dinero',
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const MoneyMakerFormScreen()),
+              ).then((value) async {
+                if (value != null && value is MoneyMaker) {
+                  await _loadMoneyMakers();
+                  final provider = context.read<RegisterProvider>();
+                  final updatedMoneyMakers = provider.moneyMakers;
+                  int newIndex = updatedMoneyMakers.indexWhere((m) => m.id == value.id);
+                  if (newIndex == -1) newIndex = updatedMoneyMakers.length - 1;
+                  if (!mounted) return;
+                  setState(() => selectedIndex = newIndex);
+                  WidgetsBinding.instance.addPostFrameCallback((_) {
+                    if (pageController != null && pageController!.hasClients) {
+                      pageController!.animateToPage(
+                        newIndex,
+                        duration: const Duration(milliseconds: 300),
+                        curve: Curves.easeInOut,
+                      );
+                    }
+                  });
                 }
               });
-            }
-          });
-        },
-      ),
+            },
+          ),
+        ),
+
       ],
       body: isLoading
           ? const LoadingWidget(message: "Cargando fuentes de dinero...")
@@ -215,7 +228,7 @@ Widget build(BuildContext context) {
                                       const SizedBox(height: 1),
 
                                       Text(
-                                        '${m.currency?.symbol}${formatCurrency(m.balance, m.currency?.code ?? currencyBase)}${m.currency?.code ?? ''}',
+                                        '${m.currency?.symbol}${formatCurrency(m.balance, m.currency?.code ?? currencyBase)} ${m.currency?.code ?? ''}',
                                         style: TextStyle(
                                           color: textColor,
                                           fontSize: 24,
@@ -224,11 +237,40 @@ Widget build(BuildContext context) {
                                       ),
                                       const SizedBox(height: 4),
 
+                                      if (m.balance_reserved > 0)
+                                        Row(
+                                          children: [
+                                        Text(
+                                          'Reserva: +${m.currency?.symbol}${formatCurrency(m.balance_reserved, m.currency?.code ?? currencyBase)} ${m.currency?.code ?? ''}',
+                                          style: TextStyle(
+                                            color: subTextColor,
+                                            fontSize: 18,
+                                            fontWeight: FontWeight.w500,
+                                          ),
+                                        ),
+                                            const SizedBox(width: 6),
+                                        InfoIcon(
+                                            title: 'Dinero reservado',
+                                            message: 
+                                                'El dinero reservado corresponde a los fondos asignados a tus metas financieras.\n\n'
+                                                '🟣 No está disponible para:\n'
+                                                '• Gastos diarios\n'
+                                                '• Transferencias a otras fuentes\n'
+                                                '• Creación de nuevas metas\n\n'
+                                                '🔓 Cuando una meta finaliza o se vence, ese dinero vuelve automáticamente a estar disponible en tu fuente de dinero.\n\n'
+                                                '💡 Consejo: Reservar fondos te ayuda a cumplir objetivos sin gastar por error el dinero destinado a tus metas.',
+                                            iconSize: 20,
+                                          ),
+                                          ],
+                                        ),
+
+                                      const Spacer(),
+
                                       if (currencyBase != m.currency?.code)
                                         Row(
                                           children: [
                                             Text(
-                                              '≈ $currencySymbol${formatCurrency(m.balanceConverted, currencyBase)} ${m.currency?.code ?? ''}',
+                                              'Total ≈ $currencySymbol${formatCurrency(m.balanceConverted, currencyBase)} ${m.currency?.code ?? ''}',
                                               style: TextStyle(
                                                 color: subTextColor,
                                                 fontSize: 17,
@@ -241,19 +283,9 @@ Widget build(BuildContext context) {
                                                   'Fuente: Open Exchange Rates\n'
                                                   'Última actualización: ${DateFormat('dd/MM/yyyy').format(m.currency!.updatedAt!)}\n\n'
                                                   'Este valor es un estimativo. Las tasas pueden variar según el mercado y el momento de la conversión.',
-                                              iconSize: 18,
+                                              iconSize: 20,
                                             ),
                                           ],
-                                        ),
-                                      const Spacer(),
-                                      if (m.balance_reserved > 0)
-                                        Text(
-                                          'Reservado: ${m.currency?.symbol}${formatCurrency(m.balance_reserved, m.currency?.code ?? currencyBase)}${m.currency?.code ?? ''}',
-                                          style: TextStyle(
-                                            color: subTextColor,
-                                            fontSize: 16,
-                                            fontWeight: FontWeight.w500,
-                                          ),
                                         ),
                                     ],
                                   ),

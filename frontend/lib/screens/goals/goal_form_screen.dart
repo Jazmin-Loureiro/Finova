@@ -102,6 +102,13 @@ class _GoalFormScreenState extends State<GoalFormScreen> {
     if (widget.goal == null) return;
     try {
       await api.deleteGoal(widget.goal!.id);
+      await showDialog(
+        context: context,
+        builder: (_) => const SuccessDialogWidget(
+          title: "Éxito",
+          message: "Meta eliminada con éxito.",
+        ),
+      );
       Navigator.pop(context, true);
     } catch (e) {
       debugPrint('Error al eliminar meta: $e');

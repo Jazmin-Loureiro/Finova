@@ -6,6 +6,7 @@ use App\Models\Goal;
 use App\Models\Currency;
 use App\Models\MoneyMaker;
 use Illuminate\Http\Request;
+use Carbon\Carbon;
 
 class GoalController extends Controller
 {
@@ -92,9 +93,12 @@ class GoalController extends Controller
      * @param  \App\Models\Goal  $goal
      * @return \Illuminate\Http\Response
      */
-        public function delete(Goal $goal, Request $request)
-        {
-            // 🧩 1️⃣ Si es meta creada por un desafío, fallar el desafío vinculado
+    public function delete(Goal $goal, Request $request = null) {
+        if (!$request) {
+            $request = new \Illuminate\Http\Request();
+        }
+
+        // 🧩 1️⃣ Si es meta creada por un desafío, fallar el desafío vinculado
             if ($goal->is_challenge_goal && $goal->id) {
                 $userChallenge = \App\Models\UserChallenge::where('goal_id', $goal->id)
                     ->where('state', 'in_progress')
@@ -117,22 +121,23 @@ class GoalController extends Controller
                 }
             }
 
-            // 🧩 2️⃣ Liberar dinero reservado (mantiene tu lógica actual)
-            $request->merge(['goal_id' => $goal->id]);
-            $this->assignReservedToMoneyMakers($request);
+        $request->merge(['goal_id' => $goal->id]);
+        $this->assignReservedToMoneyMakers($request);
 
-            // 🧩 3️⃣ Desvincular registros
-            foreach ($goal->registers as $register) {
-                $register->reserved_for_goal = 0;
-                $register->save();
-            }
+        // Desvincular registros de la meta y limpiar reserved_for_goal
+        foreach ($goal->registers as $register) {
+            $register->goal_id = null;
+            $register->reserved_for_goal = 0;
+            $register->save();
+        }
 
-            // 🧩 4️⃣ Desactivar la meta
-            $goal->active = false;
-            $goal->state = 'disabled';
-            $goal->save();
+        // Desactivar la meta
+        $goal->active = false;
+        $goal->state = 'disabled';
+        $goal->balance = 0;
+        $goal->save();
 
-            return response()->json([
+       return response()->json([
                 'message' => 'Meta eliminada con éxito' .
                     ($goal->is_challenge_goal ? ' y desafío marcado como fallido.' : '.'),
                 'data' => $goal,
@@ -169,6 +174,24 @@ class GoalController extends Controller
             'goal' => $goal,
         ]);
     }
+
+
+    public function getExpiredGoals() {
+    $user = auth()->user();
+    $now = Carbon::now();
+
+    //  Buscar metas vencidas del usuario
+    $expiredGoals = Goal::where('user_id', $user->id)->where('date_limit', '<', $now)->whereIn('state', ['disabled_pending_release'])->get();
+    //  Marcar como pendientes de liberar (sin liberar)
+    foreach ($expiredGoals as $goal) {
+        $this->delete($goal);  
+    }
+
+    //  Devolver la lista de metas vencidas
+    return response()->json([
+        'expired_goals' => $expiredGoals,
+    ]);
+}
 
     public function fetchRegistersByGoal(Goal $goal) {
         $registers = $goal->registers()->with('moneyMaker', 'category', 'currency','goal')->get();

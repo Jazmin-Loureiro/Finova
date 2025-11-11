@@ -24,7 +24,7 @@ class MoneyMakerService
                 ? 1.0
                 : CurrencyService::getRate($fromCurrency, $toCurrency);
 
-            $balanceConverted = round($m->balance * $rate, 2);
+            $balanceConverted = round(($m->balance + $m->balance_reserved) * $rate, 2);
             $totalInBase += $balanceConverted;
 
             return [

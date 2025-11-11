@@ -112,6 +112,8 @@ flutter:
     - assets/lottie/BudgetAndBills.json
     - assets/lottie/SavingAndFinancialGrowth.json
     - assets/lottie/GrowthAndAnalytics.json
+    - assets/lottie/success.json
+    - assets/lottie/Errorfailure.json
 
 
     

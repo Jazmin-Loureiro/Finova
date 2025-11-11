@@ -174,7 +174,7 @@ Future<bool> _cancelReserve() async {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                '${currencySymbol}${formatCurrency(register.balance, register.currency.code)}${register.currency.code}',
+                                '${currencySymbol}${formatCurrency(register.balance, register.currency.code)} ${register.currency.code}',
                                 style: TextStyle(
                                   fontSize: 24,
                                   fontWeight: FontWeight.bold,
@@ -241,7 +241,7 @@ Future<bool> _cancelReserve() async {
                                       ),
                                     ),
                                     Text(
-                                      '${register.goal?.name} - ${currencySymbol}${formatCurrency(register.reserved_for_goal, register.currency.code)}${register.currency.code}',
+                                      '${register.goal?.name} - ${currencySymbol}${formatCurrency(register.reserved_for_goal, register.currency.code)} ${register.currency.code}',
                                       style: TextStyle(
                                         fontSize: 15,
                                         fontWeight: FontWeight.w600,

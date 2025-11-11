@@ -3,9 +3,11 @@
 namespace App\Http\Controllers;
 
 use App\Models\UserChallenge;
+use App\Models\Goal;
 use App\Models\Challenge;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Database\QueryException;
 use Carbon\Carbon;
 
@@ -49,10 +51,10 @@ class UserChallengeController extends Controller
         // Verificá que exista y esté activo
         $challenge = Challenge::where('active', true)->findOrFail($challengeId);
 
-        return \Illuminate\Support\Facades\DB::transaction(function () use ($user, $challenge) {
+        return DB::transaction(function () use ($user, $challenge) {
 
-            // 🔒 Bloqueo por TIPO: ¿ya hay uno in_progress de este tipo?
-            $hasTypeInProgress = \DB::table('users_challenges')
+            // 🔒 Bloqueo por tipo
+            $hasTypeInProgress = DB::table('users_challenges')
                 ->join('challenges', 'challenges.id', '=', 'users_challenges.challenge_id')
                 ->where('users_challenges.user_id', $user->id)
                 ->where('users_challenges.state', 'in_progress')
@@ -68,19 +70,14 @@ class UserChallengeController extends Controller
                 ], 409);
             }
 
-            // 2) Busco exactamente UNA fila suggested para promover
-            $suggested = \App\Models\UserChallenge::where('user_id', $user->id)
+            // Buscar si existe uno "suggested"
+            $suggested = UserChallenge::where('user_id', $user->id)
                 ->where('challenge_id', $challenge->id)
                 ->where('state', 'suggested')
                 ->lockForUpdate()
                 ->first();
 
-            $update = [
-                'state'      => 'in_progress',
-                'start_date' => now(),
-                'end_date'   => now()->addDays((int) ($challenge->duration_days ?? 30)),
-            ];
-
+            // 🔹 Leer payload sugerido (si existe)
             $payloadArr = [];
             if ($suggested && $suggested->payload) {
                 $payloadArr = is_array($suggested->payload)
@@ -88,10 +85,42 @@ class UserChallengeController extends Controller
                     : (is_string($suggested->payload) ? (json_decode($suggested->payload, true) ?: []) : []);
             }
 
+            // 🔹 Calcular duración correctamente (prioridad: payload → challenge → 30)
+            $durationDays = (int) ($payloadArr['duration_days'] ?? $challenge->duration_days ?? 30);
+            $start = now();
+            $end   = now()->addDays($durationDays);
+
+            // Datos base
+            $update = [
+                'state'      => 'in_progress',
+                'start_date' => $start,
+                'end_date'   => $end,
+            ];
+
+            // ⚙️ NUEVO: creación automática de meta espejo si es desafío de ahorro
+            $goalId = null;
             if ($challenge->type === 'SAVE_AMOUNT') {
+                $target = (float)($suggested->target_amount ?? $payloadArr['amount'] ?? 0);
+                if ($target <= 0) $target = 100;
+
+                $goal = Goal::create([
+                    'user_id'           => $user->id,
+                    'name'              => 'Desafío: ' . ($challenge->name ?? 'Ahorro'),
+                    'target_amount'     => $target,
+                    'currency_id'       => $user->currency_id,
+                    'date_limit'        => $end,
+                    'balance'           => 0,
+                    'state'             => 'in_progress',
+                    'active'            => true,
+                    'is_challenge_goal' => true,
+                ]);
+
+                $goalId = $goal->id;
                 $update['balance'] = $user->balance ?? 0;
+                $update['goal_id'] = $goalId;
             }
 
+            // 🧩 Si es de reducción de gastos, mantiene tu lógica actual
             if ($challenge->type === 'REDUCE_SPENDING_PERCENT') {
                 $windowDays = (int)($payloadArr['window_days'] ?? 30);
                 $prevStart  = now()->copy()->subDays($windowDays);
@@ -113,78 +142,64 @@ class UserChallengeController extends Controller
                 if (!isset($payloadArr['reduction'])) {
                     $payloadArr['reduction'] = rand(10, 25);
                 }
+
                 $payloadArr['baseline_expenses'] = $baselinePrev;
                 $payloadArr['window_days']       = $windowDays;
+                $payloadArr['mode']              = $payloadArr['mode'] ?? ($windowDays <= 7 ? 'weekly' : 'monthly');
+                $payloadArr['max_allowed']       = round($baselinePrev, 2);
+                $payloadArr['current_spent']     = 0.0;
+                $payloadArr['period_start']      = now()->toIso8601String();
 
                 $update['payload'] = $payloadArr;
-                
-                // 🔹 Nuevos campos para iniciar el desafío correctamente
-                $payloadArr['mode']          = $payloadArr['mode'] ?? ($windowDays <= 7 ? 'weekly' : 'monthly');
-                $payloadArr['max_allowed']   = round($baselinePrev, 2);      // límite de gasto permitido
-                $payloadArr['current_spent'] = 0.0;                          // arranca desde cero
-                $payloadArr['period_start']  = now()->toIso8601String();     // fecha real de inicio
-
-                $update['payload'] = $payloadArr; // vuelve a guardarse con los nuevos campos
             }
 
-            
-
-
+            // 🔹 Si existía uno suggested, lo promovemos
             if ($suggested) {
                 $suggested->fill($update)->save();
-                return response()->json(['message' => 'Desafío aceptado correctamente.'], 200);
+                return response()->json([
+                    'message' => 'Desafío aceptado correctamente.',
+                    'goal_id' => $goalId,
+                    'start'   => $start->toIso8601String(),
+                    'end'     => $end->toIso8601String(),
+                ], 200);
             }
 
-            // 3) Crear in_progress desde cero (si no había suggested)
+            // 🔹 Si no existía, lo creamos desde cero (tu caso original)
             $create = array_merge([
-                'user_id'      => $user->id,
-                'challenge_id' => $challenge->id,
-                'balance'      => ($challenge->type === 'SAVE_AMOUNT') ? ($user->balance ?? 0) : 0,
-                'progress'     => 0,
-            ], $update);
+    'user_id'      => $user->id,
+    'challenge_id' => $challenge->id,
+    'progress'     => 0,
+], $update);
 
-            if ($challenge->type === 'REDUCE_SPENDING_PERCENT') {
-                $windowDays = 30;
-                $prevStart  = now()->copy()->subDays($windowDays);
-                $toCode     = optional($user->currency)->code ?? 'ARS';
+// 🔹 Aseguramos guardar el goal_id siempre que se haya creado
+if (!empty($goalId)) {
+    $create['goal_id'] = $goalId;
+}
 
-                $regs = $user->registers()
-                    ->with('currency')
-                    ->where('type', 'expense')
-                    ->whereBetween('created_at', [$prevStart, now()])
-                    ->get();
+try {
+    $uc = UserChallenge::create($create);
 
-                $baselinePrev = 0.0;
-                foreach ($regs as $r) {
-                    $fromCode = optional($r->currency)->code ?? $toCode;
-                    $rate = ($fromCode === $toCode) ? 1.0 : \App\Services\CurrencyService::getRate($fromCode, $toCode);
-                    $baselinePrev += (float)$r->balance * $rate;
-                }
-
-                $create['payload'] = [
-                    'reduction'         => rand(10, 25),
-                    'window_days'       => $windowDays,
-                    'baseline_expenses' => $baselinePrev,
-                    'max_allowed'       => round($baselinePrev, 2),
-                    'current_spent'     => 0.0,
-                    'period_start'      => now()->toIso8601String(),
-                    'mode'              => ($windowDays <= 7 ? 'weekly' : 'monthly'),
-                ];
-
-            }
-
-            try {
-                \App\Models\UserChallenge::create($create);
-            } catch (\Illuminate\Database\QueryException $e) {
+    // 🔹 Extra: si el registro se creó, aseguramos persistir el vínculo
+    if ($uc && !empty($goalId)) {
+        $uc->goal_id = $goalId;
+        $uc->save();
+    }
+} catch (QueryException $e) {
                 if ((int)($e->errorInfo[1] ?? 0) === 1062) {
                     return response()->json(['message' => 'Ya tenés este desafío en progreso.'], 200);
                 }
                 throw $e;
             }
 
-            return response()->json(['message' => 'Desafío aceptado correctamente.'], 200);
+            return response()->json([
+                'message' => 'Desafío aceptado correctamente.',
+                'goal_id' => $goalId,
+                'start'   => $start->toIso8601String(),
+                'end'     => $end->toIso8601String(),
+            ], 200);
         });
     }
+
 
 
     /**

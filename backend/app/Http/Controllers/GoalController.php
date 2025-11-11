@@ -93,11 +93,34 @@ class GoalController extends Controller
      * @param  \App\Models\Goal  $goal
      * @return \Illuminate\Http\Response
      */
-        public function delete(Goal $goal, Request $request = null) {
+    public function delete(Goal $goal, Request $request = null) {
         if (!$request) {
             $request = new \Illuminate\Http\Request();
         }
-        // Liberar el dinero reservado usando la función existente
+
+        // 🧩 1️⃣ Si es meta creada por un desafío, fallar el desafío vinculado
+            if ($goal->is_challenge_goal && $goal->id) {
+                $userChallenge = \App\Models\UserChallenge::where('goal_id', $goal->id)
+                    ->where('state', 'in_progress')
+                    ->first();
+
+                if ($userChallenge) {
+                    $payload = $userChallenge->payload ?? [];
+                    if (is_string($payload)) {
+                        $payload = json_decode($payload, true) ?: [];
+                    }
+
+                    $payload['cancel_reason'] = 'goal_deleted';
+
+                    $userChallenge->update([
+                        'state' => 'failed',
+                        'end_date' => now(),
+                        'progress' => 0,
+                        'payload' => $payload,
+                    ]);
+                }
+            }
+
         $request->merge(['goal_id' => $goal->id]);
         $this->assignReservedToMoneyMakers($request);
 
@@ -114,13 +137,12 @@ class GoalController extends Controller
         $goal->balance = 0;
         $goal->save();
 
-        return response()->json([
-            'message' => 'Meta deshabilitada con éxito',
-            'data' => $goal
-        ], 200);
-    }
-
-
+       return response()->json([
+                'message' => 'Meta eliminada con éxito' .
+                    ($goal->is_challenge_goal ? ' y desafío marcado como fallido.' : '.'),
+                'data' => $goal,
+            ], 200);
+        }
 
     /**
      * Asignar el dinero reservado de una meta a las fuentes de dinero correspondientes

@@ -55,6 +55,24 @@ class Kernel extends ConsoleKernel
             ->dailyAt('00:00')
             ->runInBackground()
             ->withoutOverlapping();
+
+        /**
+         * 🏆 Actualización automática de desafíos
+         * Recalcula progreso y marca vencidos o completados.
+         */
+
+        // 🔹 Recalcular progreso general cada hora
+        $schedule->command('challenges:tick')
+            ->hourly()
+            ->runInBackground()
+            ->withoutOverlapping();
+
+        // 🔹 Revisión liviana (solo vencidos) una vez al día
+        $schedule->command('challenges:tick --expired-only')
+            ->dailyAt('00:30')
+            ->runInBackground()
+            ->withoutOverlapping();
+
     }
 
     /**

@@ -2,8 +2,8 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:frontend/helpers/icon_utils.dart';
+import 'package:frontend/widgets/bottom_sheet_pickerField.dart';
 import 'package:frontend/widgets/buttons/button_save.dart';
-import 'package:frontend/widgets/category_picker_widget.dart';
 import 'package:frontend/widgets/custom_scaffold.dart';
 
 import '../../services/api_service.dart';
@@ -262,19 +262,25 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
                     Row(
                       children: [
                         Expanded(
-                          child: DropdownButtonFormField<MoneyMaker>(
-                            decoration: const InputDecoration(
-                              labelText: 'Fuente de dinero',
-                              border: OutlineInputBorder(
-                                borderRadius:
-                                    BorderRadius.all(Radius.circular(12)),
+                          child: BottomSheetPickerField<MoneyMaker>(
+                            key: ValueKey(selectedMoneyMaker?.id ?? 'no_source'), 
+                            label: 'Fuente de dinero',
+                            title: 'Seleccionar fuente de dinero',
+                            items: moneyMakers,
+                            itemLabel: (m) => m.name,
+                            itemIcon: (m) => CircleAvatar(
+                              radius: 20,
+                              backgroundColor: Color(
+                                int.parse(m.color.substring(1), radix: 16) + 0xFF000000,
+                              ).withOpacity(0.15),
+                              child: Icon(
+                                Icons.account_balance_wallet_rounded,
+                                color: Color(
+                                  int.parse(m.color.substring(1), radix: 16) + 0xFF000000,
+                                ),
                               ),
                             ),
-                            value: selectedMoneyMaker,
-                            items: moneyMakers
-                                .map((m) => DropdownMenuItem(
-                                    value: m, child: Text(m.name)))
-                                .toList(),
+                            initialValue: selectedMoneyMaker,
                             onChanged: (value) {
                               setState(() {
                                 selectedMoneyMaker = value;
@@ -355,130 +361,68 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
 
                     // Categoría
                     Row(
-                      children: [
-                        Expanded(
-                          child: GestureDetector(
-                            onTap: () async {
-                              final selected = await CategoryPickerWidget.show(
-                                context,
-                                categories: categories,
-                                initialCategory: selectedCategory,
-                              );
-                              if (selected != null) {
-                                setState(() => selectedCategory = selected);
-                              }
-                            },
-                            child: AbsorbPointer(
-                              child: TextFormField(
-                                decoration: InputDecoration(
-                                  labelText: 'Categoría',
-                                  border: const OutlineInputBorder(
-                                    borderRadius:
-                                        BorderRadius.all(Radius.circular(12)),
-                                  ),
-                                  prefixIcon: Padding(
-                                    padding: const EdgeInsets.symmetric(
-                                        horizontal: 8),
-                                    child: CircleAvatar(
-                                      radius: 14,
-                                      backgroundColor: selectedCategory != null
-                                          ? Color(
-                                                  int.parse(
-                                                          selectedCategory!.color
-                                                              .substring(1),
-                                                          radix: 16) +
-                                                      0xFF000000)
-                                              .withOpacity(0.15)
-                                          : Theme.of(context)
-                                              .colorScheme
-                                              .primary
-                                              .withOpacity(0.1),
-                                      child: Icon(
-                                        AppIcons.fromName(
-                                            selectedCategory?.icon),
-                                        color: selectedCategory != null
-                                            ? Color(
-                                                int.parse(
-                                                        selectedCategory!.color
-                                                            .substring(1),
-                                                        radix: 16) +
-                                                    0xFF000000)
-                                            : Theme.of(context)
-                                                .colorScheme
-                                                .primary,
-                                        size: 20,
-                                      ),
-                                    ),
-                                  ),
-                                  suffixIcon: const Padding(
-                                    padding: EdgeInsets.only(right: 12),
-                                    child: Icon(Icons.arrow_drop_down,
-                                        size: 24),
-                                  ),
-                                ),
-                                controller: TextEditingController(
-                                    text: selectedCategory?.name ?? ''),
-                                readOnly: true,
-                                validator: (value) => value == null ||
-                                        value.isEmpty
-                                    ? 'Seleccione una categoría'
-                                    : null,
-                              ),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        IconButton(
-                          icon: const Icon(Icons.add),
-                          tooltip: 'Agregar categoría',
-                          onPressed: () async {
-                            final newCategory = await Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (_) => CategoryFormScreen(
-                                    type: widget.type),
-                              ),
+                    children: [
+                      Expanded(
+                        child: BottomSheetPickerField<Category>(
+                          key: ValueKey(selectedCategory?.id ?? 'no_category'),
+                          label: 'Categoría',
+                          title: 'Seleccionar categoría',
+                          items: categories,
+                          itemLabel: (c) => c.name,
+                          itemIcon: (c) {
+                            final color = Color(
+                              int.parse(c.color.substring(1), radix: 16) + 0xFF000000,
                             );
-                            debugPrint(
-                                '🟢 Nueva categoría retornada: $newCategory');
-                            if (newCategory != null && newCategory is Category) {
-                              setState(() {
-                                categories.add(newCategory);
-                                selectedCategory = newCategory;
-                              });
-                            }
+                            return CircleAvatar(
+                              radius: 20,
+                              backgroundColor: color.withOpacity(0.15),
+                              child: Icon(AppIcons.fromName(c.icon), color: color, size: 22),
+                            );
                           },
+                          initialValue: selectedCategory,
+                          onChanged: (value) => setState(() => selectedCategory = value),
+                          validator: (value) =>
+                              value == null ? 'Seleccione una categoría' : null,
                         ),
-                      ],
-                    ),
+                      ),
+                      const SizedBox(width: 8),
+                      IconButton(
+                        icon: const Icon(Icons.add_rounded),
+                        tooltip: 'Agregar categoría',
+                        onPressed: () async {
+                          final newCategory = await Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => CategoryFormScreen(type: widget.type),
+                            ),
+                          );
+                          if (newCategory != null && newCategory is Category) {
+                            setState(() {
+                              categories.add(newCategory);
+                              selectedCategory = newCategory;
+                            });
+                          }
+                        },
+                      ),
+                    ],
+                  ),
                     const SizedBox(height: 16),
 
                     // Meta
                     if (widget.type != 'expense') ...[
-                      DropdownButtonFormField<Goal?>(
-                        decoration: const InputDecoration(
-                          labelText: 'Meta (opcional)',
-                          border: OutlineInputBorder(
-                            borderRadius:
-                                BorderRadius.all(Radius.circular(12)),
-                          ),
-                        ),
-                        value: selectedGoal,
-                        items: [
-                          const DropdownMenuItem<Goal?>(
-                            value: null,
-                            child: Text('Sin meta'),
-                          ),
-                          ...goals.map(
-                            (g) => DropdownMenuItem<Goal?>(
-                              value: g,
-                              child: Text(g.name),
-                            ),
-                          ),
-                        ],
-                        onChanged: (value) =>
-                            setState(() => selectedGoal = value),
-                      ),
+                     BottomSheetPickerField<Goal?>(
+                      label: 'Meta (opcional)',
+                      title: 'Seleccionar meta',
+                      items: [
+                        ...goals, // tus metas disponibles
+                      ],
+                      itemLabel: (g) => g!.name + ' (' + g.balance.toStringAsFixed(2) + '/' + (g.targetAmount.toStringAsFixed(2) ) + ' ' + (g.currency?.code ?? '') + ')',
+                      itemIcon: (g) => const Icon(Icons.flag_rounded, color: Colors.blueAccent),
+                      initialValue: selectedGoal,
+                      emptyText: 'Sin meta',
+                      onChanged: (value) => setState(() => selectedGoal = value),
+                      isRequired: false,
+                    ),
                       const SizedBox(height: 16),
                     ],
 
@@ -529,7 +473,7 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
                         return 'Tipo de archivo no permitido (${ext.toUpperCase()})';
                       }
 
-                      return null; // ✅ válido
+                      return null; //
                     },
                     builder: (state) => Column(
                       crossAxisAlignment: CrossAxisAlignment.start,

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:frontend/widgets/bottom_sheet_pickerField.dart';
 import 'package:frontend/widgets/buttons/button_delete.dart';
 import 'package:frontend/widgets/buttons/button_save.dart';
-import 'package:frontend/widgets/confirm_dialog_widget.dart';
 import '../../services/api_service.dart';
 import '../../models/currency.dart';
 import '../../models/money_maker.dart';
@@ -25,6 +25,25 @@ class _MoneyMakerFormScreenState extends State<MoneyMakerFormScreen> {
   final TextEditingController nameController = TextEditingController();
   final TextEditingController balanceController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
+
+  final List<String> tiposDeFuente = [
+  "Efectivo",
+  "Mastercard",
+  "Visa",
+  "Tarjeta de débito",
+  "Ahorros",
+  "Banco",
+  "Inversión",
+  "Tarjeta de crédito",
+  "Cuenta bancaria",
+  "Criptomoneda",
+  "Cheque",
+  "Cuenta virtual",
+  "PayPal",
+  "Transferencia",
+  "Préstamo",
+  "Otro"
+];
 
   Color? selectedColor;
   String typeSelected = "Efectivo";
@@ -159,60 +178,62 @@ Widget build(BuildContext context) {
                 ),
                 const SizedBox(height: 16),
 
-                // Tipo de fuente
-                DropdownButtonFormField<String>(
-                  decoration: const InputDecoration(
-                    labelText: 'Tipo de fuente',
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.all(Radius.circular(12)),
-                    ),
-                  ),
-                  value: typeSelected,
-                  items: [
-                    "Efectivo",
-                    "Mastercard",
-                    "Visa",
-                    "Tarjeta de débito",
-                    "Ahorros",
-                    "Banco",
-                    "Inversión",
-                    "Tarjeta de crédito",
-                    "Cuenta bancaria",
-                    "Criptomoneda",
-                    "Cheque",
-                    "Cuenta virtual",
-                    "PayPal",
-                    "Transferencia",
-                    "Préstamo",
-                    "Otro"
-                  ]
-                      .map((f) => DropdownMenuItem(value: f, child: Text(f)))
-                      .toList(),
-                  onChanged: (value) => setState(() => typeSelected = value!),
+                // Tipo de fuente Modificar 
+                BottomSheetPickerField<String>(
+                  label: 'Tipo de fuente',
+                  items: tiposDeFuente,
+                  itemLabel: (f) => f,
+                  itemIcon: (f) {
+                    switch (f) {
+                      case "Efectivo":
+                        return const Icon(Icons.attach_money_rounded);
+                      case "Banco":
+                        return const Icon(Icons.account_balance_rounded);
+                      case "Visa":
+                      case "Mastercard":
+                      case "Tarjeta de crédito":
+                      case "Tarjeta de débito":
+                        return const Icon(Icons.credit_card_rounded);
+                      case "Inversión":
+                        return const Icon(Icons.trending_up_rounded);
+                      case "Criptomoneda":
+                        return const Icon(Icons.currency_bitcoin_rounded);
+                      case "PayPal":
+                        return const Icon(Icons.account_balance_wallet_outlined);
+                      case "Transferencia":
+                        return const Icon(Icons.swap_horiz_rounded);
+                      default:
+                        return const Icon(Icons.account_balance_wallet_outlined);
+                    }
+                  },
+                  initialValue: typeSelected,
+                onChanged: (value) => setState(() => typeSelected = value ?? typeSelected),
+                  validator: (value) => value == null ? 'Seleccione un tipo de fuente' : null,
                 ),
 
                 if (widget.moneyMaker == null) ...[
                   const SizedBox(height: 16),
 
                   // Tipo de moneda
-                  DropdownButtonFormField<Currency>(
-                    value: selectedCurrency,
-                    decoration: const InputDecoration(
-                      labelText: 'Tipo de moneda',
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.all(Radius.circular(12)),
+                BottomSheetPickerField<Currency>(
+                    label: 'Tipo de moneda',
+                    items: currencies,
+                    itemLabel: (c) => '${c.code} - ${c.name}',
+                    itemIcon: (c) => CircleAvatar(
+                      radius: 16,
+                      backgroundColor: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+                      child: Text(
+                        c.symbol,
+                        style: TextStyle(
+                          color: Theme.of(context).colorScheme.primary,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                     ),
-                    items: currencies
-                        .map((c) => DropdownMenuItem<Currency>(
-                              value: c,
-                              child: Text('${c.symbol} ${c.code} - ${c.name}'),
-                            ))
-                        .toList(),
-                    onChanged: (value) =>
-                        setState(() => selectedCurrency = value),
-                    validator: (val) =>
-                        val == null ? 'Debes seleccionar una moneda' : null,
+                    initialValue: selectedCurrency,
+                    onChanged: (value) => setState(() => selectedCurrency = value),
+                    validator: (value) =>
+                        value == null ? 'Debes seleccionar una moneda' : null,
                   ),
                   const SizedBox(height: 16),
 
@@ -249,8 +270,8 @@ Widget build(BuildContext context) {
 
                 if (widget.moneyMaker != null)
                   ButtonDelete(
-                    title: "Eliminar Meta",
-                    message: "¿Seguro que quieres deshabilitar esta meta?",
+                    title: "Eliminar Fuente",
+                    message: "¿Seguro que quieres deshabilitar esta fuente?",
                     onConfirm: _deleteMoneyMaker,
                   ),
                 ],

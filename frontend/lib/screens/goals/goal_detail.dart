@@ -49,6 +49,7 @@ Future<void> _fetchRegistersGoal() async {
     final dateFormat = DateFormat('dd/MM/yyyy');
     final currencySymbol = widget.goal.currency?.symbol ?? '';
     final hasRegisters = registers.isNotEmpty;
+        final progress = (widget.goal.balance / widget.goal.targetAmount).clamp(0.0, 1.0);
 
     return CustomScaffold(
       title: 'Detalle de ${widget.goal.name}',
@@ -145,15 +146,32 @@ Future<void> _fetchRegistersGoal() async {
                           ),
                           
                           const SizedBox(height: 10),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                'Progreso:',
+                                style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
+                              ),
+                              Text(
+                                '${(progress * 100).toStringAsFixed(0)}%',
+                                style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                color: progress >= 1 ? Theme.of(context).colorScheme.secondary
+                                      : Colors.blue,
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 4),
                           LinearProgressIndicator(
-                            value: (widget.goal.balance / widget.goal.targetAmount)
-                                .clamp(0.0, 1.0),
-                            minHeight: 8,
-                            borderRadius: BorderRadius.circular(10),
+                            value: progress,
                             backgroundColor: Colors.grey[300],
-                            color: widget.goal.balance >= widget.goal.targetAmount
-                                ? Theme.of( context).colorScheme.secondary
+                            color: progress >= 1
+                                ? Theme.of(context).colorScheme.secondary
                                 : Colors.blue,
+                            minHeight: 6,
+                            borderRadius: BorderRadius.circular(10),
                           ),
                           const SizedBox(height: 12),
 

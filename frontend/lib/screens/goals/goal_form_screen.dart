@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:frontend/widgets/bottom_sheet_pickerField.dart';
 import 'package:frontend/widgets/buttons/button_delete.dart';
 import 'package:frontend/widgets/buttons/button_save.dart';
 import 'package:frontend/widgets/custom_scaffold.dart';
@@ -160,24 +161,20 @@ Widget build(BuildContext context) {
                           ),
                         ),
                       )
-                    : DropdownButtonFormField<Currency>(
-                        decoration: const InputDecoration(
-                          labelText: 'Moneda',
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.all(Radius.circular(12)),
+                    : BottomSheetPickerField<Currency>(
+                        label: 'Moneda',
+                        items: currencies,
+                        itemLabel: (c) => '${c.name} (${c.code})',
+                        itemIcon: (c) => CircleAvatar(
+                          backgroundColor: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+                          child: Text(
+                            c.symbol,
+                            style: TextStyle(color: Theme.of(context).colorScheme.primary),
                           ),
                         ),
-                        value: selectedCurrency,
-                        items: currencies
-                            .map((c) => DropdownMenuItem(
-                                  value: c,
-                                  child: Text('${c.name} (${c.code})'),
-                                ))
-                            .toList(),
-                        onChanged: (value) =>
-                            setState(() => selectedCurrency = value),
-                        validator: (value) =>
-                            value == null ? 'Seleccione una moneda' : null,
+                        initialValue: selectedCurrency,
+                        onChanged: (value) => setState(() => selectedCurrency = value),
+                        validator: (value) => value == null ? 'Seleccione una moneda' : null,
                       ),
 
                 const SizedBox(height: 16),

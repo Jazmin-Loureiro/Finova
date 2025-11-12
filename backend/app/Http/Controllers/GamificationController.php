@@ -118,13 +118,22 @@ class GamificationController extends Controller
                 'points' => $user->points,
                 'level'  => $user->level,
 
-                // 🔹 NUEVO: avatar del usuario (semilla o ruta)
-                'avatar_seed' => $user->icon, // el campo que guardás en DB
+                // 🔹 Avatar del usuario
+                'avatar_seed' => $user->icon,
                 'full_icon_url' => $user->icon && str_contains($user->icon, '/')
                     ? asset('storage/' . $user->icon)
                     : null,
             ],
+
+            // 🔥 NUEVO: Datos de racha del usuario
+            'streak' => [
+                'current' => optional($user->streak)->current_streak ?? 0,
+                'longest' => optional($user->streak)->longest_streak ?? 0,
+                'last_activity' => optional($user->streak)->last_activity_date?->toIso8601String(),
+            ],
+
             'badges' => $badges,
+
             'challenges' => [
                 'in_progress' => $inProgress,
                 'completed'   => $completed,

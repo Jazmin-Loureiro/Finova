@@ -5,6 +5,8 @@ import '../widgets/loading_widget.dart';
 import '../widgets/success_dialog_widget.dart';
 import '../widgets/confirm_dialog_widget.dart';
 import 'challenge_profile_screen.dart';
+import '../../main.dart'; // 👈 para usar routeObserver
+
 
 // 🔹 Nuevos imports modularizados
 import '../widgets/empty_state_widget.dart';
@@ -21,29 +23,51 @@ class ChallengeScreen extends StatefulWidget {
 }
 
 class _ChallengeScreenState extends State<ChallengeScreen>
-    with SingleTickerProviderStateMixin {
-  final ApiService api = ApiService();
-  late TabController _tabController;
+    with SingleTickerProviderStateMixin, RouteAware {
+    final ApiService api = ApiService();
+    late TabController _tabController;
 
-  late Future<Map<String, dynamic>> _availableFuture;
-  late Future<Map<String, dynamic>> _profileFuture;
+    late Future<Map<String, dynamic>> _availableFuture;
+    late Future<Map<String, dynamic>> _profileFuture;
 
-  DateTime? _cooldownUntil;
-  static const _cooldownHours = 12;
-  bool _hideLocked = false;
+    DateTime? _cooldownUntil;
+    static const _cooldownHours = 12;
+    bool _hideLocked = false;
 
-  @override
-  void initState() {
-    super.initState();
-    _tabController = TabController(length: 2, vsync: this);
-    _loadData();
-  }
+    // ✅ Este initState se había perdido
+    @override
+    void initState() {
+      super.initState();
+      _tabController = TabController(length: 2, vsync: this);
+      _loadData();
+    }
 
-  void _loadData() {
-    _availableFuture = api.getAvailableChallenges();
-    _profileFuture = api.getGamificationProfile();
-    _primeCooldownFromUser();
-  }
+    // ✅ Este método también se había perdido
+    void _loadData() {
+      _availableFuture = api.getAvailableChallenges();
+      _profileFuture = api.getGamificationProfile();
+      _primeCooldownFromUser();
+    }
+
+    // ✅ Esto es lo que agregamos para el refresco automático al volver
+    @override
+    void didChangeDependencies() {
+      super.didChangeDependencies();
+      routeObserver.subscribe(this, ModalRoute.of(context)! as PageRoute);
+    }
+
+    @override
+    void didPopNext() {
+      super.didPopNext();
+      // 👇 cuando volvés desde el perfil, refresca los datos
+      _loadData();
+    }
+
+    @override
+    void dispose() {
+      routeObserver.unsubscribe(this);
+      super.dispose();
+    }
 
   Future<void> _primeCooldownFromUser() async {
     try {

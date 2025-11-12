@@ -4,6 +4,7 @@ import '../widgets/custom_scaffold.dart';
 import '../widgets/loading_widget.dart';
 import '../widgets/success_dialog_widget.dart';
 import '../widgets/confirm_dialog_widget.dart';
+import 'challenge_profile_screen.dart';
 
 // 🔹 Nuevos imports modularizados
 import '../widgets/empty_state_widget.dart';
@@ -202,6 +203,18 @@ class _ChallengeScreenState extends State<ChallengeScreen>
     return CustomScaffold(
       title: 'Desafíos',
       currentRoute: 'challenge',
+      actions: [
+        IconButton(
+          icon: const Icon(Icons.person_outline),
+          tooltip: 'Ver perfil gamificado',
+          onPressed: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const ChallengeProfileScreen()),
+            );
+          },
+        ),
+      ],
       body: Column(
         children: [
           // 🔹 Header con nivel y puntos (igual que tenías)

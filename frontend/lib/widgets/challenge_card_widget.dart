@@ -9,204 +9,221 @@ class ChallengeCardWidget extends StatelessWidget {
   const ChallengeCardWidget({super.key, required this.challenge, this.completed = false});
 
   @override
-  Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-    final ch = challenge;
-    final rawProgress = ch['pivot']?['progress'] ?? 0;
-    final progress = rawProgress is String
-        ? double.tryParse(rawProgress) ?? 0.0
-        : (rawProgress as num).toDouble();
-    final state =
-        ch['pivot']?['state'] ?? (completed ? 'completed' : 'in_progress');
+  @override
+Widget build(BuildContext context) {
+  final cs = Theme.of(context).colorScheme;
+  final ch = challenge;
+  final rawProgress = ch['pivot']?['progress'] ?? 0;
+  final progress = rawProgress is String
+      ? double.tryParse(rawProgress) ?? 0.0
+      : (rawProgress as num).toDouble();
+  final state =
+      ch['pivot']?['state'] ?? (completed ? 'completed' : 'in_progress');
 
-    return Card(
-      margin: const EdgeInsets.symmetric(vertical: 8),
-      color: cs.surface,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-        side: BorderSide(
-          color: cs.outlineVariant.withOpacity(0.4),
-          width: 1.2,
-        ),
+  return Card(
+    margin: const EdgeInsets.symmetric(vertical: 8),
+    color: cs.surface,
+    shape: RoundedRectangleBorder(
+      borderRadius: BorderRadius.circular(16),
+      side: BorderSide(
+        color: cs.outlineVariant.withOpacity(0.4),
+        width: 1.2,
       ),
-      child: ListTile(
-        title: Row(
-          children: [
-            Expanded(
-              child: Text(
-                ch['name'] ?? '',
-                style: TextStyle(
-                  color: cs.onSurface,
-                  fontWeight: FontWeight.w600,
-                  fontSize: 16,
-                ),
-              ),
-            ),
-
-            // 🔹 Ícono de información solo para desafíos de ahorro
-            if (ch['type'] == 'SAVE_AMOUNT')
-              InfoIcon(
-                title: 'Desafío de ahorro',
-                message:
-                    'Este desafío se completa ahorrando dentro de la meta creada automáticamente. '
-                    'Cada vez que sumes dinero a esa meta, tu progreso se actualizará en esta sección.',
-                iconSize: 20,
-              ),
-          ],
-        ),
-
-        subtitle: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            if ((ch['description'] as String?)?.isNotEmpty == true)
-              Text(
-                ch['description'] ?? '',
-                style: TextStyle(color: cs.onSurface.withOpacity(0.85)),
-              ),
-
-            // 🧩 Hint
-            Builder(builder: (_) {
-              final merged = {
-                'type': ch['type'],
-                'description': ch['description'],
-                'payload': ch['pivot']?['payload'] ?? ch['payload'],
-                'target_amount':
-                    ch['pivot']?['target_amount'] ?? ch['target_amount'],
-                'duration_days': ch['duration_days'],
-                'reward_points': ch['reward_points'],
-                'start_date': ch['pivot']?['start_date'],
-              };
-              final hint = _buildChallengeHint(merged);
-              return Padding(
-                padding: const EdgeInsets.only(top: 6, bottom: 8),
+    ),
+    child: Padding(
+      padding: const EdgeInsets.all(16), // 🔹 cambio: da aire a todo el contenido
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // 🔹 Título
+          Row(
+            children: [
+              Expanded(
                 child: Text(
-                  hint,
+                  ch['name'] ?? '',
                   style: TextStyle(
-                    fontWeight: FontWeight.w700,
                     color: cs.onSurface,
+                    fontWeight: FontWeight.w600,
+                    fontSize: 16,
                   ),
                 ),
-              );
-            }),
+              ),
+              if (ch['type'] == 'SAVE_AMOUNT')
+                InfoIcon(
+                  title: 'Desafío de ahorro',
+                  message:
+                      'Este desafío se completa ahorrando dentro de la meta creada automáticamente. '
+                      'Cada vez que sumes dinero a esa meta, tu progreso se actualizará en esta sección.',
+                  iconSize: 20,
+                ),
+            ],
+          ),
 
-            MetaChipsWidget(challenge: ch),
+          const SizedBox(height: 8),
+
+          // 🔹 Descripción
+          if ((ch['description'] as String?)?.isNotEmpty == true) ...[
+            Text(
+              ch['description'] ?? '',
+              style: TextStyle(color: cs.onSurface.withOpacity(0.85)),
+            ),
             const SizedBox(height: 8),
-
-            // 🔹 Progreso
-            _progressBar(context, ch, state, progress),
-
-            // 🔹 Mensaje final
-            _statusRow(context, ch, progress, state),
           ],
+
+          // 🔹 Hint
+          Builder(builder: (_) {
+            final merged = {
+              'type': ch['type'],
+              'description': ch['description'],
+              'payload': ch['pivot']?['payload'] ?? ch['payload'],
+              'target_amount':
+                  ch['pivot']?['target_amount'] ?? ch['target_amount'],
+              'duration_days': ch['duration_days'],
+              'reward_points': ch['reward_points'],
+              'start_date': ch['pivot']?['start_date'],
+            };
+            final hint = _buildChallengeHint(merged);
+            return Text(
+              hint,
+              style: TextStyle(
+                fontWeight: FontWeight.w700,
+                color: cs.onSurface,
+              ),
+            );
+          }),
+
+          const SizedBox(height: 8),
+
+          // 🔹 Chips
+          MetaChipsWidget(challenge: ch),
+
+          const SizedBox(height: 8),
+
+          // 🔹 Progreso (barra + texto)
+          _progressBar(context, ch, state, progress),
+
+          const SizedBox(height: 8),
+
+          // 🔹 Estado final
+          _statusRow(context, ch, progress, state),
+        ],
+      ),
+    ),
+  );
+}
+
+
+  Widget _progressBar(
+    BuildContext context, Map<String, dynamic> ch, String state, double progress) {
+  final cs = Theme.of(context).colorScheme;
+  final p = ChallengeUtils.decodePayload(ch['pivot']?['payload'] ?? ch['payload']);
+  final type = ch['type'];
+
+  Color trackColor = cs.surfaceContainerHighest.withOpacity(0.25);
+
+  Widget progressContainer(double value, Color fillColor) {
+    return Container(
+      height: 8,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(6),
+        border: Border.all(
+          color: cs.outlineVariant.withOpacity(0.7),
+          width: 1,
+        ),
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(5),
+        child: LinearProgressIndicator(
+          value: value,
+          color: fillColor,
+          backgroundColor: trackColor,
+          minHeight: 6,
         ),
       ),
     );
   }
 
-  Widget _progressBar(
-      BuildContext context, Map<String, dynamic> ch, String state, double progress) {
-    final cs = Theme.of(context).colorScheme;
-    final p = ChallengeUtils.decodePayload(ch['pivot']?['payload'] ?? ch['payload']);
-    final type = ch['type'];
+  if (type == 'SAVE_AMOUNT') {
+    final double goal = (p['goal_amount'] ?? p['amount'] ?? 0).toDouble();
+    final double saved = (p['total_ahorro'] ?? 0).toDouble();
+    final double realProgress = goal > 0 ? (saved / goal).clamp(0.0, 1.0) : 0.0;
 
-    Color trackColor = cs.surfaceContainerHighest.withOpacity(0.25);
-
-    Widget progressContainer(double value, Color fillColor) {
-      return Container(
-        height: 8,
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(6),
-          border: Border.all(
-            color: cs.outlineVariant.withOpacity(0.7),
-            width: 1,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        progressContainer(realProgress, state == 'completed' ? Colors.green : cs.primary),
+        const SizedBox(height: 8),
+        Text(
+          'Llevás ahorrado ${ChallengeUtils.symbolOf(ch)}${saved.toStringAsFixed(0)} '
+          'de ${ChallengeUtils.symbolOf(ch)}${goal.toStringAsFixed(0)}',
+          style: TextStyle(
+            fontSize: 12,
+            color: cs.onSurface.withOpacity(0.85),
+            fontWeight: FontWeight.w600,
           ),
         ),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(5),
-          child: LinearProgressIndicator(
-            value: value,
-            color: fillColor,
-            backgroundColor: trackColor,
-            minHeight: 6,
-          ),
-        ),
-      );
-    }
+      ],
+    );
+  }
 
-    if (type == 'SAVE_AMOUNT') {
-      final double goal = (p['goal_amount'] ?? p['amount'] ?? 0).toDouble();
-      final double saved = (p['total_ahorro'] ?? 0).toDouble();
-      final double realProgress = goal > 0 ? (saved / goal).clamp(0.0, 1.0) : 0.0;
+  if (type == 'REDUCE_SPENDING_PERCENT') {
+    final num? maxAllowed = p['max_allowed'] is num
+        ? p['max_allowed']
+        : (p['max_allowed'] is String ? num.tryParse(p['max_allowed']) : null);
+    final num? currentSpent = p['current_spent'] is num
+        ? p['current_spent']
+        : (p['current_spent'] is String ? num.tryParse(p['current_spent']) : null);
+
+    if (maxAllowed != null && currentSpent != null) {
+      final symbol = ChallengeUtils.symbolOf(ch);
+      final percent = (currentSpent / maxAllowed).clamp(0.0, 1.0);
+      Color color;
+      if (percent < 0.5) {
+        color = Colors.green;
+      } else if (percent < 0.8) {
+        color = Colors.orange;
+      } else {
+        color = Colors.red;
+      }
+
+      final remaining = (maxAllowed - currentSpent).clamp(0, maxAllowed);
 
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          progressContainer(realProgress, state == 'completed' ? Colors.green : cs.primary),
-          const SizedBox(height: 6),
+          progressContainer(percent, color),
+          const SizedBox(height: 8),
           Text(
-            'Llevás ahorrado ${ChallengeUtils.symbolOf(ch)}${saved.toStringAsFixed(0)} '
-            'de ${ChallengeUtils.symbolOf(ch)}${goal.toStringAsFixed(0)}',
+            remaining > 0
+                ? 'Te queda ${symbol}${remaining.toStringAsFixed(0)} '
+                    'de ${symbol}${maxAllowed.toStringAsFixed(0)}'
+                : 'Te pasaste del límite',
             style: TextStyle(
               fontSize: 12,
-              color: cs.onSurface.withOpacity(0.85),
+              color: color,
               fontWeight: FontWeight.w600,
             ),
           ),
         ],
       );
     }
-
-    if (type == 'REDUCE_SPENDING_PERCENT') {
-      final num? maxAllowed = p['max_allowed'] is num
-          ? p['max_allowed']
-          : (p['max_allowed'] is String ? num.tryParse(p['max_allowed']) : null);
-      final num? currentSpent = p['current_spent'] is num
-          ? p['current_spent']
-          : (p['current_spent'] is String ? num.tryParse(p['current_spent']) : null);
-
-      if (maxAllowed != null && currentSpent != null) {
-        final symbol = ChallengeUtils.symbolOf(ch);
-        final percent = (currentSpent / maxAllowed).clamp(0.0, 1.0);
-        Color color;
-        if (percent < 0.5) {
-          color = Colors.green;
-        } else if (percent < 0.8) {
-          color = Colors.orange;
-        } else {
-          color = Colors.red;
-        }
-
-        final remaining = (maxAllowed - currentSpent).clamp(0, maxAllowed);
-
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            progressContainer(percent, color),
-            const SizedBox(height: 4),
-            Text(
-              remaining > 0
-                  ? 'Te queda ${symbol}${remaining.toStringAsFixed(0)} '
-                      'de ${symbol}${maxAllowed.toStringAsFixed(0)}'
-                  : 'Te pasaste del límite',
-              style: TextStyle(
-                fontSize: 12,
-                color: color,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ],
-        );
-      }
-    }
-
-    return progressContainer(
-      (progress / 100).clamp(0.0, 1.0),
-      state == 'completed' ? Colors.green : cs.primary,
-    );
   }
 
+  // Porcentaje genérico
+  return Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      progressContainer(
+        (progress / 100).clamp(0.0, 1.0),
+        state == 'completed' ? Colors.green : cs.primary,
+      ),
+    ],
+  );
+}
+
+
   Widget _statusRow(
-      BuildContext context, Map<String, dynamic> ch, double progress, String state) {
+    BuildContext context, Map<String, dynamic> ch, double progress, String state) {
     final cs = Theme.of(context).colorScheme;
 
     String text;
@@ -233,21 +250,95 @@ class ChallengeCardWidget extends StatelessWidget {
         icon = Icons.timelapse_outlined;
     }
 
-    return Row(
+    // 🗓️ Cálculo de fechas (inicio, fin, fallo o completado)
+    String? startStr = ch['pivot']?['start_date'];
+    String? failedAtStr = ch['pivot']?['failed_at'] ?? ch['pivot']?['updated_at'];
+    String? completedAtStr = ch['pivot']?['completed_at'] ?? ch['pivot']?['updated_at'];
+    int? durationDays = ch['duration_days'] is int
+        ? ch['duration_days']
+        : int.tryParse('${ch['duration_days']}');
+
+    String? remainingInfo;
+    if (startStr != null && durationDays != null) {
+      final startDate = DateTime.tryParse(startStr)?.toLocal();
+      if (startDate != null) {
+        final endDate = startDate.add(Duration(days: durationDays));
+        final now = DateTime.now();
+
+        if (state == 'failed') {
+          if (failedAtStr != null) {
+            final failedAt = DateTime.tryParse(failedAtStr)?.toLocal();
+            if (failedAt != null) {
+              remainingInfo =
+                  '❌ Falló el ${failedAt.day}/${failedAt.month}${failedAt.year != now.year ? "/${failedAt.year}" : ""}';
+            } else {
+              remainingInfo = '❌ Falló antes del fin';
+            }
+          } else {
+            remainingInfo = '❌ Falló antes del fin';
+          }
+        } else if (state == 'completed') {
+          if (completedAtStr != null) {
+            final completedAt = DateTime.tryParse(completedAtStr)?.toLocal();
+            if (completedAt != null) {
+              remainingInfo =
+                  '✅ Completado el ${completedAt.day}/${completedAt.month}${completedAt.year != now.year ? "/${completedAt.year}" : ""}';
+            }
+          } else {
+            remainingInfo =
+                '✅ Completado el ${endDate.day}/${endDate.month}';
+          }
+        } else {
+          // En progreso
+          final remaining = endDate.difference(now);
+          if (remaining.isNegative) {
+            remainingInfo = '📅 Finalizado el ${endDate.day}/${endDate.month}';
+          } else if (remaining.inDays >= 1) {
+            remainingInfo =
+                '⏳ Faltan ${remaining.inDays} día${remaining.inDays == 1 ? '' : 's'} '
+                '(termina el ${endDate.day}/${endDate.month})';
+          } else {
+            final hours = remaining.inHours;
+            remainingInfo =
+                '⏰ Faltan $hours hora${hours == 1 ? '' : 's'} '
+                '(termina el ${endDate.day}/${endDate.month})';
+          }
+        }
+      }
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Icon(icon, size: 16, color: color),
-        const SizedBox(width: 6),
-        Text(
-          text,
-          style: TextStyle(
-            fontSize: 12,
-            color: color,
-            fontWeight: FontWeight.w600,
-          ),
+        Row(
+          children: [
+            Icon(icon, size: 16, color: color),
+            const SizedBox(width: 6),
+            Text(
+              text,
+              style: TextStyle(
+                fontSize: 12,
+                color: color,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
         ),
+        if (remainingInfo != null) ...[
+          const SizedBox(height: 6),
+          Text(
+            remainingInfo,
+            style: TextStyle(
+              fontSize: 12,
+              color: cs.onSurfaceVariant,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ],
       ],
     );
   }
+
 
   String _buildChallengeHint(Map<String, dynamic> ch) {
     final type = (ch['type'] ?? '') as String;

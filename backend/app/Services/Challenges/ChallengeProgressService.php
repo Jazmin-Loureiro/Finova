@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Services;
+namespace App\Services\Challenges;
 
 use App\Models\User;
 use App\Models\UserChallenge;
@@ -288,7 +288,19 @@ if (!empty($pivot->end_date)) {
 
         // 🎁 Entregar recompensa solo si acaba de completarse
         if (isset($update['state']) && $update['state'] === 'completed') {
-            $reward = app(\App\Services\GamificationService::class)
+
+            // ✅ NUEVO: registrar actividad de racha por completar un desafío hoy
+            app(\App\Services\Challenges\StreakService::class)->recordActivity($user, now());
+
+            $reward = app(\App\Services\Challenges\GamificationService::class)
+                ->rewardUser($user, $pivot->challenge);
+
+            return is_array($reward) ? $reward : null;
+        }
+
+        // 🎁 Entregar recompensa solo si acaba de completarse
+        if (isset($update['state']) && $update['state'] === 'completed') {
+            $reward = app(\App\Services\Challenges\GamificationService::class)
                 ->rewardUser($user, $pivot->challenge);
             return is_array($reward) ? $reward : null;
         }

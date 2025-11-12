@@ -18,7 +18,7 @@ class GamificationController extends Controller
         $user = Auth::user();
 
         // 🔄 Recalcular progreso y cerrar automáticamente (failed/completed + recompensas)
-        app(\App\Services\ChallengeProgressService::class)->recomputeForUserWithRewards($user);
+        app(\App\Services\Challenges\ChallengeProgressService::class)->recomputeForUserWithRewards($user);
 
         // 🏅 Insignias: todas, pero marcando las desbloqueadas del usuario
         $allBadges = \App\Models\Badge::all([

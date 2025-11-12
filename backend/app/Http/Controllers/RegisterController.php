@@ -57,7 +57,7 @@ class RegisterController extends Controller {
                 ], 500);
             }
 
-            $rewards = app(\App\Services\ChallengeProgressService::class)
+            $rewards = app(\App\Services\Challenges\ChallengeProgressService::class)
                 ->recomputeForUserWithRewards($user);
 
         return response()->json([

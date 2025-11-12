@@ -31,7 +31,7 @@ class UserChallengeController extends Controller
         }
 
         // 🔹 Recalcular progreso y gasto antes de devolver
-        app(\App\Services\ChallengeProgressService::class)->recomputeForUserWithRewards($user);
+        app(\App\Services\Challenges\ChallengeProgressService::class)->recomputeForUserWithRewards($user);
 
         $challenges = $query->get();
 

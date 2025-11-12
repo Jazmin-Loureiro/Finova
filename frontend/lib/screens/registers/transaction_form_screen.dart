@@ -4,6 +4,7 @@ import 'package:file_picker/file_picker.dart';
 import 'package:frontend/helpers/icon_utils.dart';
 import 'package:frontend/widgets/bottom_sheet_pickerField.dart';
 import 'package:frontend/widgets/buttons/button_save.dart';
+import 'package:frontend/widgets/completed_dialog_widget.dart';
 import 'package:frontend/widgets/custom_scaffold.dart';
 
 import '../../services/api_service.dart';
@@ -186,13 +187,9 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
           final goal = Goal.fromJson(res['goal']);
           if (goal.state == 'completed') {
             await api.assignReservedToMoneyMakers(goal.id);
-            await showDialog(
-              context: context,
-              builder: (_) => const SuccessDialogWidget(
-                title: 'Meta completada',
-                message:
-                    '¡Meta completada! Su dinero reservado se asignará a las fuentes de dinero utilizadas.',
-              ),
+            await CompletedDialog.show(
+              context,
+              goal: goal, // Tu modelo Goal con goal.name, goal.amount, etc.
             );
           }
         }

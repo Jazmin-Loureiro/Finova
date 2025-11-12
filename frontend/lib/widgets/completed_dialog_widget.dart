@@ -1,42 +1,53 @@
 import 'package:flutter/material.dart';
+import 'package:frontend/models/goal.dart';
 import 'package:lottie/lottie.dart';
 
 class CompletedDialog extends StatelessWidget {
   final String title;
-  final String message;
+  final String? message;
   final String buttonText;
+  final String iconPath;
+  final Goal goal;
 
   const CompletedDialog({
     super.key,
+    required this.goal,
+    this.iconPath = 'assets/lottie/congratulationgoal.json',
     this.title = "¡Meta completada!",
-    this.message = "Ganaste una nueva medalla y subiste de nivel 🎯",
+    this.message,
     this.buttonText = "Aceptar",
   });
 
-  static Future<void> show(BuildContext context) async {
+  static Future<void> show(
+    BuildContext context, {
+    required Goal goal,
+    String? title,
+    String? message,
+    String? iconPath,
+  }) async {
     await showGeneralDialog(
       context: context,
       barrierLabel: "goalCompleted",
       barrierDismissible: true,
-      transitionDuration: const Duration(milliseconds: 450),
+      transitionDuration: const Duration(milliseconds: 500),
       pageBuilder: (_, __, ___) {
-        return const Center(child: CompletedDialog());
+        return Center(
+          child: CompletedDialog(
+            goal: goal,
+            title: title ?? "¡Meta completada!",
+            message: message,
+            iconPath: iconPath ?? 'assets/lottie/congratulationgoal.json',
+          ),
+        );
       },
-      transitionBuilder: (context, animation, secondaryAnimation, child) {
+      transitionBuilder: (context, animation, _, child) {
         final curved = CurvedAnimation(
           parent: animation,
-          curve: Curves.easeOutBack,
+          curve: Curves.elasticOut,
         );
-
-        return ScaleTransition(
-          scale: curved,
-          child: FadeTransition(
-            opacity: CurvedAnimation(
-              parent: animation,
-              curve: Curves.easeInOut,
-            ),
-            child: child,
-          ),
+        return FadeTransition(
+          opacity: animation,
+          child: ScaleTransition(scale: curved, child: child),
         );
       },
     );
@@ -44,8 +55,14 @@ class CompletedDialog extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+
+    final dynamicMessage = message ??
+        "Completaste tu meta \"${goal.name}\" con éxito. "
+        "Tu dinero reservado ha sido liberado.";
+
     return Dialog(
-      backgroundColor: Colors.white,
+      backgroundColor: cs.surface,
       insetPadding: const EdgeInsets.symmetric(horizontal: 40),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
       elevation: 10,
@@ -54,76 +71,84 @@ class CompletedDialog extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            // 🏆 Ícono o animación
             Stack(
               alignment: Alignment.center,
               children: [
                 Container(
-                  height: 100,
-                  width: 100,
-                  decoration: const BoxDecoration(
+                  height: 110,
+                  width: 110,
+                  decoration: BoxDecoration(
                     shape: BoxShape.circle,
                     gradient: LinearGradient(
-                      colors: [Color(0xFF8E2DE2), Color(0xFF4A00E0)],
+                      colors: [
+                        cs.primary.withOpacity(0.9),
+                        cs.primaryContainer.withOpacity(0.9),
+                      ],
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
                     ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: cs.primary.withOpacity(0.3),
+                        blurRadius: 12,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
                   ),
                 ),
                 Lottie.asset(
-                  'assets/lottie/goal_trophy.json', // 👈 poné tu animación
-                  height: 90,
+                  iconPath,
+                  height: 95,
                   repeat: false,
                 ),
               ],
             ),
 
-            const SizedBox(height: 20),
+            const SizedBox(height: 22),
 
-            // 🎉 Título
-            const Text(
-              "¡Meta completada!",
+            Text(
+              title,
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 20,
                 fontWeight: FontWeight.bold,
-                color: Colors.black87,
+                color: cs.primary,
               ),
             ),
 
-            const SizedBox(height: 8),
+            const SizedBox(height: 10),
 
-            // 💬 Descripción
-            const Text(
-              "Ganaste una nueva medalla y subiste de nivel 🎯",
+            Text(
+              dynamicMessage,
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 14.5,
-                color: Colors.black54,
+                color: cs.onSurface,
                 height: 1.4,
               ),
             ),
 
-            const SizedBox(height: 24),
+            const SizedBox(height: 26),
 
-            // 🌈 Botón azul estilo app moderna
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF2196F3),
-                  foregroundColor: Colors.white,
-                  elevation: 4,
+                  backgroundColor: cs.primary,
+                  foregroundColor: cs.onPrimary,
+                  elevation: 6,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(14),
                   ),
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 24,
+                    vertical: 14,
+                  ),
                 ),
                 onPressed: () => Navigator.pop(context, true),
-                child: const Text(
-                  "Aceptar",
-                  style: TextStyle(
+                child: Text(
+                  buttonText,
+                  style: const TextStyle(
                     fontWeight: FontWeight.w600,
                     fontSize: 16,
                   ),

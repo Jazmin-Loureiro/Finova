@@ -117,6 +117,12 @@ class GamificationController extends Controller
                 'name'   => $user->name,
                 'points' => $user->points,
                 'level'  => $user->level,
+
+                // 🔹 NUEVO: avatar del usuario (semilla o ruta)
+                'avatar_seed' => $user->icon, // el campo que guardás en DB
+                'full_icon_url' => $user->icon && str_contains($user->icon, '/')
+                    ? asset('storage/' . $user->icon)
+                    : null,
             ],
             'badges' => $badges,
             'challenges' => [

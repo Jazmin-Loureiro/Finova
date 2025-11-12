@@ -1,16 +1,25 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import 'package:flutter_lucide/flutter_lucide.dart'; // o lucide_icons_flutter
+import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'dart:math' as math;
+
+// ✅ la hacemos estática para que se mantenga entre reconstrucciones
+final Set<int> _animatedBadges = <int>{};
 
 IconData? _lucideFrom(String name) {
-  // Mapea strings a IconData de Lucide. Ejemplo básico:
   switch (name) {
     case 'trophy': return LucideIcons.trophy;
     case 'medal': return LucideIcons.medal;
     case 'crown': return LucideIcons.crown;
     case 'award': return LucideIcons.award;
-    default: return null;
+    case 'zap': return LucideIcons.zap;
+    case 'piggy-bank': return LucideIcons.piggy_bank;
+    case 'chart-line': return LucideIcons.trending_up;
+    case 'calendar-check': return LucideIcons.calendar_check_2;
+    case 'repeat': return LucideIcons.repeat;
+    case 'flame': return LucideIcons.flame;
+    default: return LucideIcons.badge_check;
   }
 }
 
@@ -18,17 +27,20 @@ Widget buildBadge(BuildContext context, Map<String, dynamic> badge) {
   final cs = Theme.of(context).colorScheme;
   final iconStr = (badge['icon'] ?? '') as String;
   final tier = (badge['tier'] ?? 0) as int;
-  final unlocked = badge['unlocked'] == true; // 👈 nuevo campo
+  final unlocked = badge['unlocked'] == true;
+  final badgeId = badge['badge_id'] ?? badge['id'] ?? badge.hashCode;
 
-  // color por tier (solo si está desbloqueada)
+  // 🎨 Colores suaves compatibles con blanco/violeta
   final Color activeColor = switch (tier) {
-    3 => Colors.amberAccent,
-    2 => Colors.blueGrey.shade200,
-    1 => Colors.brown.shade300,
-    _ => cs.primary,
+    3 => const Color(0xFFFFD700), // Oro brillante
+    2 => const Color(0xFFC0C0C0), // Plata clásica
+    1 => const Color(0xFFCD7F32), // Bronce real
+    _ => cs.primary,              // Violeta de tu tema
   };
-  final Color color = unlocked ? activeColor : Colors.grey.shade400;
 
+  final Color color = unlocked ? activeColor : const Color(0xFFE0E0E0);
+
+  // 🧩 Construir el ícono
   Widget inner;
   if (iconStr.startsWith('lucide:')) {
     final name = iconStr.split(':').last;
@@ -39,70 +51,124 @@ Widget buildBadge(BuildContext context, Map<String, dynamic> badge) {
       color: unlocked ? Colors.white : Colors.grey.shade200,
     );
   } else if (iconStr.endsWith('.svg')) {
-    inner = SvgPicture.network(iconStr,
-        width: 36,
-        height: 36,
-        color: unlocked ? Colors.white : Colors.grey.shade200);
+    inner = SvgPicture.network(
+      iconStr,
+      width: 26,
+      height: 26,
+      color: unlocked ? Colors.white : Colors.grey.shade200,
+    );
   } else if (iconStr.startsWith('http')) {
     inner = ColorFiltered(
       colorFilter: unlocked
           ? const ColorFilter.mode(Colors.transparent, BlendMode.multiply)
-          : ColorFilter.mode(Colors.grey, BlendMode.saturation),
-      child: CachedNetworkImage(imageUrl: iconStr, width: 40, height: 40),
+          : const ColorFilter.mode(Colors.grey, BlendMode.saturation),
+      child: CachedNetworkImage(imageUrl: iconStr, width: 32, height: 32),
     );
   } else {
-    inner = Icon(Icons.emoji_events_outlined,
-        size: 36, color: unlocked ? Colors.white : Colors.grey.shade200);
+    inner = Icon(
+      Icons.emoji_events_outlined,
+      size: 26,
+      color: unlocked ? Colors.white : Colors.grey.shade200,
+    );
   }
 
-  return Column(
-    mainAxisSize: MainAxisSize.min,
-    children: [
-      AnimatedOpacity(
-        duration: const Duration(milliseconds: 400),
-        opacity: unlocked ? 1 : 0.6,
-        child: Container(
-          width: 60,
-          height: 60,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            gradient: LinearGradient(
-              colors: unlocked
-                  ? [color.withOpacity(0.9), color.withOpacity(0.5)]
-                  : [Colors.grey.shade300, Colors.grey.shade500],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: color.withOpacity(0.35),
-                blurRadius: 10,
-                offset: const Offset(0, 4),
+  // 🌟 Animación de logro solo una vez
+  final bool showAchievementAnim =
+      unlocked && !_animatedBadges.contains(badgeId);
+
+  if (showAchievementAnim) {
+    _animatedBadges.add(badgeId);
+  }
+
+  return TweenAnimationBuilder<double>(
+    tween: Tween(begin: showAchievementAnim ? 0.0 : 1.0, end: 1.0),
+    duration: const Duration(milliseconds: 1200),
+    curve: Curves.easeOutBack,
+    builder: (context, scale, child) {
+  // 🔒 Asegura que scale no sobrepase el rango válido
+  final double safeScale = scale.clamp(0.0, 1.2);
+  final double safeOpacity = scale.clamp(0.0, 1.0);
+
+  return Transform.scale(
+    scale: safeScale, // ✅ usamos safeScale en vez de scale
+    child: Stack(
+      alignment: Alignment.center,
+      children: [
+        if (showAchievementAnim)
+          AnimatedOpacity(
+            opacity: safeOpacity, // ✅ ahora sí se usa correctamente
+            duration: const Duration(milliseconds: 1200),
+            child: Container(
+              width: 75,
+              height: 75,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                gradient: RadialGradient(
+                  colors: [
+                    Colors.white.withOpacity(0.7),
+                    color.withOpacity(0.3),
+                    Colors.transparent,
+                  ],
+                  stops: const [0.0, 0.5, 1.0],
+                ),
               ),
-            ],
-            border: Border.all(
-              color: unlocked
-                  ? Colors.white.withOpacity(0.25)
-                  : Colors.grey.withOpacity(0.2),
-              width: 1,
             ),
           ),
-          alignment: Alignment.center,
-          child: inner,
+        // 🎖️ Insignia base
+        Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 60,
+              height: 60,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                gradient: LinearGradient(
+                  colors: unlocked
+                      ? [color.withOpacity(0.9), cs.secondary.withOpacity(0.6)]
+                      : [Colors.grey.shade300, Colors.grey.shade500],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: unlocked
+                        ? color.withOpacity(0.4)
+                        : Colors.black.withOpacity(0.1),
+                    blurRadius: 8,
+                    offset: const Offset(0, 3),
+                  ),
+                ],
+                border: Border.all(
+                  color: unlocked
+                      ? Colors.white.withOpacity(0.25)
+                      : Colors.grey.withOpacity(0.2),
+                  width: 1,
+                ),
+              ),
+              alignment: Alignment.center,
+              child: inner,
+            ),
+            const SizedBox(height: 8),
+            Text(
+              badge['name'] ?? '',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w600,
+                color: unlocked
+                    ? cs.onSurface.withOpacity(0.9)
+                    : cs.onSurfaceVariant.withOpacity(0.5),
+              ),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ],
         ),
-      ),
-      const SizedBox(height: 8),
-      Text(
-        badge['name'] ?? '',
-        textAlign: TextAlign.center,
-        style: TextStyle(
-          fontSize: 11,
-          fontWeight: FontWeight.w600,
-          color: unlocked ? cs.onSurface : cs.onSurfaceVariant.withOpacity(0.5),
-        ),
-        maxLines: 2,
-      ),
-    ],
+      ],
+    ),
+  );
+},
+
   );
 }
-

@@ -23,6 +23,113 @@ class _ChallengeProfileScreenState extends State<ChallengeProfileScreen> {
     _profileFuture = api.getGamificationProfile();
   }
 
+  Widget _animatedStatCard({
+    required IconData icon,
+    required String label,
+    required int value,
+    required List<Color> gradient,
+    int delay = 0,
+  }) {
+    final cs = Theme.of(context).colorScheme;
+    final double baseHeight = 130; // altura base uniforme
+
+    return TweenAnimationBuilder<double>(
+      tween: Tween(begin: 0, end: 1),
+      duration: const Duration(milliseconds: 800),
+      curve: Curves.easeOutBack,
+      builder: (context, anim, child) {
+        return Transform.scale(
+          scale: anim,
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              // 📱 Detecta pantallas pequeñas
+              final bool isSmall = constraints.maxWidth < 110;
+              final double textScale = MediaQuery.of(context).textScaleFactor;
+
+              return Container(
+                height: baseHeight * (textScale > 1.2 ? 1.2 : 1.0),
+                padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 10),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(20),
+                  gradient: LinearGradient(
+                    colors: gradient.map((c) => c.withOpacity(0.85)).toList(),
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: gradient.first.withOpacity(0.3),
+                      blurRadius: 12,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    // 🎯 Ícono circular
+                    Container(
+                      padding: const EdgeInsets.all(9),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.15),
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(
+                        icon,
+                        color: Colors.white,
+                        size: isSmall ? 22 : 26,
+                      ),
+                    ),
+
+                    const SizedBox(height: 8),
+
+                    // 🔢 Contador animado
+                    TweenAnimationBuilder<int>(
+                      tween: IntTween(begin: 0, end: value),
+                      duration: const Duration(milliseconds: 800),
+                      builder: (context, animatedValue, _) {
+                        return Text(
+                          '$animatedValue',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: isSmall ? 17 : 20,
+                            fontWeight: FontWeight.bold,
+                            height: 1.0,
+                          ),
+                        );
+                      },
+                    ),
+
+                    const SizedBox(height: 4),
+
+                    // 🏷️ Label adaptable (Completados / Fallidos / etc.)
+                    Flexible(
+                      child: FittedBox(
+                        fit: BoxFit.scaleDown,
+                        child: Text(
+                          label,
+                          textAlign: TextAlign.center,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            color: Colors.white.withOpacity(0.9),
+                            fontSize: isSmall ? 10 : 12,
+                            fontWeight: FontWeight.w500,
+                            height: 1.1,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            },
+          ),
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
@@ -89,10 +196,9 @@ class _ChallengeProfileScreenState extends State<ChallengeProfileScreen> {
                     child: Column(
                       children: [
                         UserAvatarWidget(
-                          avatarSeed: user['avatar_seed'], // lo que venga del backend
+                          avatarSeed: user['avatar_seed'] ?? user['icon'] ?? user['full_icon_url'],
                           radius: 40,
                           onTap: () {
-                            // 🔹 más adelante podés abrir un modal para cambiar la foto
                             ScaffoldMessenger.of(context).showSnackBar(
                               const SnackBar(content: Text('Función para cambiar avatar')),
                             );
@@ -136,78 +242,115 @@ class _ChallengeProfileScreenState extends State<ChallengeProfileScreen> {
                   const SizedBox(height: 24),
 
                   // 🔹 Resumen de desafíos
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                    children: [
-                      _statCard(Icons.check_circle_outline, 'Completados',
-                          completed, cs.primary),
-                      _statCard(Icons.timelapse_outlined, 'En progreso',
-                          inProgress, cs.tertiary),
-                      _statCard(Icons.cancel_outlined, 'Fallidos',
-                          failed, Colors.redAccent),
-                    ],
+                  // 🔹 Resumen de desafíos (reemplaza tu bloque Row)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 8),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Expanded(
+                          child: _animatedStatCard(
+                            icon: Icons.check_circle_rounded,
+                            label: 'Completados',
+                            value: completed,
+                            gradient: [cs.primary, cs.secondary],
+                            delay: 0,
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: _animatedStatCard(
+                            icon: Icons.timelapse_rounded,
+                            label: 'En progreso',
+                            value: inProgress,
+                            gradient: [Colors.tealAccent.shade700, Colors.teal],
+                            delay: 150,
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: _animatedStatCard(
+                            icon: Icons.cancel_rounded,
+                            label: 'Fallidos',
+                            value: failed,
+                            gradient: [Colors.redAccent, Colors.deepOrange],
+                            delay: 300,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
+
 
                   const SizedBox(height: 40),
 
                   // 🔹 Insignias del usuario
-Container(
-  padding: const EdgeInsets.all(20),
-  decoration: BoxDecoration(
-    borderRadius: BorderRadius.circular(16),
-    color: cs.surfaceContainerHighest.withOpacity(0.2),
-  ),
-  child: Column(
-    crossAxisAlignment: CrossAxisAlignment.start,
-    children: [
-      Row(
-        children: [
-          Icon(Icons.emoji_events_outlined, color: cs.primary, size: 30),
-          const SizedBox(width: 8),
-          Text(
-            'Insignias',
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-              color: cs.onSurface,
-            ),
-          ),
-        ],
-      ),
-      const SizedBox(height: 16),
+                  Container(
+                    padding: const EdgeInsets.all(20),
+                    margin: const EdgeInsets.only(bottom: 24),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(16),
+                      color: cs.surfaceContainerHighest.withOpacity(0.2),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Icon(Icons.emoji_events_outlined, color: cs.primary, size: 28),
+                            const SizedBox(width: 8),
+                            Text(
+                              'Insignias',
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                                color: cs.onSurface,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 16),
 
-      if (badges.isEmpty)
-        Center(
-          child: Text(
-            'Todavía no desbloqueaste ninguna insignia 🏅',
-            style: TextStyle(
-              color: cs.onSurfaceVariant,
-              fontStyle: FontStyle.italic,
-            ),
-          ),
-        )
-      else
-        GridView.builder(
-  shrinkWrap: true,
-  physics: const NeverScrollableScrollPhysics(),
-  itemCount: badges.length,
-  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-    crossAxisCount: 4, // 👈 antes era 3 → ahora 4 por fila
-    crossAxisSpacing: 12,
-    mainAxisSpacing: 12,
-    childAspectRatio: 1.1, // 👈 ajusta la proporción
-  ),
-  itemBuilder: (context, index) {
-    final badge = badges[index] as Map<String, dynamic>;
-    return buildBadge(context, badge);
-  },
-),
+                        if (badges.isEmpty)
+                          Center(
+                            child: Text(
+                              'Todavía no desbloqueaste ninguna insignia 🏅',
+                              style: TextStyle(
+                                color: cs.onSurfaceVariant,
+                                fontStyle: FontStyle.italic,
+                              ),
+                            ),
+                          )
+                        else
+                          LayoutBuilder(
+                            builder: (context, constraints) {
+                              // ✅ Calcula automáticamente el ancho disponible
+                              final crossAxisCount =
+                                  (constraints.maxWidth ~/ 80).clamp(3, 5); // entre 3 y 5 por fila
 
-      const SizedBox(height: 12),
-    ],
-  ),
-),
-
+                              return GridView.builder(
+                                shrinkWrap: true,
+                                physics: const NeverScrollableScrollPhysics(),
+                                itemCount: badges.length,
+                                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                                  crossAxisCount: crossAxisCount,
+                                  crossAxisSpacing: 12,
+                                  mainAxisSpacing: 20,
+                                  childAspectRatio: 0.7, // más alto para que entre el texto
+                                ),
+                                itemBuilder: (context, index) {
+                                  final badge = badges[index] as Map<String, dynamic>;
+                                  return Padding(
+                                    padding: const EdgeInsets.symmetric(vertical: 4),
+                                    child: buildBadge(context, badge),
+                                  );
+                                },
+                              );
+                            },
+                          ),
+                      ],
+                    ),
+                  ),
                 ],
               ),
             ),

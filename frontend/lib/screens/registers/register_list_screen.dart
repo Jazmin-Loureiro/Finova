@@ -4,6 +4,7 @@ import 'package:frontend/widgets/empty_state_widget.dart';
 import 'package:frontend/widgets/loading_widget.dart';
 import 'package:frontend/widgets/month_header_widget.dart';
 import 'package:frontend/widgets/register_item_widget.dart';
+import 'package:frontend/widgets/custom_refresh_wrapper.dart';
 import '../../services/api_service.dart';
 import '../../models/register.dart';
 import 'package:intl/intl.dart';
@@ -28,7 +29,6 @@ class _RegisterListScreenState extends State<RegisterListScreen> {
   List<Register> registers = [];
   String? symbol = '';
 
-  //  agregamos una variable de estado para el mes actual
   DateTime selectedDate = DateTime.now();
 
   @override
@@ -54,15 +54,11 @@ class _RegisterListScreenState extends State<RegisterListScreen> {
   }
 
   Future<void> getSymbol() async {
-  final user = await api.getUser(); // <-- devuelve Map<String, dynamic>
-  // obtenemos el símbolo desde el mapa
-  final currencySymbol = user?['currency_symbol'];
-  setState(() {
-    symbol = currencySymbol?.toString(); // <-- guardamos en el estado
-  });
-}
+    final user = await api.getUser();
+    final currencySymbol = user?['currency_symbol'];
+    setState(() => symbol = currencySymbol?.toString());
+  }
 
-  // Totales por categoría
   Map<String, double> getTotalsByCategory() {
     final Map<String, double> totals = {};
     for (var r in registers) {
@@ -72,7 +68,6 @@ class _RegisterListScreenState extends State<RegisterListScreen> {
     return totals;
   }
 
-  // Mapa de categoría a color
   Map<String, Color> getCategoryColors() {
     final Map<String, Color> map = {};
     for (var r in registers) {
@@ -92,77 +87,72 @@ class _RegisterListScreenState extends State<RegisterListScreen> {
     return CustomScaffold(
       title: 'Registros de ${widget.moneyMakerName}',
       currentRoute: '/registers',
-      actions: [
-        IconButton(
-          icon: const Icon(Icons.refresh),
-          onPressed: _fetchRegisters,
-        ),
-      ],
       body: isLoading
-    ? const Center(child: LoadingWidget())
-    : Column(
-        children: [
-          //  Encabezado con selector de mes
-          MonthHeaderWidget(
-            date: selectedDate,
-            onPrevious: () {
-              setState(() {
-                selectedDate = DateTime(
-                  selectedDate.year,
-                  selectedDate.month - 1,
-                );
-              });
-              _fetchRegisters();
-            },
-            onNext: () {
-              setState(() {
-                selectedDate = DateTime(
-                  selectedDate.year,
-                  selectedDate.month + 1,
-                );
-              });
-              _fetchRegisters();
-            },
-          ),
-
-          const SizedBox(height: 10),
-          //  Gráfico de resumen por categoría (si hay datos)
-          if (hasData)
-            CategorySummaryChartWidget(
-              totals: totals,
-              colorsMap: colorsMap,
-              symbol: symbol,
-            ),
-          const SizedBox(height: 8),
-
-          // Lista o estado vacío
-          Expanded(
-            child: registers.isEmpty
-                ? const EmptyStateWidget(
-                    title: "Aún no hay registros.",
-                    message:
-                        "No has reservado ninguna cantidad aún.",
-                    icon: Icons.receipt_long,
-                  )
-                : ListView.builder(
-                    padding: const EdgeInsets.symmetric(horizontal: 10),
-                    itemCount: registers.length,
-                    itemBuilder: (context, index) {
-                      final r = registers[index];
-                      return RegisterItemWidget(
-                        register: r,
-                        dateFormat: dateFormat,
-                        fromHex: (hex) {
-                          hex = hex.toUpperCase().replaceAll("#", "");
-                          if (hex.length == 6) hex = "FF$hex";
-                          return Color(int.parse(hex, radix: 16));
-                        },
-                      );
+          ? const Center(child: LoadingWidget())
+          : CustomRefreshWrapper(
+              onRefresh: _fetchRegisters, 
+              padding: const EdgeInsets.only(bottom: 20),
+              child: Column(
+                children: [
+                  MonthHeaderWidget(
+                    date: selectedDate,
+                    onPrevious: () {
+                      setState(() {
+                        selectedDate = DateTime(
+                          selectedDate.year,
+                          selectedDate.month - 1,
+                        );
+                      });
+                      _fetchRegisters();
+                    },
+                    onNext: () {
+                      setState(() {
+                        selectedDate = DateTime(
+                          selectedDate.year,
+                          selectedDate.month + 1,
+                        );
+                      });
+                      _fetchRegisters();
                     },
                   ),
-          ),
-        ],
-      ),
+
+                  const SizedBox(height: 10),
+
+                  if (hasData)
+                    CategorySummaryChartWidget(
+                      totals: totals,
+                      colorsMap: colorsMap,
+                      symbol: symbol,
+                    ),
+                  const SizedBox(height: 8),
+
+                  registers.isEmpty
+                      ? const EmptyStateWidget(
+                          title: "Aún no hay registros.",
+                          message: "No has reservado ninguna cantidad aún.",
+                          icon: Icons.receipt_long,
+                        )
+                      : ListView.builder(
+                          physics: const NeverScrollableScrollPhysics(),
+                          shrinkWrap: true,
+                          padding: const EdgeInsets.symmetric(horizontal: 10),
+                          itemCount: registers.length,
+                          itemBuilder: (context, index) {
+                            final r = registers[index];
+                            return RegisterItemWidget(
+                              register: r,
+                              dateFormat: dateFormat,
+                              fromHex: (hex) {
+                                hex = hex.toUpperCase().replaceAll("#", "");
+                                if (hex.length == 6) hex = "FF$hex";
+                                return Color(int.parse(hex, radix: 16));
+                              },
+                            );
+                          },
+                        ),
+                ],
+              ),
+            ),
     );
   }
 }

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:frontend/helpers/icon_utils.dart';
+import 'package:frontend/widgets/custom_refresh_wrapper.dart';
 import 'package:frontend/widgets/loading_widget.dart';
 import '../../services/api_service.dart';
 import 'category_form_screen.dart';
@@ -104,8 +105,14 @@ class _CategoryListScreenState extends State<CategoryListScreen>
                 : TabBarView(
                     controller: _tabController,
                     children: [
-                      _buildCategoryList(incomeCategories),
-                      _buildCategoryList(expenseCategories),
+                      CustomRefreshWrapper(
+                        onRefresh: _fetchCategories,
+                        child: _buildCategoryList(incomeCategories),
+                      ),
+                      CustomRefreshWrapper(
+                        onRefresh: _fetchCategories,
+                        child: _buildCategoryList(expenseCategories),
+                      ),
                     ],
                   ),
           ),

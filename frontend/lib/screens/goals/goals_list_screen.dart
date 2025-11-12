@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:frontend/widgets/custom_refresh_wrapper.dart';
 import 'package:frontend/widgets/info_icon_widget.dart';
 import 'package:frontend/widgets/success_dialog_widget.dart';
 import 'package:intl/intl.dart';
@@ -189,13 +190,22 @@ Future<void> _checkExpiredGoals() async {
             child: isLoading
                 ? const LoadingWidget(message: 'Cargando metas...')
                 : TabBarView(
-                    controller: _tabController,
-                    children: [
-                      _buildGoalsList(_filterGoals('in_progress')),
-                      _buildGoalsList(_filterGoals('completed')),
-                      _buildGoalsList(_filterGoals('disabled')),
-                    ],
-                  ),
+                  controller: _tabController,
+                  children: [
+                    CustomRefreshWrapper(
+                      onRefresh: _fetchGoals,
+                      child: _buildGoalsList(_filterGoals('in_progress')),
+                    ),
+                    CustomRefreshWrapper(
+                      onRefresh: _fetchGoals,
+                      child: _buildGoalsList(_filterGoals('completed')),
+                    ),
+                    CustomRefreshWrapper(
+                      onRefresh: _fetchGoals,
+                      child: _buildGoalsList(_filterGoals('disabled')),
+                    ),
+                  ],
+                ),
           ),
         ],
       ),

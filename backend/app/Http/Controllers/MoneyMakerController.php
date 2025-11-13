@@ -19,19 +19,22 @@ class MoneyMakerController extends Controller {
     }
 
     public function store(Request $request) {
-        $request->validate([
+        $validated = $request->validate([
             'name'        => 'required|string|max:255',
-            'type'        => 'required|string|max:255',
+            'type'        => 'required',
             'balance'     => 'required|numeric|min:0',
             'currency_id' => 'required|exists:currencies,id',
             'color'       => 'required|string',
         ]);
 
-        $data = (new MoneyMakerService())->createForUser($request->user(), $request->all());
+        if (is_array($validated['type'])) {
+            $validated['type'] = $validated['type']['id'] ?? null;
+        }
+        $data = (new MoneyMakerService())->createForUser($request->user(), $validated);
 
         return response()->json([
             'message'        => 'Fuente de pago creada con éxito',
-            'moneyMaker'     => $data['moneyMaker'],
+            'moneyMaker'     => $data['moneyMaker']->load('currency', 'type'),
             'balance_converted' => $data['convertedBalance'],
             'user_balance'   => $data['userBalance'],
         ], 201);
@@ -41,15 +44,15 @@ class MoneyMakerController extends Controller {
         public function update(Request $request, MoneyMaker $moneyMaker) {
         $request->validate([
             'name' => 'required|string|max:255',
-            'type' => 'required|string|max:255',
+            'type' => 'required|integer|exists:money_maker_types,id',
             'color' => 'required|string',
         ]);
         $moneyMaker->update([
             'name' => $request->name,
-            'type' => $request->type,
+            'money_maker_type_id' => $request->type,
             'color' => $request->color,
         ]);
-
+        $moneyMaker->load(['type', 'currency']);
         return response()->json($moneyMaker);
     }
 

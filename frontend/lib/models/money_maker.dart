@@ -1,9 +1,11 @@
 import 'currency.dart';
 import 'register.dart';
+import 'money_maker_type.dart';
+
 class MoneyMaker {
   final int id;      
   final String name;
-  final String type;
+  final MoneyMakerType? type;
   final double balance;
   final double balanceConverted; // saldo convertido a moneda base
   final double balance_reserved; // saldo reservado
@@ -31,7 +33,7 @@ class MoneyMaker {
     return MoneyMaker(
       id: json['id'],  
       name: json['name'] ?? '',
-      type: json['type'] ?? '',
+      type:  json['type'] != null ? MoneyMakerType.fromJson(json['type']) : null,
       currency: json['currency'] != null ? Currency.fromJson(json['currency']) : null,
       balance: double.tryParse(json['balance'].toString()) ?? 0.0,
       balanceConverted: double.tryParse(json['balanceConverted'].toString()) ?? 0.0,

@@ -14,7 +14,7 @@ class MoneyMakerService
     public function listForUser($user)
     {
         $toCurrency = $user->currency->code;
-        $moneyMakers = $user->moneyMakers()->where('active', true)->with('currency')->get();
+        $moneyMakers = $user->moneyMakers()->where('active', true)->with('currency', 'type')->get();
 
         $totalInBase = 0;
 
@@ -66,14 +66,14 @@ class MoneyMakerService
 
             $moneyMaker = $user->moneyMakers()->create([
                 'name'        => $data['name'],
-                'type'        => $data['type'],
+                'money_maker_type_id' => $data['type'],
                 'balance'     => $data['balance'],
                 'currency_id' => $fromCurrency->id,
                 'color'       => $data['color'],
             ]);
 
             $category = $user->categories()->where('name', 'General')->first();
-
+if ($data['balance'] > 0) {
             $user->registers()->create([
                 'type'          => 'income',
                 'balance'       => $data['balance'],
@@ -82,6 +82,7 @@ class MoneyMakerService
                 'name'          => 'Saldo inicial',
                 'category_id'   => $category?->id,
             ]);
+}
 
             $user->increment('balance', $convertedBalance);
 

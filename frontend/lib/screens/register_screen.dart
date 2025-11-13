@@ -71,6 +71,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
         context: context,
         barrierDismissible: false,
         builder: (_) => const SuccessDialogWidget(
+          isFailure: true,
           title: 'Error',
           message: 'Error al cargar las monedas.',
           buttonText: 'Aceptar',
@@ -209,6 +210,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
         context: context,
         barrierDismissible: false,
         builder: (_) => SuccessDialogWidget(
+          isFailure: true,
           title: 'Error',
           message: 'Ocurrió un error en el registro: $e',
           buttonText: 'Aceptar',
@@ -369,10 +371,15 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                       ),
                                     ),
                                     onChanged: (val) => password = val,
-                                    validator: (val) => val == null ||
-                                            val.isEmpty
-                                        ? 'Obligatorio'
-                                        : null,
+                                    validator: (val) { 
+                                      if (val == null || val.isEmpty) {
+                                        return 'Obligatorio';
+                                      }
+                                      if (val.length < 6) {
+                                        return 'Mínimo 6 caracteres';
+                                      }
+                                      return null;
+                                    },
                                   ),
                                 ),
                             const SizedBox(height: 16),

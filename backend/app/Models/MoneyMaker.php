@@ -15,7 +15,7 @@ class MoneyMaker extends Model
     protected $fillable = [
         'user_id',
         'name',
-        'type',
+        'money_maker_type_id',
         'balance',
         'balance_reserved',
         'currency_id',
@@ -25,6 +25,11 @@ class MoneyMaker extends Model
     /**
      * Relaciones
      */
+
+        public function type()
+    {
+        return $this->belongsTo(MoneyMakerType::class, 'money_maker_type_id');
+    }
 
     public function currency()
     {

@@ -2,6 +2,7 @@ import 'dart:io';
 //import 'package:flutter/material.dart';
 import 'package:frontend/models/category.dart';
 import 'package:frontend/models/investment_rate.dart';
+import 'package:frontend/models/money_maker_type.dart';
 import 'package:path/path.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
@@ -13,10 +14,10 @@ import '../models/register.dart';
 import '../models/goal.dart';
 
 // URLs base
-const String baseUrl = "http://192.168.1.113:8000"; //Jaz
+//const String baseUrl = "http://192.168.1.113:8000"; //Jaz
 //const String baseUrl = "http://192.168.0.117:8000"; // Jaz 2
 //const String baseUrl = "http://192.168.1.45:8000"; //Jaz 3
-//const String baseUrl = "http://192.168.0.162:8000";// guardo el mio je
+const String baseUrl = "http://192.168.0.162:8000";// guardo el mio je
 //const String baseUrl = "http://127.0.0.1:8000"; //compu local
 //const String baseUrl = "http://172.16.195.79:8000"; // IP de la facu
 const String apiUrl = "$baseUrl/api";
@@ -507,14 +508,13 @@ Future<Map<String, dynamic>> getMoneyMakersFull() async {
   ////////////////////////////////////////////////////////// Agregar nueva fuente de pago
 Future<MoneyMaker?> addPaymentSource(
   String name,
-  String typeSelected,
+  int typeSelected,
   double balance,
   Currency currency, // CAMBIO: objeto completo 
   String color,
 ) async {
   final token = await storage.read(key: 'token');
   if (token == null) return null;
-
   final res = await http.post(
     Uri.parse('$apiUrl/moneyMakers'),
     headers: jsonHeaders(token),
@@ -534,7 +534,7 @@ Future<MoneyMaker?> addPaymentSource(
   return null;
 }
 
-Future<dynamic> updatePaymentSource( int id,String name, String type, String color,) async {
+Future<dynamic> updatePaymentSource( int id,String name, int type, String color,) async {
   final token = await storage.read(key: 'token');
   if (token == null) return false;
   final response = await http.put(
@@ -567,7 +567,24 @@ Future<void> deleteMoneyMaker(int id) async {
   }
 }
 
+//// Tipos de fuente
+Future<List<MoneyMakerType>> getMoneyMakerTypes() async {
+  final token = await storage.read(key: 'token');
+  if (token == null) return [];
 
+  final response = await http.get(
+    Uri.parse('$apiUrl/moneyMakerTypes'),
+    headers: jsonHeaders(token),
+  );
+
+  if (response.statusCode == 200) {
+    final data = jsonDecode(response.body);
+    if (data is List) {
+      return data.map((t) => MoneyMakerType.fromJson(t)).toList();
+    }
+  }
+  return [];
+}
 //////////////////////////////////////////////////////
 //// Categorías
 /////////////////////////////////////////////////////

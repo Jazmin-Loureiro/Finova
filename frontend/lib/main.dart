@@ -10,10 +10,17 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'screens/home/onboarding_screen.dart';
 
 import 'package:google_fonts/google_fonts.dart';
+import 'package:flutter/services.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await initializeDateFormatting('es', null);
+
+   // Bloquea la orientación a solo vertical
+  await SystemChrome.setPreferredOrientations([
+    DeviceOrientation.portraitUp,
+    DeviceOrientation.portraitDown,
+  ]);
 
   runApp(
     MultiProvider(

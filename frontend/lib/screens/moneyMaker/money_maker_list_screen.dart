@@ -207,7 +207,7 @@ class _MoneyMakerListScreenState extends State<MoneyMakerListScreen> {
                                         ),
                                         const SizedBox(height: 1),
                                         Text(
-                                          m.type.toUpperCase(),
+                                          m.type!.name,
                                           style: TextStyle(
                                             color: subTextColor,
                                             fontSize: 14,

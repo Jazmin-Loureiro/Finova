@@ -86,6 +86,7 @@ class _LoginScreenState extends State<LoginScreen> {
       context: context,
       barrierDismissible: false,
       builder: (_) => SuccessDialogWidget(
+        isFailure: true,
         title: 'Error',
         message: message,
         buttonText: 'Aceptar',

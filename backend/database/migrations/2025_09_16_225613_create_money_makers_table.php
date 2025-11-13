@@ -15,9 +15,9 @@ return new class extends Migration
     {
         Schema::create('money_makers', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
+            $table->foreignId('user_id')->constrained('users');
             $table->string('name');
-            $table->string('type');
+            $table->foreignId('money_maker_type_id')->constrained('money_maker_types')->onDelete('restrict');
             $table->decimal('balance', 12, 2)->default(0);
             ////Campo que guardaria el balance reservado de las metas unicamente
             $table->decimal('balance_reserved', 12, 2)->default(0);

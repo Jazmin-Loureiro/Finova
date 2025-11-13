@@ -1,7 +1,6 @@
 <?php
 
 namespace App\Http\Controllers;
-
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -21,6 +20,11 @@ class AuthController extends Controller
     // 🔹 Registro de usuario
     public function register(Request $request)
     {
+        $cashType = \App\Models\MoneyMakerType::firstOrCreate( // 
+            ['name' => 'Efectivo'],
+            ['description' => 'Dinero físico disponible.', 'active' => true]
+        );
+        
         $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:users',
@@ -59,7 +63,7 @@ class AuthController extends Controller
         // Crear fuente de pago "Efectivo"
         $moneyMaker = $user->moneyMakers()->create([
             'name' => 'Efectivo',
-            'type' => 'Efectivo',
+            'money_maker_type_id' => $cashType->id,
             'balance' => $request->balance ?? 0,
             'currency_id' => $request->currency_id,
             'color' => '#4CAF50',

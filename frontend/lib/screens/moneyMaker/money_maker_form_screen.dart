@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:frontend/models/money_maker_type.dart';
 import 'package:frontend/widgets/bottom_sheet_pickerField.dart';
 import 'package:frontend/widgets/buttons/button_delete.dart';
 import 'package:frontend/widgets/buttons/button_save.dart';
@@ -26,31 +27,16 @@ class _MoneyMakerFormScreenState extends State<MoneyMakerFormScreen> {
   final TextEditingController balanceController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
 
-  final List<String> tiposDeFuente = [
-  "Efectivo",
-  "Mastercard",
-  "Visa",
-  "Tarjeta de débito",
-  "Ahorros",
-  "Banco",
-  "Inversión",
-  "Tarjeta de crédito",
-  "Cuenta bancaria",
-  "Criptomoneda",
-  "Cheque",
-  "Cuenta virtual",
-  "PayPal",
-  "Transferencia",
-  "Préstamo",
-  "Otro"
-];
 
   Color? selectedColor;
-  String typeSelected = "Efectivo";
+  int typeSelected = 1;
   bool _isLoading = true;
   bool isSaving = false;
   List<Currency> currencies = [];
   Currency? selectedCurrency;
+
+  List<MoneyMakerType> typeMoneyMaker = [];
+  MoneyMakerType? selectedType;
 
   @override
   void initState() {
@@ -60,13 +46,14 @@ class _MoneyMakerFormScreenState extends State<MoneyMakerFormScreen> {
       nameController.text = m.name;
       balanceController.text = m.balance.toString();
       selectedColor = Color(int.parse(m.color.replaceAll('#', '0xFF')));
-      typeSelected = m.type;
-    }
+      selectedType = m.type;
+  }
     loadFormData();
   }
 
   Future<void> loadFormData() async {
     final fetchedCurrencies = await api.getCurrencies();
+    final fetchedTypes = await api.getMoneyMakerTypes();
     final userBaseCurrency = await api.getUserCurrency();
     if (!mounted) return;
     setState(() {
@@ -75,6 +62,7 @@ class _MoneyMakerFormScreenState extends State<MoneyMakerFormScreen> {
         (c) => c.id == userBaseCurrency,
         orElse: () => currencies.first,
       );
+      typeMoneyMaker = fetchedTypes;
       _isLoading = false;
     });
   }
@@ -92,8 +80,8 @@ class _MoneyMakerFormScreenState extends State<MoneyMakerFormScreen> {
     setState(() => isSaving = true);
 
     dynamic newSource;
-    if (isEditing) { newSource = await api.updatePaymentSource( widget.moneyMaker!.id,name,typeSelected, colorHex,);
-    } else {newSource = await api.addPaymentSource(name, typeSelected, balance, selectedCurrency!, colorHex, );}
+    if (isEditing) { newSource = await api.updatePaymentSource( widget.moneyMaker!.id,name,selectedType!.id, colorHex,);
+    } else {newSource = await api.addPaymentSource(name, selectedType!.id, balance, selectedCurrency!, colorHex, );}
     setState(() => isSaving = false);
 
     if (newSource != null) {
@@ -178,37 +166,26 @@ Widget build(BuildContext context) {
                 ),
                 const SizedBox(height: 16),
 
-                // Tipo de fuente Modificar 
-                BottomSheetPickerField<String>(
+               // Tipo de fuente
+                BottomSheetPickerField<MoneyMakerType>(
                   label: 'Tipo de fuente',
-                  items: tiposDeFuente,
-                  itemLabel: (f) => f,
-                  itemIcon: (f) {
-                    switch (f) {
-                      case "Efectivo":
-                        return const Icon(Icons.attach_money_rounded);
-                      case "Banco":
-                        return const Icon(Icons.account_balance_rounded);
-                      case "Visa":
-                      case "Mastercard":
-                      case "Tarjeta de crédito":
-                      case "Tarjeta de débito":
-                        return const Icon(Icons.credit_card_rounded);
-                      case "Inversión":
-                        return const Icon(Icons.trending_up_rounded);
-                      case "Criptomoneda":
-                        return const Icon(Icons.currency_bitcoin_rounded);
-                      case "PayPal":
-                        return const Icon(Icons.account_balance_wallet_outlined);
-                      case "Transferencia":
-                        return const Icon(Icons.swap_horiz_rounded);
-                      default:
-                        return const Icon(Icons.account_balance_wallet_outlined);
-                    }
-                  },
-                  initialValue: typeSelected,
-                onChanged: (value) => setState(() => typeSelected = value ?? typeSelected),
-                  validator: (value) => value == null ? 'Seleccione un tipo de fuente' : null,
+                  items: typeMoneyMaker,
+                  itemLabel: (t) => t.name,
+                  itemIcon: (t) => CircleAvatar(
+                    radius: 16,
+                    backgroundColor: Theme.of(context).colorScheme.primary.withOpacity(0.15),
+                    child: Text(
+                      t.name.isNotEmpty ? t.name[0].toUpperCase() : '?',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: Theme.of(context).colorScheme.primary,
+                      ),
+                    ),
+                  ),
+                  initialValue: selectedType,
+                  onChanged: (value) => setState(() => selectedType = value),
+                  validator: (value) =>
+                      value == null ? 'Seleccione un tipo de fuente' : null,
                 ),
 
                 if (widget.moneyMaker == null) ...[

@@ -4,7 +4,7 @@ namespace App\Console\Commands;
 
 use Illuminate\Console\Command;
 use App\Models\UserChallenge;
-use App\Services\ChallengeProgressService;
+use App\Services\Challenges\ChallengeProgressService;
 
 class TickChallenges extends Command
 {

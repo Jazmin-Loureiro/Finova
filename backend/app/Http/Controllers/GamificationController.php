@@ -18,7 +18,7 @@ class GamificationController extends Controller
         $user = Auth::user();
 
         // 🔄 Recalcular progreso y cerrar automáticamente (failed/completed + recompensas)
-        app(\App\Services\ChallengeProgressService::class)->recomputeForUserWithRewards($user);
+        app(\App\Services\Challenges\ChallengeProgressService::class)->recomputeForUserWithRewards($user);
 
         // 🏅 Insignias: todas, pero marcando las desbloqueadas del usuario
         $allBadges = \App\Models\Badge::all([
@@ -117,8 +117,23 @@ class GamificationController extends Controller
                 'name'   => $user->name,
                 'points' => $user->points,
                 'level'  => $user->level,
+
+                // 🔹 Avatar del usuario
+                'avatar_seed' => $user->icon,
+                'full_icon_url' => $user->icon && str_contains($user->icon, '/')
+                    ? asset('storage/' . $user->icon)
+                    : null,
             ],
+
+            // 🔥 NUEVO: Datos de racha del usuario
+            'streak' => [
+                'current' => optional($user->streak)->current_streak ?? 0,
+                'longest' => optional($user->streak)->longest_streak ?? 0,
+                'last_activity' => optional($user->streak)->last_activity_date?->toIso8601String(),
+            ],
+
             'badges' => $badges,
+
             'challenges' => [
                 'in_progress' => $inProgress,
                 'completed'   => $completed,

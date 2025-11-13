@@ -4,7 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Challenge;
 use App\Models\User;
-use App\Services\ChallengeGeneratorService;
+use App\Services\Challenges\ChallengeGeneratorService;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\DB;

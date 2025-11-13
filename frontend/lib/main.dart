@@ -8,9 +8,11 @@ import 'providers/register_provider.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'screens/home/onboarding_screen.dart';
-
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter/services.dart';
+
+// 👇 Agregamos el observador global
+final RouteObserver<PageRoute> routeObserver = RouteObserver<PageRoute>();
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -44,25 +46,25 @@ class MyApp extends StatelessWidget {
       //  Tema claro
       theme: ThemeData(
         colorScheme: const ColorScheme.light(
-          primary: Color(0xFF7D2FFF), // Violeta Finova
+          primary: Color(0xFF7D2FFF),
           onPrimary: Colors.white,
-          secondary: Color(0xFF00CC46), // Verde éxito
+          secondary: Color(0xFF00CC46),
           onSecondary: Colors.white,
-          surface: Color(0xFFFFFFFF), // Tarjetas
-          onSurface: Color(0xFF141414), // Texto principal
+          surface: Color(0xFFFFFFFF),
+          onSurface: Color(0xFF141414),
         ),
-        scaffoldBackgroundColor: Color(0xFFF8F8F8), // Fondo claro general
-        cardColor: Color(0xFFFFFFFF), // Fondo secundario
-        shadowColor: Color(0xFFE0E0E0), // Bordes/sombras suaves
+        scaffoldBackgroundColor: const Color(0xFFF8F8F8),
+        cardColor: const Color(0xFFFFFFFF),
+        shadowColor: const Color(0xFFE0E0E0),
         textTheme: TextTheme(
-          bodyLarge: GoogleFonts.poppins(fontSize: 16, color: Color(0xFF141414)),
-          bodyMedium: GoogleFonts.poppins(fontSize: 14, color: Color(0xFF141414)),
+          bodyLarge: GoogleFonts.poppins(fontSize: 16, color: const Color(0xFF141414)),
+          bodyMedium: GoogleFonts.poppins(fontSize: 14, color: const Color(0xFF141414)),
           titleLarge: GoogleFonts.spaceGrotesk(
-              fontSize: 22, fontWeight: FontWeight.bold, color: Color(0xFF7D2FFF)),
+              fontSize: 22, fontWeight: FontWeight.bold, color: const Color(0xFF7D2FFF)),
           headlineMedium: GoogleFonts.spaceGrotesk(
-              fontSize: 18, fontWeight: FontWeight.w600, color: Color(0xFF3A00FF)),
+              fontSize: 18, fontWeight: FontWeight.w600, color: const Color(0xFF3A00FF)),
           titleMedium: GoogleFonts.poppins(
-              fontSize: 16, fontWeight: FontWeight.w600, color: Color(0xFF141414)),
+              fontSize: 16, fontWeight: FontWeight.w600, color: const Color(0xFF141414)),
         ),
         useMaterial3: true,
       ),
@@ -70,28 +72,27 @@ class MyApp extends StatelessWidget {
       // Tema oscuro
       darkTheme: ThemeData(
         colorScheme: const ColorScheme.dark(
-          primary: Color(0xFF7D2FFF), // Violeta Finova
+          primary: Color(0xFF7D2FFF),
           onPrimary: Colors.black,
-          secondary: Color(0xFF00FF4C), // Verde Neón
+          secondary: Color(0xFF00FF4C),
           onSecondary: Colors.white,
-          surface: Color(0xFF151515), // Tarjetas
-          onSurface: Color(0xFFFFFFFF), // Texto principal
+          surface: Color(0xFF151515),
+          onSurface: Color(0xFFFFFFFF),
         ),
-        scaffoldBackgroundColor: Color(0xFF0A0A0A), // Fondo principal
-        cardColor: Color.fromARGB(255, 39, 39, 39), // Fondo secundario
-        shadowColor: Color.fromARGB(255, 89, 89, 89), // Bordes/íconos suaves
+        scaffoldBackgroundColor: const Color(0xFF0A0A0A),
+        cardColor: const Color.fromARGB(255, 39, 39, 39),
+        shadowColor: const Color.fromARGB(255, 89, 89, 89),
         textTheme: TextTheme(
           bodyLarge: GoogleFonts.poppins(fontSize: 16, color: Colors.white),
-          bodyMedium: GoogleFonts.poppins(fontSize: 14, color: Color(0xFFB3B3B3)),
+          bodyMedium: GoogleFonts.poppins(fontSize: 14, color: const Color(0xFFB3B3B3)),
           titleLarge: GoogleFonts.spaceGrotesk(
-              fontSize: 22, fontWeight: FontWeight.bold, color: Color(0xFF7D2FFF)),
+              fontSize: 22, fontWeight: FontWeight.bold, color: const Color(0xFF7D2FFF)),
           headlineMedium: GoogleFonts.spaceGrotesk(
-              fontSize: 18, fontWeight: FontWeight.w600, color: Color(0xFF00FF4C)),
+              fontSize: 18, fontWeight: FontWeight.w600, color: const Color(0xFF00FF4C)),
         ),
         useMaterial3: true,
       ),
 
-      // 👇 Usa el tema según el sistema
       themeMode: ThemeMode.system,
       locale: const Locale('es', 'ES'),
       supportedLocales: const [
@@ -104,7 +105,6 @@ class MyApp extends StatelessWidget {
         GlobalCupertinoLocalizations.delegate,
       ],
 
-      // 🕐 Fuerza formato 24 horas + fondo global degradado
       builder: (context, child) {
         final theme = Theme.of(context);
         final primary = theme.colorScheme.primary;
@@ -131,6 +131,9 @@ class MyApp extends StatelessWidget {
 
       debugShowCheckedModeBanner: false,
       home: const SplashScreen(),
+
+      // 👇 Registramos el observador
+      navigatorObservers: [routeObserver],
     );
   }
 }
@@ -171,7 +174,7 @@ class _SplashScreenState extends State<SplashScreen> {
   @override
   Widget build(BuildContext context) {
     return const Scaffold(
-      backgroundColor: Colors.transparent, // 👈 Deja ver el fondo global
+      backgroundColor: Colors.transparent,
       body: Center(child: LoadingWidget()),
     );
   }

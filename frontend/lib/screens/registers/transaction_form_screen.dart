@@ -22,6 +22,7 @@ import '../../widgets/loading_widget.dart';
 import 'package:provider/provider.dart';
 import '../../providers/register_provider.dart';
 import 'register_list_screen.dart';
+import '../challenge_completed_screen.dart';
 
 class TransactionFormScreen extends StatefulWidget {
   final String type; // "income" o "expense"
@@ -179,21 +180,55 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
             .loadRegisters(selectedMoneyMaker!.id);
         await context.read<RegisterProvider>().loadMoneyMakers();
 
+        // 1) Mostrar CelebrationScreen primero
         if (res['rewards'] != null && (res['rewards'] as List).isNotEmpty) {
-          await _showRewardsDialog(res['rewards']);
+
+          final userData = await api.getUser();
+          final userName = userData?['name'] ?? 'Usuario';
+          final avatar = (userData?['full_icon_url'] ??
+                          userData?['icon'] ??
+                          '') as String;
+
+          for (final reward in res['rewards']) {
+
+            final closed = await Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => ChallengeCompletedScreen(
+                  userName: userName,
+                  avatarSeedOrUrl: avatar,
+
+                  // ✔ Puntos que ganó con el desafío
+                  pointsEarned: reward['points_earned'] ?? 0,
+
+                  // ✔ Total REAL después de sumar recompensa
+                  totalPoints: reward['new_total_points'] ?? 0,
+
+                  // ✔ Subió de nivel
+                  leveledUp: reward['leveled_up'] == true,
+
+                  // ✔ Nuevo nivel
+                  newLevel: reward['new_level'],
+
+                  // ✔ Insignia (si la hay)
+                  badgeName: reward['badge_earned']?['name'],
+                ),
+              ),
+            );
+            if (closed != true) return;
+          }
         }
 
+        // 2) Recién después, mostrar METAS completadas
         if (res['goal'] != null) {
           final goal = Goal.fromJson(res['goal']);
           if (goal.state == 'completed') {
             await api.assignReservedToMoneyMakers(goal.id);
-            await CompletedDialog.show(
-              context,
-              goal: goal, // Tu modelo Goal con goal.name, goal.amount, etc.
-            );
+            await CompletedDialog.show(context, goal: goal);
           }
         }
 
+        // 3) Navegar al listado
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(
@@ -203,6 +238,7 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
             ),
           ),
         );
+
       } else {
         await showDialog(
           context: context,
@@ -436,7 +472,7 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
                                     BorderRadius.all(Radius.circular(12)),
                               ),
                             ),
-                            value: repeatType,
+                            initialValue: repeatType,
                             items: const [
                               DropdownMenuItem(
                                   value: null, child: Text('No Repetir')),

@@ -83,7 +83,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   void _showAvatarOptions() async {
     final choice = await showModalBottomSheet<String>(
       context: context,
-      backgroundColor: Theme.of(context).colorScheme.surfaceVariant,
+      backgroundColor: Theme.of(context).colorScheme.surfaceContainerHighest,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
@@ -127,7 +127,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
     final selected = await showModalBottomSheet<String>(
       context: context,
-      backgroundColor: Theme.of(context).colorScheme.surfaceVariant,
+      backgroundColor: Theme.of(context).colorScheme.surfaceContainerHighest,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
@@ -389,7 +389,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                         const Duration(milliseconds: 700),
                                     child: DropdownButtonFormField<Currency>(
                                       isExpanded: true, 
-                                      value: currencyBase,
+                                      initialValue: currencyBase,
                                       items: currencyBases.map((c) {
                                         return DropdownMenuItem(
                                           value: c,

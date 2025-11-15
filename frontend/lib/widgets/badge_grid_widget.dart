@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:cached_network_image/cached_network_image.dart';
-import 'dart:math' as math;
 
 // ✅ la hacemos estática para que se mantenga entre reconstrucciones
 final Set<int> _animatedBadges = <int>{};
@@ -23,7 +22,104 @@ IconData? _lucideFrom(String name) {
   }
 }
 
-Widget buildBadge(BuildContext context, Map<String, dynamic> badge) {
+void showBadgeInfo(BuildContext context, Map<String, dynamic> badge) {
+  final cs = Theme.of(context).colorScheme;
+  final unlocked = badge['unlocked'] == true;
+
+  showModalBottomSheet(
+    context: context,
+    isScrollControlled: true,
+    backgroundColor: Colors.transparent,
+    builder: (context) {
+      return DraggableScrollableSheet(
+        expand: false,
+        initialChildSize: 0.40,     // ↓ abre con altura justa
+        minChildSize: 0.30,         // ↓ mínimo si la descripción es corta
+        maxChildSize: 0.70,         // ↑ suficiente si hay más texto
+        builder: (context, scrollCtrl) {
+          return Container(
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              color: cs.surface,
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(22)),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.08),
+                  blurRadius: 10,
+                  offset: const Offset(0, -3),
+                )
+              ],
+            ),
+            child: SingleChildScrollView(
+              controller: scrollCtrl,
+              child: Column(
+                children: [
+                  // indicador superior
+                  Center(
+                    child: Container(
+                      width: 40,
+                      height: 4,
+                      margin: const EdgeInsets.only(bottom: 20),
+                      decoration: BoxDecoration(
+                        color: Colors.grey.shade400,
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                    ),
+                  ),
+
+                  // insignia
+                  Center(
+                    child: Transform.scale(
+                      scale: 1.4,
+                      child: buildBadge(context, badge, showLabel: false),
+                    ),
+
+                  ),
+
+                  const SizedBox(height: 18),
+
+                  // nombre
+                  Text(
+                    badge['name'] ?? '',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      color: cs.onSurface,
+                    ),
+                  ),
+
+                  const SizedBox(height: 12),
+
+                  // descripción
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 18),
+                    child: Text(
+                      unlocked
+                          ? (badge['description'] ?? 'Sin descripción')
+                          : 'Todavía no desbloqueaste esta insignia.',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 15,
+                        color: cs.onSurfaceVariant,
+                      ),
+                    ),
+                  ),
+
+                  const SizedBox(height: 24),
+                ],
+              ),
+            ),
+          );
+        },
+      );
+    },
+  );
+}
+
+
+
+Widget buildBadge(BuildContext context, Map<String, dynamic> badge, {bool showLabel = true}) {
   final cs = Theme.of(context).colorScheme;
   final iconStr = (badge['icon'] ?? '') as String;
   final tier = (badge['tier'] ?? 0) as int;
@@ -150,19 +246,21 @@ Widget buildBadge(BuildContext context, Map<String, dynamic> badge) {
               child: inner,
             ),
             const SizedBox(height: 8),
-            Text(
-              badge['name'] ?? '',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 11,
-                fontWeight: FontWeight.w600,
-                color: unlocked
-                    ? cs.onSurface.withOpacity(0.9)
-                    : cs.onSurfaceVariant.withOpacity(0.5),
+            if (showLabel)
+              Text(
+                badge['name'] ?? '',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                  color: unlocked
+                      ? cs.onSurface.withOpacity(0.9)
+                      : cs.onSurfaceVariant.withOpacity(0.5),
+                ),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
               ),
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-            ),
+
           ],
         ),
       ],

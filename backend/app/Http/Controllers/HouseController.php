@@ -11,127 +11,134 @@ use App\Services\CurrencyService;
 class HouseController extends Controller
 {
     public function getHouseStatus()
-    {
-        $user = Auth::user();
-        $house = $user->house;
+{
+    $user = Auth::user();
 
-        // 🔹 Balance del usuario (siempre guardado en su moneda base)
-        $balance = (float) $user->balance;
+    if (!$user) {
+        return response()->json(['error' => 'No hay usuario autenticado'], 404);
+    }
 
-        // 🔹 Datos de la moneda del usuario
-        $currency = $user->currency;
-        $code = $currency->code ?? 'ARS';
-        $symbol = $currency->symbol ?? '$';
+    $house = $user->house;
 
-        // ============================================================
-        // 🔸 1. Determinar referencia económica según la moneda
-        // ============================================================
-
-        // Mapeo básico de moneda → país ISO (para buscar el PPA)
-        $countryCode = match ($code) {
-            'ARS' => 'AR',
-            'USD' => 'US',
-            'EUR' => 'DE',
-            'BRL' => 'BR',
-            'MXN' => 'MX',
-            'CLP' => 'CL',
-            'COP' => 'CO',
-            'GBP' => 'GB',
-            'JPY' => 'JP',
-            'CNY' => 'CN',
-            default => null,
-        };
-
-        // 🔹 Buscar valor PPA si existe
-        $ppa = $countryCode
-            ? DataApi::where('name', 'ppa_' . strtolower($countryCode))
-                ->where('status', 'ok')
-                ->orderByDesc('last_fetched_at')
-                ->first()
-            : null;
-
-        // 🔹 Si existe un PPA válido, usarlo como referencia base
-        if ($ppa && $ppa->balance > 0) {
-            $referencia = [
-                'tipo'   => 'ppa',
-                'valor'  => $ppa->balance,
-                'unidad' => 'PPA'
-            ];
-
-            // Convertir balance a USD para mantener coherencia global
-            try {
-                $balanceRef = CurrencyService::convert($balance, $code, 'USD');
-            } catch (\Exception $e) {
-                $balanceRef = $balance;
-            }
-        }
-        elseif ($code === 'ARS') {
-            // 🇦🇷 Argentina → usar UVA como fallback
-            $referencia = [
-                'tipo' => 'uva',
-                'valor' => $this->getUvaValue(),
-                'unidad' => 'UVA'
-            ];
-            $balanceRef = $balance;
-        }
-        else {
-            // 🌍 Otros países sin PPA → fallback a USD fijo
-            try {
-                $balanceRef = CurrencyService::convert($balance, $code, 'USD');
-            } catch (\Exception $e) {
-                $balanceRef = $balance;
-            }
-
-            $referencia = [
-                'tipo' => 'usd',
-                'valor' => 1,
-                'unidad' => 'USD'
-            ];
-        }
-
-        $baseValor = $referencia['valor']; // valor de referencia (PPA, UVA o USD)
-
-        // ============================================================
-        // 🔸 2. Escalas (definidas en unidades base)
-        // ============================================================
-        $limites = [
-            'segundo_piso' => 3000 * $baseValor, // desbloqueo medio (~3k unidades)
-            'garage'       => 6000 * $baseValor, // desbloqueo alto (~6k unidades)
-        ];
-
-        // ============================================================
-        // 🔸 3. Reglas de desbloqueo progresivo
-        // ============================================================
-        if ($balanceRef >= $limites['segundo_piso'] && !$house->unlocked_second_floor) {
-            $house->update(['unlocked_second_floor' => true]);
-        }
-
-        if ($balanceRef >= $limites['garage'] && !$house->unlocked_garage) {
-            $house->update(['unlocked_garage' => true]);
-        }
-
-        $desbloqueado = [
-            'segundo_piso' => $house->unlocked_second_floor,
-            'garage'       => $house->unlocked_garage,
-        ];
-
-        // ============================================================
-        // 🔸 4. Respuesta final JSON
-        // ============================================================
-        return response()->json([
-            'balance' => number_format($balance, 2, '.', ''),
-            'balance_referencia' => number_format($balanceRef, 2, '.', ''),
-            'currency_symbol' => $symbol,
-            'currency_code' => $code,
-            'referencia' => $referencia['unidad'],
-            'casa' => [
-                'base'      => $this->getBase($desbloqueado),
-                'modulos'   => $this->getModulos($desbloqueado, $balanceRef, $baseValor),
-                'deterioro' => $this->getDeterioro($balanceRef, $desbloqueado, $baseValor),
-                'suelo'     => $this->getSuelo($balanceRef, $baseValor),
-            ]
+    if (!$house) {
+        $house = $user->house()->create([
+            'unlocked_second_floor' => false,
+            'unlocked_garage'       => false,
         ]);
     }
+
+    // 🔹 Balance del usuario en su moneda base
+    $balance = (float) $user->balance;
+
+    // 🔹 Datos de la moneda del usuario
+    $currency = $user->currency;
+    $code    = $currency->code   ?? 'ARS';
+    $symbol  = $currency->symbol ?? '$';
+
+    // ============================================================
+    // 🔸 1. Convertir SIEMPRE a USD como referencia común
+    //     (CurrencyService adentro se encarga de UVA / PPA)
+    // ============================================================
+    try {
+        $balanceUSD = CurrencyService::convert($balance, $code, 'USD');
+    } catch (\Exception $e) {
+        $balanceUSD = $balance;
+    }
+
+    // ============================================================
+    // 🔸 2. Obtener PPA / UVA solo para mostrar la referencia
+    //     (NO para tocar el balanceRef acá)
+    // ============================================================
+    $countryMap = [
+        'ARS' => 'AR', 'USD' => 'US', 'EUR' => 'DE', 'BRL' => 'BR',
+        'MXN' => 'MX', 'CLP' => 'CL', 'COP' => 'CO', 'GBP' => 'GB',
+        'JPY' => 'JP', 'CNY' => 'CN',
+    ];
+
+    $countryCode = $countryMap[$code] ?? null;
+
+    // PPA
+    $ppaValue = null;
+    if ($countryCode) {
+        $ppaValue = DataApi::where('name', 'ppa_' . strtolower($countryCode))
+            ->where('status', 'ok')
+            ->orderByDesc('last_fetched_at')
+            ->value('balance');
+    }
+
+    // UVA solo para Argentina (para referencia visual / info)
+    $uvaValue = null;
+    if ($code === 'ARS') {
+        $uvaValue = $this->getUvaValue();
+    }
+
+    // ============================================================
+    // 🔸 3. Definir referencia y balance de comparación
+    // ============================================================
+    // 💵 Balance de referencia SIEMPRE en USD
+    $balanceRef = $balanceUSD;
+
+    // Ajuste suave solo para Argentina (sin tocar la conversión)
+    if ($code === 'ARS') {
+        $balanceRef = $balanceRef * 2.35; 
+    }
+
+    // 📌 Texto de referencia que mostrás al usuario
+    if ($code === 'ARS') {
+        if ($uvaValue) {
+            $unidadRef = 'UVA';
+        } elseif ($ppaValue) {
+            $unidadRef = 'PPA';
+        } else {
+            $unidadRef = 'USD';
+        }
+    } else {
+        if ($ppaValue) {
+            $unidadRef = 'PPA';
+        } else {
+            $unidadRef = 'USD';
+        }
+    }
+
+    $baseValor = 1;
+
+    $limites = [
+        'segundo_piso' => 3000 * $baseValor,
+        'garage'       => 6000 * $baseValor,
+    ];
+
+    if ($balanceRef >= $limites['segundo_piso'] && !$house->unlocked_second_floor) {
+        $house->update(['unlocked_second_floor' => true]);
+    }
+
+    if ($balanceRef >= $limites['garage'] && !$house->unlocked_garage) {
+        $house->update(['unlocked_garage' => true]);
+    }
+
+    $desbloqueado = [
+        'segundo_piso' => (bool) $house->unlocked_second_floor,
+        'garage'       => (bool) $house->unlocked_garage,
+    ];
+
+    return response()->json([
+        'balance'            => number_format($balance, 2, '.', ''),
+        'balance_referencia' => number_format($balanceRef, 2, '.', ''),
+        'currency_symbol'    => $symbol,
+        'currency_code'      => $code,
+        'referencia'         => $unidadRef,
+        'casa'               => [
+            'base'      => $this->getBase($desbloqueado),
+            'modulos'   => $this->getModulos($desbloqueado, $balanceRef, $baseValor),
+            'deterioro' => $this->getDeterioro($balanceRef, $desbloqueado, $baseValor),
+            'suelo'     => $this->getSuelo($balanceRef, $baseValor),
+        ],
+    ])
+        ->header('Cache-Control', 'no-cache, no-store, must-revalidate')
+        ->header('Pragma', 'no-cache')
+        ->header('Expires', '0');
+}
+
+
 
     // ============================================================
     // 🔹 TEST API PPA
@@ -244,9 +251,20 @@ class HouseController extends Controller
             $layers[] = $esCentrada ? 'deterioro/segundo-piso-sin-garage.svg' : 'deterioro/segundo-piso.svg';
         }
 
-        // Garage deteriorado
-        if (!empty($desbloqueado['garage']) && $balance >= 6000 * $valor && $balance < 10000 * $valor) {
-            $layers[] = 'deterioro/garage.svg';
+        // 👉 Garage deterioro progresivo realista
+        if (!empty($desbloqueado['garage'])) {
+
+            // Muy deteriorado (recién desbloqueado)
+            if ($balance < 7000 * $valor) {
+                $layers[] = 'deterioro/garage.svg'; // tu SVG actual de grieta/mancha
+            }
+
+            // Punto medio (opcional si tenés otro SVG)
+            // elseif ($balance < 10000 * $valor) {
+            //     $layers[] = 'deterioro/garage-medio.svg';
+            // }
+
+            // Si tiene más de 10k USD → GARAGE LIMPIO
         }
 
         return $layers;

@@ -6,13 +6,14 @@ import '../widgets/success_dialog_widget.dart';
 import '../widgets/confirm_dialog_widget.dart';
 import 'challenge_profile_screen.dart';
 import '../../main.dart'; // 👈 para usar routeObserver
+import '../widgets/custom_refresh_wrapper.dart';
+
 
 
 // 🔹 Nuevos imports modularizados
 import '../widgets/empty_state_widget.dart';
 import '../widgets/challenge_card_widget.dart';
 import '../widgets/meta_chips_widget.dart';
-import '../widgets/challenge_header_widget.dart';
 import '../helpers/challenge_utils.dart';
 
 class ChallengeScreen extends StatefulWidget {
@@ -153,8 +154,9 @@ class _ChallengeScreenState extends State<ChallengeScreen>
       await showDialog(
         context: context,
         builder: (_) => SuccessDialogWidget(
-          title: "Esperá un poco ⏳",
+          title: "Esperá un poco",
           message: "Podés regenerar desafíos nuevamente a las $formatted hs.",
+          isFailure: true,
         ),
       );
       return;
@@ -166,8 +168,9 @@ class _ChallengeScreenState extends State<ChallengeScreen>
       await showDialog(
         context: context,
         builder: (_) => SuccessDialogWidget(
-          title: "Esperá un poco ⏳",
+          title: "Esperá un poco",
           message: "Podés regenerar desafíos nuevamente a las $formatted hs.",
+          isFailure: true,
         ),
       );
       return;
@@ -208,6 +211,7 @@ class _ChallengeScreenState extends State<ChallengeScreen>
           builder: (_) => SuccessDialogWidget(
             title: "Esperá un poco ⏳",
             message: "Podés regenerar desafíos nuevamente a las $formatted hs.",
+            isFailure: true,
           ),
         );
         return;
@@ -228,36 +232,23 @@ class _ChallengeScreenState extends State<ChallengeScreen>
       title: 'Desafíos',
       currentRoute: 'challenge',
       actions: [
-        IconButton(
-          icon: const Icon(Icons.person_outline),
-          tooltip: 'Ver perfil gamificado',
-          onPressed: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (_) => const ChallengeProfileScreen()),
-            );
-          },
+        Transform.translate(
+          offset: const Offset(-13, 0), // 👈 negativo = va a la izquierda
+          child: IconButton(
+            icon: Icon(Icons.person_outline, color: cs.primary),
+            tooltip: 'Ver perfil gamificado',
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const ChallengeProfileScreen()),
+              );
+            },
+          ),
         ),
       ],
       body: Column(
         children: [
-          // 🔹 Header con nivel y puntos (igual que tenías)
-          FutureBuilder<Map<String, dynamic>?>(
-            future: _profileFuture,
-            builder: (context, snap) {
-              if (snap.connectionState == ConnectionState.waiting) {
-                return const SizedBox(height: 12);
-              }
-              final profile = snap.data ?? {};
-              final user = profile['user'] ?? {};
-              final level = user['level'] ?? 0;
-              final points = user['points'] ?? 0;
-
-              return ChallengeHeaderWidget(level: level, points: points);
-            },
-          ),
-
-          // 🔹 Tabs (respetando theme)
+         // 🔹 Tabs (respetando theme)
           Container(
             color: cs.surfaceContainerHighest.withOpacity(0.2),
             child: TabBar(
@@ -391,9 +382,7 @@ class _ChallengeScreenState extends State<ChallengeScreen>
         sorted.sort(_compareChallenges);
 
         // Lista principal (con INFO + cards táctiles)
-        Widget list = RefreshIndicator(
-          color: cs.primary,
-          backgroundColor: cs.surfaceContainerHighest,
+        Widget list = CustomRefreshWrapper(
           onRefresh: _refreshChallengesManually,
           child: sorted.isEmpty
               ? ListView(
@@ -401,9 +390,9 @@ class _ChallengeScreenState extends State<ChallengeScreen>
                   children: [
                     EmptyStateWidget(
                       title: "¡No hay desafíos disponibles!",
-                      message: "Parece que completaste todos los desafíos por ahora.\nPodés intentar regenerarlos",
+                      message:
+                          "Parece que completaste todos los desafíos por ahora.\nPodés intentar regenerarlos",
                       icon: Icons.emoji_events_outlined,
-                
                     ),
                   ],
                 )
@@ -413,6 +402,9 @@ class _ChallengeScreenState extends State<ChallengeScreen>
                   itemCount: sorted.length,
                   itemBuilder: (context, index) {
                     final ch = sorted[index];
+
+                    // … resto del código igual …
+
 
                     // 🟣 Mensajes informativos del backend (type: INFO) — se mantiene
                     if ((ch['type'] ?? '') == 'INFO') {
@@ -648,7 +640,7 @@ class _ChallengeScreenState extends State<ChallengeScreen>
           );
         }
 
-        return RefreshIndicator(
+        return CustomRefreshWrapper(
           onRefresh: () async => _refreshTab(_tabController.index),
           child: ListView(
             padding: const EdgeInsets.all(16),

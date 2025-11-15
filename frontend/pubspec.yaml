@@ -115,6 +115,7 @@ flutter:
     - assets/lottie/success.json
     - assets/lottie/Errorfailure.json
     - assets/lottie/congratulationgoal.json
+    - assets/lottie/confetti.json
 
 
     

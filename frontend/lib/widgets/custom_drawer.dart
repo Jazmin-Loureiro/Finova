@@ -11,6 +11,8 @@ import '../screens/export_reports_screen.dart';
 import '../screens/loan_simulator_screen.dart';
 import '../screens/investment_simulator_screen.dart';
 import '../screens/category/category_list.dart';
+import '../screens/challenge_profile_screen.dart';
+import '../screens/home_screen.dart';
 
 class CustomDrawer extends StatelessWidget {
   final String currentRoute;
@@ -89,40 +91,51 @@ class CustomDrawer extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // 🔹 Encabezado con el color primario del tema
-            Container(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 20.0, vertical: 28.0),
-              color: scheme.primary,
-              child: Row(
-                children: [
-                  Container(
-                    width: 50,
-                    height: 50,
-                    decoration: BoxDecoration(
-                      color: scheme.onPrimary, // círculo contrastante según tema
-                      shape: BoxShape.circle,
-                    ),
-                    child: Padding(
-                      padding: const EdgeInsets.all(6.0),
-                      child: Image.asset(
-                        'assets/icon.png',
-                        fit: BoxFit.contain,
+            InkWell(
+              onTap: () {
+                Navigator.pop(context); // Cierra el drawer
+
+                if (currentRoute != '/home') {
+                  Navigator.pushReplacement(
+                    context,
+                    MaterialPageRoute(builder: (_) => const HomeScreen()),
+                  );
+                }
+              },
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 28.0),
+                color: scheme.primary,
+                child: Row(
+                  children: [
+                    Container(
+                      width: 50,
+                      height: 50,
+                      decoration: BoxDecoration(
+                        color: scheme.onPrimary,
+                        shape: BoxShape.circle,
+                      ),
+                      child: Padding(
+                        padding: const EdgeInsets.all(6.0),
+                        child: Image.asset(
+                          'assets/icon.png',
+                          fit: BoxFit.contain,
+                        ),
                       ),
                     ),
-                  ),
-                  const SizedBox(width: 12),
-                  Text(
-                    'Finova',
-                    style: textTheme.titleLarge?.copyWith(
-                      fontWeight: FontWeight.bold,
-                      color: scheme.onPrimary,
-                      letterSpacing: 0.5,
+                    const SizedBox(width: 12),
+                    Text(
+                      'Finova',
+                      style: textTheme.titleLarge?.copyWith(
+                        fontWeight: FontWeight.bold,
+                        color: scheme.onPrimary,
+                        letterSpacing: 0.5,
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
+
 
             const SizedBox(height: 12),
 
@@ -132,16 +145,10 @@ class CustomDrawer extends StatelessWidget {
                 padding: const EdgeInsets.only(top: 8),
                 children: [
                   buildMenuItem(
-                    icon: Icons.dashboard_rounded,
-                    title: 'Panel',
-                    routeName: 'dashboard',
-                    screen: const DashboardScreen(),
-                  ),
-                  buildMenuItem(
-                    icon: Icons.settings_rounded,
-                    title: 'Configuración',
-                    routeName: 'configuration',
-                    screen: const ConfigurationScreen(),
+                    icon: Icons.manage_accounts,
+                    title: 'Perfil',
+                    routeName: 'challenge_profile',
+                    screen: const ChallengeProfileScreen(),
                   ),
                   buildMenuItem(
                     icon: Icons.emoji_events_rounded,
@@ -185,12 +192,7 @@ class CustomDrawer extends StatelessWidget {
                     routeName: 'investment_list',
                     screen: const InvestmentRatesScreen(),
                   ),
-                  buildMenuItem(
-                    icon: Icons.manage_accounts,
-                    title: 'Perfil',
-                    routeName: 'manage_accounts',
-                    screen: const UserScreen(),
-                  ),
+                  
 
                 ],
               ),

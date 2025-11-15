@@ -8,6 +8,7 @@ import '../widgets/badge_grid_widget.dart';
 import '../widgets/custom_refresh_wrapper.dart';
 import '../../main.dart';
 import '../widgets/info_icon_widget.dart';
+import '../screens/configuration_screen.dart';
 
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:multiavatar/multiavatar.dart';
@@ -273,9 +274,20 @@ class _ChallengeProfileScreenState extends State<ChallengeProfileScreen>
   @override
   Widget build(BuildContext context) {
     return CustomScaffold(
-      title: 'Mi Perfil de Desafíos',
-      currentRoute: 'user',
+      title: 'Perfil',
+      currentRoute: 'challenge_profile',
       showNavigation: false,
+      actions: [
+        IconButton(
+          icon: const Icon(Icons.settings, color: Colors.white),
+          onPressed: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const ConfigurationScreen()),
+            );
+          },
+        ),
+      ],
       body: FutureBuilder<Map<String, dynamic>>(
         future: _profileFuture,
         builder: (context, snap) {

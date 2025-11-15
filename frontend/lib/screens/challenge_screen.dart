@@ -232,21 +232,7 @@ class _ChallengeScreenState extends State<ChallengeScreen>
       title: 'Desafíos',
       currentRoute: 'challenge',
       showNavigation: false,
-      actions: [
-        Transform.translate(
-          offset: const Offset(-13, 0), // 👈 negativo = va a la izquierda
-          child: IconButton(
-            icon: Icon(Icons.person_outline, color: cs.primary),
-            tooltip: 'Ver perfil gamificado',
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => const ChallengeProfileScreen()),
-              );
-            },
-          ),
-        ),
-      ],
+    
       body: Column(
         children: [
          // 🔹 Tabs (respetando theme)

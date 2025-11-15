@@ -275,6 +275,7 @@ class _ChallengeProfileScreenState extends State<ChallengeProfileScreen>
     return CustomScaffold(
       title: 'Mi Perfil de Desafíos',
       currentRoute: 'user',
+      showNavigation: false,
       body: FutureBuilder<Map<String, dynamic>>(
         future: _profileFuture,
         builder: (context, snap) {

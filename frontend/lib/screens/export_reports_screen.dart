@@ -150,6 +150,7 @@ class _ExportReportsScreenState extends State<ExportReportsScreen> {
     return CustomScaffold(
       title: 'Exportaciones',
       currentRoute: 'export',
+      showNavigation: false,
       body: isLoading
           ? const LoadingWidget(message: 'Cargando...')
           : Padding(

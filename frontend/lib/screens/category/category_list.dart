@@ -66,6 +66,7 @@ class _CategoryListScreenState extends State<CategoryListScreen>
     return CustomScaffold(
       title: 'Categorías',
       currentRoute: 'categories_list',
+      showNavigation: false,
       actions: [
         /*
         IconButton(

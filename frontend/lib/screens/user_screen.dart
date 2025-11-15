@@ -77,6 +77,7 @@ class _UserScreenState extends State<UserScreen> {
     return CustomScaffold(
       title: 'Usuario',
       currentRoute: 'user',
+      showNavigation: false,
       body: FutureBuilder<Map<String, dynamic>?>(
         future: userFuture,
         builder: (context, snapshot) {

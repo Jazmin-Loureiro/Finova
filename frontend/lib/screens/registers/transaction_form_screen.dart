@@ -269,6 +269,7 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
     return CustomScaffold(
       title: 'Nuevo ${typeLabels[widget.type] ?? widget.type}',
       currentRoute: 'transaction_form',
+      showNavigation: false,
       body: Stack(
         children: [
           Padding(

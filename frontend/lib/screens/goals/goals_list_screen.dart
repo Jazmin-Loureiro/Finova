@@ -11,7 +11,6 @@ import 'package:frontend/services/api_service.dart';
 import 'package:frontend/widgets/custom_scaffold.dart';
 import 'package:frontend/widgets/loading_widget.dart';
 import '../../widgets/empty_state_widget.dart';
-import '../../widgets/navigation_bar_widget.dart';
 
 class GoalsListScreen extends StatefulWidget {
   const GoalsListScreen({super.key});
@@ -134,86 +133,82 @@ Future<void> _checkExpiredGoals() async {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: CustomScaffold(
-        title: 'Metas',
-        currentRoute: 'goals_list',
-        actions: [
-          InfoIcon(
-            title: 'Metas financieras',
-            message:
-                'Las metas financieras te ayudan a planificar y administrar tu dinero para alcanzar objetivos concretos.\n\n'
-                'Establecé un monto y un plazo estimado, y al generar una transacción, Finova reservará automáticamente el dinero que asignes a esa meta para ayudarte a cumplirla.',
-            iconSize: 25,
+    return CustomScaffold(
+      title: 'Metas',
+      currentRoute: 'goals_list',
+      actions: [
+        InfoIcon(
+          title: 'Metas financieras',
+          message:
+              'Las metas financieras te ayudan a planificar y administrar tu dinero para alcanzar objetivos concretos.\n\n'
+              'Establecé un monto y un plazo estimado, y al generar una transacción, Finova reservará automáticamente el dinero que asignes a esa meta para ayudarte a cumplirla.',
+          iconSize: 25,
+        ),
+        /*
+        IconButton(
+          icon: const Icon(Icons.refresh),
+          onPressed: _fetchGoals,
+        ),
+        */
+         Container(
+          margin: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            color: Theme.of(context).colorScheme.primary,
+            shape: BoxShape.circle,
           ),
-          Container(
-            margin: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: Theme.of(context).colorScheme.primary,
-              shape: BoxShape.circle,
-            ),
-            child: IconButton(
-              icon: Icon(Icons.add,
-                  color: Theme.of(context).colorScheme.onPrimary),
-              tooltip: 'Agregar nueva meta',
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => const GoalFormScreen()),
-                ).then((value) {
-                  if (value == true) {
-                    _fetchGoals(); // recargar metas
-                  }
-                });
-              },
-            ),
+          child: IconButton(
+            icon: Icon(Icons.add, color: Theme.of(context).colorScheme.onPrimary),
+            tooltip: 'Agregar nueva meta',
+          onPressed: () {
+            Navigator.push(context, 
+              MaterialPageRoute(builder: (context) => const GoalFormScreen())
+            ).then((value) {
+              if (value == true) {
+                _fetchGoals(); // recargar metas
+              }
+            });
+          },
+        )
+      ),
+      ],
+      body: isLoading
+    ? const LoadingWidget(message: 'Cargando metas...')
+      : Column(
+        children: [
+          TabBar(
+            controller: _tabController,
+            labelColor: Theme.of(context).colorScheme.primary,
+            labelStyle:
+                const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+            tabs: const [
+              Tab(text: 'En proceso'),
+              Tab(text: 'Completadas'),
+              Tab(text: 'Canceladas'),
+            ],
+          ),
+          Expanded(
+            child: isLoading
+                ? const LoadingWidget(message: 'Cargando metas...')
+                : TabBarView(
+                  controller: _tabController,
+                  children: [
+                    CustomRefreshWrapper(
+                      onRefresh: _fetchGoals,
+                      child: _buildGoalsList(_filterGoals('in_progress')),
+                    ),
+                    CustomRefreshWrapper(
+                      onRefresh: _fetchGoals,
+                      child: _buildGoalsList(_filterGoals('completed')),
+                    ),
+                    CustomRefreshWrapper(
+                      onRefresh: _fetchGoals,
+                      child: _buildGoalsList(_filterGoals('disabled')),
+                    ),
+                  ],
+                ),
           ),
         ],
-        body: isLoading
-            ? const LoadingWidget(message: 'Cargando metas...')
-            : Column(
-                children: [
-                  TabBar(
-                    controller: _tabController,
-                    labelColor: Theme.of(context).colorScheme.primary,
-                    labelStyle: const TextStyle(
-                        fontWeight: FontWeight.bold, fontSize: 15),
-                    tabs: const [
-                      Tab(text: 'En proceso'),
-                      Tab(text: 'Completadas'),
-                      Tab(text: 'Canceladas'),
-                    ],
-                  ),
-                  Expanded(
-                    child: isLoading
-                        ? const LoadingWidget(message: 'Cargando metas...')
-                        : TabBarView(
-                            controller: _tabController,
-                            children: [
-                              CustomRefreshWrapper(
-                                onRefresh: _fetchGoals,
-                                child: _buildGoalsList(
-                                    _filterGoals('in_progress')),
-                              ),
-                              CustomRefreshWrapper(
-                                onRefresh: _fetchGoals,
-                                child:
-                                    _buildGoalsList(_filterGoals('completed')),
-                              ),
-                              CustomRefreshWrapper(
-                                onRefresh: _fetchGoals,
-                                child:
-                                    _buildGoalsList(_filterGoals('disabled')),
-                              ),
-                            ],
-                          ),
-                  ),
-                ],
-              ),
       ),
-
-      // ⭐⭐⭐ Aca va la barra, índice 1
-      bottomNavigationBar: const NavigationBarWidget(currentIndex: 1),
     );
   }
 

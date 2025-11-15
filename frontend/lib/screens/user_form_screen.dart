@@ -146,6 +146,7 @@ class _UserFormScreenState extends State<UserFormScreen> {
     return CustomScaffold(
       title: "Editar Usuario",
       currentRoute: "/user/form",
+      showNavigation: false,
       body: Padding(
         padding: const EdgeInsets.all(16),
         child: Form(

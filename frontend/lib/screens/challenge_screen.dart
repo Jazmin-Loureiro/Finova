@@ -231,6 +231,7 @@ class _ChallengeScreenState extends State<ChallengeScreen>
     return CustomScaffold(
       title: 'Desafíos',
       currentRoute: 'challenge',
+      showNavigation: false,
       actions: [
         Transform.translate(
           offset: const Offset(-13, 0), // 👈 negativo = va a la izquierda

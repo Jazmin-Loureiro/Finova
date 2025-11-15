@@ -6,7 +6,6 @@ import 'package:frontend/widgets/statistics/category_summary_chart_widget.dart';
 import '../../services/api_service.dart';
 import '../../widgets/custom_scaffold.dart';
 import '../../widgets/loading_widget.dart';
-import '../../widgets/navigation_bar_widget.dart';
 
 class StatisticsScreen extends StatefulWidget {
   const StatisticsScreen({super.key});
@@ -116,87 +115,88 @@ Future<void> _loadStatistics() async {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: CustomScaffold(
-        title: 'Estadísticas',
-        currentRoute: 'statistics',
-        body: Column(
-          children: [
-            TabBar(
-              controller: _tabController,
-              labelColor: Theme.of(context).colorScheme.primary,
-              tabs: const [
-                Tab(text: 'Ingresos'),
-                Tab(text: 'Gastos'),
-                Tab(text: 'Saldo'),
-              ],
-            ),
-            Expanded(
-              child: isLoading
-                  ? const Center(
-                      child: LoadingWidget(message: 'Cargando estadísticas...'),
-                    )
-                  : TabBarView(
-                      controller: _tabController,
-                      children: [
-                        Column(
-                          children: [
-                            _rangeChips(),
-                            Expanded(
-                              child: CategorySummaryChartWidget(
-                                title: "Ingresos por categoría",
-                                subtitle: "¿De dónde proviene mi dinero?",
-                                totals: incomeTotals,
-                                userCurrency: userCurrency,
-                                colorsMap: incomeColors,
-                                iconsMap: incomeIcons,
-                              ),
-                            ),
-                          ],
-                        ),
-                        Column(
-                          children: [
-                            _rangeChips(),
-                            Expanded(
-                              child: CategorySummaryChartWidget(
-                                title: "Gastos por categoría",
-                                subtitle: "¿En qué estoy gastando más?",
-                                totals: expenseTotals,
-                                userCurrency: userCurrency,
-                                colorsMap: expenseColors,
-                                iconsMap: expenseIcons,
-                              ),
-                            ),
-                          ],
-                        ),
-                        ListView(
-                          padding: const EdgeInsets.only(top: 12),
-                          children: [
-                            SummaryBarCardWidget(
-                              title: "Saldo por divisas",
-                              subtitle: "¿Cuánto tengo en cada moneda?",
-                              totals: balancesByCurrency,
-                              userCurrency: userCurrency,
-                              showTotal: false,
-                            ),
-                            SummaryBarCardWidget(
-                              title: "Saldo por cuentas",
-                              subtitle: "¿Dónde tengo mi dinero?",
-                              totals: balancesByMoneyMaker,
-                              userCurrency: userCurrency,
-                              showTotal: false,
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-            ),
-          ],
-        ),
-      ),
+    return CustomScaffold(
+      title: 'Estadísticas',
+      currentRoute: 'statistics',
+      body: Column(
+        children: [
+          TabBar(
+            controller: _tabController,
+            labelColor: Theme.of(context).colorScheme.primary,
+            tabs: const [
+              Tab(text: 'Ingresos'),
+              Tab(text: 'Gastos'),
+              Tab(text: 'Saldo'),
+            ],
+          ),
 
-      // ⭐⭐ AQUÍ SE AGREGA TU BARRA — NADA MÁS
-      bottomNavigationBar: const NavigationBarWidget(currentIndex: 4),
+          Expanded(
+            child: isLoading
+                ? const Center(
+                    child: LoadingWidget(message: 'Cargando estadísticas...'),
+                  )
+                : TabBarView(
+                    controller: _tabController,
+                    children: [
+                      Column(
+                        children: [
+                          _rangeChips(),
+                          Expanded(
+                            child: CategorySummaryChartWidget(
+                              title: "Ingresos por categoría",
+                              subtitle: "¿De dónde proviene mi dinero?",
+                              totals: incomeTotals,
+                              userCurrency: userCurrency,
+                                colorsMap: incomeColors,
+                                  iconsMap: incomeIcons,   // <-- nuevo
+
+
+                            ),
+                          ),
+                        ],
+                      ),
+                      Column(
+                        children: [
+                          _rangeChips(),
+                          Expanded(
+                            child: CategorySummaryChartWidget(
+                              title: "Gastos por categoría",
+                              subtitle: "¿En qué estoy gastando más?",
+                              totals: expenseTotals,
+                              userCurrency: userCurrency,
+                                colorsMap: expenseColors,
+                                  iconsMap: expenseIcons,   // <-- nuevo
+
+
+                            ),
+                          ),
+                        ],
+                      ),
+                      ListView(
+                        padding: const EdgeInsets.only(top: 12),
+                        children: [
+                          SummaryBarCardWidget(
+                            title: "Saldo por divisas",
+                            subtitle: "¿Cuánto tengo en cada moneda?",
+                            totals: balancesByCurrency,
+                            userCurrency: userCurrency,
+                            showTotal: false,
+                          ),
+
+                          SummaryBarCardWidget(
+                            title: "Saldo por cuentas",
+                            subtitle: "¿Dónde tengo mi dinero?",
+                            totals: balancesByMoneyMaker,
+                            userCurrency: userCurrency,
+                            showTotal: false,
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+          ),
+        ],
+      ),
     );
   }
 

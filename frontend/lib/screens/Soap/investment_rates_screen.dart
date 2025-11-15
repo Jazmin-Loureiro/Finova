@@ -133,6 +133,7 @@ class _InvestmentRatesScreenState extends State<InvestmentRatesScreen> {
     return CustomScaffold(
       title: 'Tasas de Inversión',
       currentRoute: '/investment-rates',
+      showNavigation: false,
       body: isLoading
           ? const Center(child: CircularProgressIndicator())
           : ListView.builder(

@@ -122,6 +122,7 @@ Widget build(BuildContext context) {
   return CustomScaffold(
     title: widget.goal != null ? 'Editar Meta' : 'Crear Meta',
     currentRoute: 'goal_form',
+    showNavigation: false,
     body: Stack(
       children: [
         Padding(

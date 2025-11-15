@@ -9,6 +9,7 @@ class ConfigurationScreen extends StatelessWidget {
     return const CustomScaffold(
       title: 'Configuración',
       currentRoute: 'configuration',
+      showNavigation: false,
       body: Center(
         child: Text(
           'Pantalla de Configuración',

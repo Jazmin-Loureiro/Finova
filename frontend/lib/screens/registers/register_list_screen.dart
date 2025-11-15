@@ -162,6 +162,7 @@ class _RegisterListScreenState extends State<RegisterListScreen> {
     return CustomScaffold(
       title: 'Registros de ${widget.moneyMakerName}',
       currentRoute: '/registers',
+      showNavigation: false,
       body: isLoading
           ? const Center(child: LoadingWidget())
           : CustomRefreshWrapper(

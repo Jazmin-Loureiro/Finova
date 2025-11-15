@@ -147,6 +147,7 @@ void saveCategory() async {
           ? 'Editar ${typeLabels[widget.type]}: ${widget.category!.name}'
           : 'Nueva Categoría ${typeLabels[widget.type]}',
       currentRoute: '/category_form',
+      showNavigation: false,
       body: Stack(
         children: [
           Padding(

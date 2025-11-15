@@ -7,6 +7,8 @@ import '../widgets/success_dialog_widget.dart';
 import '../screens/user_form_screen.dart';
 import 'login_screen.dart';
 import '../models/currency.dart';
+import '../widgets/custom_refresh_wrapper.dart';
+import '../main.dart'; // 👈 para usar routeObserver
 
 class ConfigurationScreen extends StatefulWidget {
   const ConfigurationScreen({super.key});
@@ -15,7 +17,8 @@ class ConfigurationScreen extends StatefulWidget {
   State<ConfigurationScreen> createState() => _ConfigurationScreenState();
 }
 
-class _ConfigurationScreenState extends State<ConfigurationScreen> {
+class _ConfigurationScreenState extends State<ConfigurationScreen>
+    with RouteAware {
   final ApiService api = ApiService();
   late Future<Map<String, dynamic>?> userFuture;
 
@@ -26,6 +29,38 @@ class _ConfigurationScreenState extends State<ConfigurationScreen> {
     super.initState();
     userFuture = api.getUser();
   }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // 👀 nos suscribimos para enterarnos cuando volvemos a esta pantalla
+    routeObserver.subscribe(this, ModalRoute.of(context)! as PageRoute);
+  }
+
+  @override
+  void dispose() {
+    routeObserver.unsubscribe(this);
+    super.dispose();
+  }
+
+  /// 🔁 Se llama cuando volvés a esta screen desde otra (por ej. UserFormScreen)
+  @override
+  void didPopNext() {
+    super.didPopNext();
+
+    setState(() {
+      userFuture = Future.value(null); // Fuerza loading y evita datos viejos
+    });
+
+    Future.delayed(Duration.zero, () {
+      if (mounted) {
+        setState(() {
+          userFuture = api.getUser();
+        });
+      }
+    });
+  }
+
 
   String _formatSpanishDate(String? raw) {
     if (raw == null || raw.isEmpty) return '—';
@@ -67,6 +102,14 @@ class _ConfigurationScreenState extends State<ConfigurationScreen> {
     }
   }
 
+  // 🔄 usado por el pull-to-refresh
+  Future<void> _refreshUser() async {
+    setState(() {
+      userFuture = api.getUser();
+    });
+    await userFuture;
+  }
+
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
@@ -84,7 +127,9 @@ class _ConfigurationScreenState extends State<ConfigurationScreen> {
       body: FutureBuilder<Map<String, dynamic>?>(
         future: userFuture,
         builder: (context, snap) {
-          if (!snap.hasData) {
+          if (snap.connectionState == ConnectionState.waiting ||
+              !snap.hasData ||
+              snap.data == null) {
             return const LoadingWidget(message: "Cargando...");
           }
 
@@ -94,7 +139,8 @@ class _ConfigurationScreenState extends State<ConfigurationScreen> {
           final currencyId = user['currency_id'] ?? 0;
           final createdAt = _formatSpanishDate(user['created_at']);
 
-          return SingleChildScrollView(
+          return CustomRefreshWrapper(
+            onRefresh: _refreshUser, // 👈 deslizar para refrescar
             padding: const EdgeInsets.all(20),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -111,7 +157,7 @@ class _ConfigurationScreenState extends State<ConfigurationScreen> {
                 ),
                 const SizedBox(height: 16),
 
-                // CARD PRINCIPAL ESTILO FINOVA (GLASS + BORDER + SHADOW)
+                // CARD PRINCIPAL ESTILO FINOVA
                 Container(
                   padding: const EdgeInsets.all(20),
                   decoration: BoxDecoration(
@@ -153,7 +199,10 @@ class _ConfigurationScreenState extends State<ConfigurationScreen> {
                             final found = currencies.firstWhere(
                               (c) => c.id == currencyId,
                               orElse: () => Currency(
-                                id: 0, code: "USD", name: "Desconocida", symbol: "\$",
+                                id: 0,
+                                code: "USD",
+                                name: "Desconocida",
+                                symbol: "\$",
                               ),
                             );
                             text = "${found.symbol} ${found.code} — ${found.name}";
@@ -206,7 +255,11 @@ class _ConfigurationScreenState extends State<ConfigurationScreen> {
                         icon: result['icon'],
                       );
 
-                      if (ok != null) setState(() => userFuture = api.getUser());
+                      if (ok != null && ok['user'] != null) {
+                        setState(() {
+                          userFuture = api.getUser();
+                        });
+                      }
                     }
                   },
                 ),
@@ -268,7 +321,6 @@ class _ConfigurationScreenState extends State<ConfigurationScreen> {
       children: [
         Icon(icon, color: cs.primary, size: 24),
         const SizedBox(width: 12),
-
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,

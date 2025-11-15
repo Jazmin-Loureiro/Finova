@@ -279,7 +279,10 @@ class _ChallengeProfileScreenState extends State<ChallengeProfileScreen>
       showNavigation: false,
       actions: [
         IconButton(
-          icon: const Icon(Icons.settings, color: Colors.white),
+          icon: Icon(
+            Icons.settings,
+            color: Theme.of(context).colorScheme.onSurface,
+          ),
           onPressed: () {
             Navigator.push(
               context,
@@ -445,36 +448,12 @@ class _ChallengeProfileScreenState extends State<ChallengeProfileScreen>
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      ShaderMask(
-                        shaderCallback: (rect) => LinearGradient(
-                          colors: [cs.primary, Colors.white, cs.secondary],
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                          tileMode: TileMode.mirror,
-                        ).createShader(rect),
-                        child: const Text(
-                          'Nivel ',
-                          style: TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white,
-                          ),
-                        ),
-                      ),
-                      ShaderMask(
-                        shaderCallback: (rect) => LinearGradient(
-                          colors: [cs.primary, Colors.white, cs.secondary],
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                          tileMode: TileMode.mirror,
-                        ).createShader(rect),
-                        child: Text(
-                          '$level — $points pts',
-                          style: const TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white,
-                          ),
+                      Text(
+                        'Nivel $level — $points pts',
+                        style: const TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white, // BLANCO SIEMPRE
                         ),
                       ),
                       const SizedBox(width: 6),

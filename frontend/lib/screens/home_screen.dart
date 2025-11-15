@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:frontend/widgets/confirm_dialog_widget.dart';
 import '../services/api_service.dart';
 import 'login_screen.dart';
 import '../widgets/casa_widget.dart';
@@ -60,27 +59,6 @@ class _HomeScreenState extends State<HomeScreen> {
         currentRoute: '/home',
         extendBody: true,
         extendBodyBehindAppBar: true,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.logout),
-            onPressed: () async {
-              final confirmed = await showDialog<bool>(
-                context: context,
-                builder: (_) => ConfirmDialogWidget(
-                  title: 'Cerrar sesión',
-                  message: '¿Estás seguro de que deseas cerrar sesión?',
-                  confirmText: 'Cerrar sesión',
-                  cancelText: 'Cancelar',
-                  confirmColor: Colors.red,
-                ),
-              );
-
-              if (confirmed == true) {
-                logout(); // tu método logout()
-              }
-            },
-          ),
-        ],
         body: Stack(
           children: [
             const CasaWidget(),

@@ -36,7 +36,7 @@ class CustomDrawer extends StatelessWidget {
           onTap: () {
             Navigator.pop(context);
             if (!isSelected) {
-              Navigator.pushReplacement(
+              Navigator.push(
                 context,
                 MaterialPageRoute(builder: (_) => screen),
               );

@@ -91,6 +91,7 @@ class _CurrencyConverterScreenState extends State<CurrencyConverterScreen> {
     return CustomScaffold(
   title: 'Conversor',
   currentRoute: 'currency_converter',
+  showNavigation: false,
   body: isLoading
       ? const Center(child: CircularProgressIndicator())
       : Padding(

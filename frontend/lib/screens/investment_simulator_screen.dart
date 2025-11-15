@@ -126,7 +126,7 @@ class _InvestmentSimulatorScreenState extends State<InvestmentSimulatorScreen>
     return CustomScaffold(
       title: 'Simulador de Inversiones',
       currentRoute: 'investment_simulation',
-      // 🧹 Eliminamos el Container con gradient
+      showNavigation: false,
       body: Column(
         children: [
           // 🔹 Tabs superiores (idéntico a ChallengeScreen)

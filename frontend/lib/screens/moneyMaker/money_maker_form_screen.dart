@@ -134,6 +134,7 @@ Widget build(BuildContext context) {
   return CustomScaffold(
     title: widget.moneyMaker != null ? 'Editar Fuente' : 'Agregar Fuente',
     currentRoute: 'money_maker_form',
+    showNavigation: false,
     body: Stack(
       children: [
         Padding(

@@ -166,6 +166,19 @@ class GamificationService
         if ($recentCompletions >= 7) {
             $this->assignBadgeIfNotExists($user, 'super_streak');
         }
+
+        // 🟣 Racha Semanal (7 días seguidos con actividad diaria)
+        $days7 = optional($user->streak)->current_streak ?? 0;
+        if ($days7 >= 7) {
+            $this->assignBadgeIfNotExists($user, 'weekly_streak');
+        }
+
+        // 🔥 Racha Mensual (30 días seguidos)
+        $days30 = optional($user->streak)->current_streak ?? 0;
+        if ($days30 >= 30) {
+            $this->assignBadgeIfNotExists($user, 'monthly_streak');
+        }
+
     }
 
     /**

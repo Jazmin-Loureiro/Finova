@@ -54,6 +54,7 @@ Future<void> _fetchRegistersGoal() async {
     return CustomScaffold(
       title: 'Detalle de ${widget.goal.name}',
       currentRoute: '/goal-detail',
+      showNavigation: false,
       body: isLoading
           ? const Center(child: CircularProgressIndicator())
           : SingleChildScrollView(

@@ -9,6 +9,7 @@ class DashboardScreen extends StatelessWidget {
     return const CustomScaffold(
       title: 'Panel',
       currentRoute: 'dashboard',
+      showNavigation: false,
       body: Center(
         child: Text(
           'Pantalla de Panel (Dashboard)',

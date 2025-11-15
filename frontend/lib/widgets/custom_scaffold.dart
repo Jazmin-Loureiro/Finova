@@ -63,7 +63,11 @@ class CustomScaffold extends StatelessWidget {
         extendBodyBehindAppBar: extendBodyBehindAppBar,
         appBar: CustomAppBar(title: title, actions: actions),
         drawer: CustomDrawer(currentRoute: currentRoute),
-        body: body,
+        body: SafeArea(
+          bottom: true,
+          top: true,
+          child: body,
+        ),
         bottomNavigationBar:
             showNavigation ? NavigationBarWidget(currentIndex: _getCurrentIndex()) : null,
       ),

@@ -76,5 +76,19 @@ class BadgeSeeder extends Seeder
             'description' => 'Completaste desafíos durante 7 días seguidos',
             'icon' => 'lucide:flame',
         ]);
+
+        // 📅 Racha Semanal — 7 días consecutivos con actividad diaria
+        Badge::firstOrCreate(['slug' => 'weekly_streak', 'tier' => 2], [
+            'name' => 'Racha Semanal',
+            'description' => 'Completaste al menos un desafío por día durante 7 días consecutivos.',
+            'icon' => 'lucide:calendar-days',
+        ]);
+
+        // 📆 Racha Mensual — 30 días seguidos
+        Badge::firstOrCreate(['slug' => 'monthly_streak', 'tier' => 3], [
+            'name' => 'Racha Mensual',
+            'description' => 'Mantené tu constancia durante 30 días seguidos completando desafíos.',
+            'icon' => 'lucide:calendar-range',
+        ]);
     }
 }

@@ -231,21 +231,8 @@ class _ChallengeScreenState extends State<ChallengeScreen>
     return CustomScaffold(
       title: 'Desafíos',
       currentRoute: 'challenge',
-      actions: [
-        Transform.translate(
-          offset: const Offset(-13, 0), // 👈 negativo = va a la izquierda
-          child: IconButton(
-            icon: Icon(Icons.person_outline, color: cs.primary),
-            tooltip: 'Ver perfil gamificado',
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => const ChallengeProfileScreen()),
-              );
-            },
-          ),
-        ),
-      ],
+      showNavigation: false,
+    
       body: Column(
         children: [
          // 🔹 Tabs (respetando theme)

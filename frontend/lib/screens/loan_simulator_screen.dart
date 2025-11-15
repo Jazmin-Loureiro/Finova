@@ -77,6 +77,7 @@ class _LoanSimulatorScreenState extends State<LoanSimulatorScreen> {
       return CustomScaffold(
     title: 'Simulador',
     currentRoute: 'loan_simulation',
+    showNavigation: false,
     body: const EmptyStateWidget(
       icon: Icons.block,
       title: "Función no disponible",
@@ -91,6 +92,7 @@ class _LoanSimulatorScreenState extends State<LoanSimulatorScreen> {
     return CustomScaffold(
       title: 'Simulador',
       currentRoute: 'loan_simulation',
+      showNavigation: false,
       body: Container(
         child: Padding(
           padding: const EdgeInsets.all(18.0),

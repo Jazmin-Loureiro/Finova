@@ -18,6 +18,8 @@ IconData? _lucideFrom(String name) {
     case 'calendar-check': return LucideIcons.calendar_check_2;
     case 'repeat': return LucideIcons.repeat;
     case 'flame': return LucideIcons.flame;
+    case 'calendar-days': return LucideIcons.calendar_days;
+    case 'calendar-range': return LucideIcons.calendar_range;
     default: return LucideIcons.badge_check;
   }
 }

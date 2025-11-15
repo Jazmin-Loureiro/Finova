@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'custom_app_bar.dart';
 import 'custom_drawer.dart';
-import 'navigation_bar_widget.dart'; 
 
 class CustomScaffold extends StatelessWidget {
   final String title;
@@ -10,7 +9,7 @@ class CustomScaffold extends StatelessWidget {
   final List<Widget>? actions;
   final bool extendBody;
   final bool extendBodyBehindAppBar;
-  final bool showNavigation;
+  final bool showNavigation; // ya no hace nada, si querés también lo podés borrar
 
   const CustomScaffold({
     super.key,
@@ -45,7 +44,6 @@ class CustomScaffold extends StatelessWidget {
     final background = theme.scaffoldBackgroundColor;
 
     return Container(
-      // 🌈 Fondo global Finova (se adapta al tema claro/oscuro)
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [
@@ -58,14 +56,12 @@ class CustomScaffold extends StatelessWidget {
         ),
       ),
       child: Scaffold(
-        backgroundColor: Colors.transparent, // 👈 deja ver el degradado
+        backgroundColor: Colors.transparent,
         extendBody: extendBody,
         extendBodyBehindAppBar: extendBodyBehindAppBar,
         appBar: CustomAppBar(title: title, actions: actions),
         drawer: CustomDrawer(currentRoute: currentRoute),
         body: body,
-        bottomNavigationBar:
-            showNavigation ? NavigationBarWidget(currentIndex: _getCurrentIndex()) : null,
       ),
     );
   }

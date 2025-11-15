@@ -6,6 +6,7 @@ import '../widgets/casa_widget.dart';
 import '../widgets/home_info_widget.dart';
 import '../widgets/success_dialog_widget.dart';
 import '../widgets/custom_scaffold.dart';
+import '../widgets/navigation_bar_widget.dart';
 
 class HomeScreen extends StatefulWidget {
   final bool showSuccessDialog;
@@ -55,48 +56,53 @@ class _HomeScreenState extends State<HomeScreen> {
         // 🔒 Evita que el botón "atrás" cierre el Home o vuelva al login
         return false;
       },
-      child: CustomScaffold(
-        title: 'Inicio',
-        currentRoute: '/home',
-        extendBody: true,
-        extendBodyBehindAppBar: true,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.logout),
-            onPressed: () async {
-              final confirmed = await showDialog<bool>(
-                context: context,
-                builder: (_) => ConfirmDialogWidget(
-                  title: 'Cerrar sesión',
-                  message: '¿Estás seguro de que deseas cerrar sesión?',
-                  confirmText: 'Cerrar sesión',
-                  cancelText: 'Cancelar',
-                  confirmColor: Colors.red,
-                ),
-              );
+      child: Scaffold(
+        body: CustomScaffold(
+          title: 'Inicio',
+          currentRoute: '/home',
+          extendBody: true,
+          extendBodyBehindAppBar: true,
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.logout),
+              onPressed: () async {
+                final confirmed = await showDialog<bool>(
+                  context: context,
+                  builder: (_) => ConfirmDialogWidget(
+                    title: 'Cerrar sesión',
+                    message: '¿Estás seguro de que deseas cerrar sesión?',
+                    confirmText: 'Cerrar sesión',
+                    cancelText: 'Cancelar',
+                    confirmColor: Colors.red,
+                  ),
+                );
 
-              if (confirmed == true) {
-                logout(); // tu método logout()
-              }
-            },
-          ),
-        ],
-        body: Stack(
-          children: [
-            const CasaWidget(),
-            SafeArea(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.all(16),
-                child: const Column(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    HomeInfoWidget(),
-                  ],
-                ),
-              ),
+                if (confirmed == true) {
+                  logout();
+                }
+              },
             ),
           ],
+          body: Stack(
+            children: [
+              const CasaWidget(),
+              SafeArea(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.all(16),
+                  child: const Column(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      HomeInfoWidget(),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
+
+        // ⭐ SIN ROMPER NADA: SOLO SE AGREGA ESTO
+        bottomNavigationBar: const NavigationBarWidget(currentIndex: 0),
       ),
     );
   }

@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
+import 'package:frontend/helpers/format_utils.dart';
 import 'package:frontend/helpers/icon_utils.dart';
 import 'package:frontend/widgets/bottom_sheet_pickerField.dart';
 import 'package:frontend/widgets/buttons/button_save.dart';
@@ -450,7 +451,14 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
                       items: [
                         ...goals, // tus metas disponibles
                       ],
-                      itemLabel: (g) => g!.name + ' (' + g.balance.toStringAsFixed(2) + '/' + (g.targetAmount.toStringAsFixed(2) ) + ' ' + (g.currency?.code ?? '') + ')',
+                    itemLabel: (g) {
+                      final goal = g!;
+                      final balance = goal.balance;
+                      final target = goal.targetAmount;
+                      final code = goal.currency?.code ?? '---';
+
+                      return '${goal.name} (${goal.currency?.symbol}${formatCurrency(balance, code)} / ${goal.currency?.symbol}${formatCurrency(target, code)})';
+                    },
                       itemIcon: (g) => const Icon(Icons.flag_rounded, color: Colors.blueAccent),
                       initialValue: selectedGoal,
                       emptyText: 'Sin meta',
@@ -461,6 +469,7 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
                     ],
 
                     // Repetición
+                    /*
                     Row(
                       children: [
                         Expanded(
@@ -494,6 +503,7 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
                       ],
                     ),
                     const SizedBox(height: 16),
+                    */
 
                     // Archivo adjunto
                    FormField<File?>(

@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:frontend/widgets/bottom_sheet_pickerField.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:multiavatar/multiavatar.dart';
@@ -384,38 +385,31 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                 ),
                             const SizedBox(height: 16),
 
-                                  FadeInUp(
-                                    delay:
-                                        const Duration(milliseconds: 700),
-                                    child: DropdownButtonFormField<Currency>(
-                                      isExpanded: true, 
-                                      initialValue: currencyBase,
-                                      items: currencyBases.map((c) {
-                                        return DropdownMenuItem(
-                                          value: c,
-                                          child: SizedBox(
-                                            width: double.infinity, 
-                                            child: Text('${c.symbol} ${c.code} - ${c.name}',
-                                              overflow: TextOverflow.ellipsis,
-                                              maxLines: 1,
-                                            ),
-                                          ),
-                                        );
-                                      }).toList(),
-                                      onChanged: (val) =>
-                                          setState(() => currencyBase = val),
-                                      decoration: const InputDecoration(
-                                        labelText: 'Moneda Base',
-                                        border: OutlineInputBorder(
-                                          borderRadius: BorderRadius.all(
-                                              Radius.circular(12)),
-                                        ),
+                              FadeInUp(
+                                delay:
+                                const Duration(milliseconds: 700),
+                                child: BottomSheetPickerField<Currency>(
+                                  label: 'Tipo de moneda',
+                                  
+                                  items: currencyBases,
+                                  itemLabel: (c) => '${c.code} - ${c.name}',
+                                  itemIcon: (c) => CircleAvatar(
+                                    radius: 16,
+                                    backgroundColor: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+                                    child: Text(
+                                      c.symbol,
+                                      style: TextStyle(
+                                        color: Theme.of(context).colorScheme.primary,
+                                        fontWeight: FontWeight.bold,
                                       ),
-                                      validator: (val) => val == null
-                                          ? 'Obligatorio'
-                                          : null,
                                     ),
                                   ),
+                                  initialValue: currencyBase,
+                                  onChanged: (value) => setState(() => currencyBase = value),
+                                  validator: (value) =>
+                                      value == null ? 'Debes seleccionar una moneda' : null,
+                                ),
+                              ),
                             const SizedBox(height: 16),
 
                             FadeInUp(

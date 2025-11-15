@@ -229,15 +229,19 @@ class _MoneyMakerListScreenState extends State<MoneyMakerListScreen> {
                                         if (m.balance_reserved > 0)
                                           Row(
                                             children: [
-                                              Text(
-                                                'Reserva: +${m.currency?.symbol}${formatCurrency(m.balance_reserved, m.currency?.code ?? currencyBase)} ${m.currency?.code ?? ''}',
-                                                style: TextStyle(
-                                                  color: subTextColor,
-                                                  fontSize: 18,
-                                                  fontWeight: FontWeight.w500,
+                                               Expanded(
+                                                child: Text(
+                                                  'Reserva: +${m.currency?.symbol}${formatCurrency(m.balance_reserved, m.currency?.code ?? currencyBase)} ${m.currency?.code ?? ''}',
+                                                  style: TextStyle(
+                                                    color: subTextColor,
+                                                    fontSize: 18,
+                                                    fontWeight: FontWeight.w500,
+                                                  ),
+                                                  overflow: TextOverflow.ellipsis,  // ⭐ evita overflow visual
+                                                  maxLines: 1,
                                                 ),
-                                              ),
-                                              const SizedBox(width: 6),
+                                               ),
+                                             
                                               InfoIcon(
                                                 title: 'Dinero reservado',
                                                 message:

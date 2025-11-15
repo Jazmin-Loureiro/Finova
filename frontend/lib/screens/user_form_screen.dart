@@ -2,9 +2,9 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:frontend/widgets/bottom_sheet_pickerField.dart';
+import 'package:frontend/widgets/buttons/button_save.dart';
 import 'package:multiavatar/multiavatar.dart';
-import '../widgets/confirm_dialog_widget.dart';
-import '../widgets/success_dialog_widget.dart';
 import '../services/api_service.dart';
 import '../models/currency.dart';
 import '../widgets/user_avatar_widget.dart';
@@ -135,9 +135,8 @@ class _UserFormScreenState extends State<UserFormScreen> {
   InputDecoration _inputDecoration(String label) {
     return InputDecoration(
       labelText: label,
-      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-      contentPadding:
-          const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      border: OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(12)),
+      ),
     );
   }
 
@@ -213,55 +212,30 @@ class _UserFormScreenState extends State<UserFormScreen> {
                 const SizedBox(height: 12),
                 isLoadingCurrencies
                     ? const CircularProgressIndicator()
-                    : DropdownButtonFormField<Currency>(
-                        initialValue: selectedCurrency,
-                        decoration: _inputDecoration("Moneda base"),
-                        items: currencies
-                            .map((c) => DropdownMenuItem(
-                                  value: c,
-                                  child:
-                                      Text('${c.symbol} ${c.code} - ${c.name}'),
-                                ))
-                            .toList(),
-                        onChanged: (v) =>
-                            setState(() => selectedCurrency = v),
-                      ),
-                const SizedBox(height: 20),
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    onPressed: () async {
-                      if (!_formKey.currentState!.validate()) return;
-
-                      final confirmed = await showDialog<bool>(
-                        context: context,
-                        barrierDismissible: false,
-                        builder: (_) => ConfirmDialogWidget(
-                          title: "Guardar cambios",
-                          message: "¿Querés guardar los cambios del perfil?",
-                          confirmText: "Guardar",
-                          cancelText: "Revisar",
-                          confirmColor:
-                              Theme.of(context).colorScheme.primary,
+                    :  BottomSheetPickerField<Currency>(
+                          label: 'Tipo de moneda',
+                          items: currencies,
+                          itemLabel: (c) => '${c.code} - ${c.name}',
+                          itemIcon: (c) => CircleAvatar(
+                          radius: 16,
+                          backgroundColor: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+                          child: Text( c.symbol,
+                          style: TextStyle(color: Theme.of(context).colorScheme.primary,fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ),
+                            initialValue: selectedCurrency,
+                            onChanged: (value) => setState(() => selectedCurrency = value),
+                            validator: (value) => value == null ? 'Debes seleccionar una moneda' : null,
                         ),
-                      );
-
-                      if (confirmed == true) {
-                        final success = await showDialog<bool>(
-                          context: context,
-                          barrierDismissible: false,
-                          builder: (_) => const SuccessDialogWidget(
-                            title: "¡Éxito!",
-                            message:
-                                "Los cambios se guardaron correctamente.",
-                          ),
-                        );
-
-                        if (success == true) _submitForm();
-                      }
-                    },
-                    child: const Text("Guardar cambios"),
-                  ),
+                const SizedBox(height: 15),
+              
+                 ButtonSave(
+                    title: "Guardar actualizacion",
+                    message: "¿Seguro que quieres guardar los datos de tu perfil?",
+                    onConfirm: _submitForm,
+                    formKey: _formKey,
+                    label: "Guardar Cambios",
                 ),
               ],
             ),

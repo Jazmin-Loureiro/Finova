@@ -214,12 +214,17 @@ Future<void> _checkExpiredGoals() async {
 
   Widget _buildGoalsList(List<Goal> filteredGoals) {
     if (filteredGoals.isEmpty) {
-      return EmptyStateWidget(
+      return Column(
+        children: const [
+          SizedBox(height: 20),
+          EmptyStateWidget(
             title: "Aún no tenés metas.",
             message:
                 "Creá metas para reservar dinero y avanzar hacia tus objetivos financieros.",
             icon: Icons.flag,
-          );
+          ),
+        ],
+      );
     }
 
     return ListView.builder(

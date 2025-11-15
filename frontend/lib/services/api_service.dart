@@ -444,22 +444,32 @@ Future<List<dynamic>> getExpiredGoals() async {
   return [];
 }
 
-Future<List<Register>> getRegistersByMoneyMaker(int moneyMakerId) async {
+Future<List<Register>> getRegistersByMoneyMaker(
+  int moneyMakerId, {
+  String type = "all",
+  String? category,
+  DateTime? from,
+  DateTime? to,
+  String search = "",
+}) async {
   final token = await storage.read(key: 'token');
   if (token == null) return [];
+  final params = {'type': type,'search': search,};
+  if (category != null) params['category'] = category;
+  if (from != null) params['from'] = from.toIso8601String();
+  if (to != null) params['to'] = to.toIso8601String();
 
-  final res = await http.get(
-    Uri.parse('$apiUrl/transactions/moneyMaker/$moneyMakerId'),
-    headers: jsonHeaders(token),
-  );
+  final uri = Uri.parse('$apiUrl/transactions/moneyMaker/$moneyMakerId')
+      .replace(queryParameters: params);
+
+  final res = await http.get(uri, headers: jsonHeaders(token));
+
   if (res.statusCode == 200) {
     final data = jsonDecode(res.body);
-    // Si la API devuelve una lista directa
     return (data['registers'] as List)
-        .map((json) => Register.fromJson(json))
+        .map((j) => Register.fromJson(j))
         .toList();
   }
-
   return [];
 }
 
@@ -1088,6 +1098,35 @@ Future<List<Register>> fetchRegistersByGoal(int goalId) async {
       throw Exception('Error al cargar las tasas');
     }
   }
+
+
+Future<Map<String, dynamic>> getStatistics(int range) async {
+  final token = await storage.read(key: 'token');
+  final uri = Uri.parse('$apiUrl/statistics').replace( queryParameters: {'range': range.toString()},);
+  try {
+    final res = await http.get(
+      uri,
+      headers: jsonHeaders(token),
+    );
+    if (res.statusCode != 200) {
+      throw Exception(
+        'Error ${res.statusCode}: ${res.reasonPhrase}',
+      );
+    }
+    final data = jsonDecode(res.body);
+    if (data is! Map<String, dynamic>) {
+      throw Exception('Formato de respuesta inválido');
+    }
+    return data;
+  } catch (e) {
+    throw Exception('No se pudieron cargar las estadísticas');
+  }
+}
+
+
+
+
+
 }
 
 

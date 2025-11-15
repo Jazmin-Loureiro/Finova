@@ -19,7 +19,7 @@ class CategoryService
                 ['name'=>'Educación','color'=>'#43A047','icon'=>'school'],               // verde medio
                 ['name'=>'Comida','color'=>'#FDD835','icon'=>'fastfood'],                // amarillo vibrante
                 ['name'=>'Electrónica','color'=>'#FB8C00','icon'=>'devices'],            // naranja fuerte
-                ['name'=>'Deporte','color'=>'#F4511E','icon'=>'sports'],                 // naranja rojizo
+                ['name'=>'Deporte','color'=>'#F4511E','icon'=>'fitness_center_outlined'],                 // naranja rojizo
                 ['name'=>'Restaurante','color'=>'#6D4C41','icon'=>'restaurant'],         // marrón cálido
                 ['name'=>'Salud','color'=>'#009688','icon'=>'health_and_safety'],        // verde agua
                 ['name'=>'Comunicaciones','color'=>'#3949AB','icon'=>'phone'],           // azul intenso

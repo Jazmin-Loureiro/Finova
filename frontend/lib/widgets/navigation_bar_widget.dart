@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:frontend/screens/statistics/statistics._screen.dart';
 import '../screens/moneyMaker/money_maker_list_screen.dart';
 import '../screens/registers/transaction_form_screen.dart';
 import '../screens/home_screen.dart';
@@ -40,7 +41,7 @@ class _NavigationBarWidgetState extends State<NavigationBarWidget>
     GoalsListScreen(),
     SizedBox(), // botón central
     MoneyMakerListScreen(),
-    UserScreen(),
+    StatisticsScreen(),
   ];
 
   @override
@@ -61,7 +62,7 @@ class _NavigationBarWidgetState extends State<NavigationBarWidget>
             _buildNavItem(context, 1, Icons.flag),
             _centerAddButton(context, scheme),
             _buildNavItem(context, 3, Icons.account_balance_wallet),
-            _buildNavItem(context, 4, Icons.person),
+            _buildNavItem(context, 4, Icons.auto_graph),
           ],
         ),
       ),

@@ -25,6 +25,7 @@ class _MoneyMakerListScreenState extends State<MoneyMakerListScreen> {
   bool isLoading = true;
   int selectedIndex = 0;
   PageController? pageController;
+  int currentMoneyMakerPage = 0;
   bool isPageLoading = false;
 
   Color fromHex(String hexColor) {
@@ -137,11 +138,13 @@ class _MoneyMakerListScreenState extends State<MoneyMakerListScreen> {
                           controller: pageController,
                           itemCount: moneyMakers.length,
                           onPageChanged: (index) async {
-                            setState(() => selectedIndex = index);
-                            isPageLoading = true;
-                            await context.read<RegisterProvider>().loadRegisters(moneyMakers[index].id);
-                            if (mounted) setState(() => isPageLoading = false);
-                          },
+                          setState(() => currentMoneyMakerPage = index);
+                          setState(() => selectedIndex = index);
+                          isPageLoading = true;
+                          await context.read<RegisterProvider>().loadRegisters(moneyMakers[index].id);
+                          if (mounted) setState(() => isPageLoading = false);
+                        },
+
                           itemBuilder: (context, index) {
                             final m = moneyMakers[index];
                             final isSelected = selectedIndex == index;
@@ -311,8 +314,28 @@ class _MoneyMakerListScreenState extends State<MoneyMakerListScreen> {
                           },
                         ),
                       ),
-                      const SizedBox(height: 15),
+                      const SizedBox(height: 10),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: List.generate(moneyMakers.length, (index) {
+                            final isActive = currentMoneyMakerPage == index;
 
+                            return AnimatedContainer(
+                              duration: const Duration(milliseconds: 300),
+                              margin: const EdgeInsets.symmetric(horizontal: 4),
+                              width: isActive ? 20 : 8,
+                              height: 8,
+                              decoration: BoxDecoration(
+                                color: isActive
+                                    ? Theme.of(context).colorScheme.primary
+                                    : Colors.grey.shade400,
+                                borderRadius: BorderRadius.circular(4),
+                              ),
+                            );
+                          }),
+                        ),
+
+                        const SizedBox(height: 15),
                       //Sección de transacciones recientes
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 16),

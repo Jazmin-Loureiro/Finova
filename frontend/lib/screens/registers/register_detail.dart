@@ -101,6 +101,7 @@ Future<bool> _cancelReserve() async {
     final isIncome = register.type == 'income';
     final currencySymbol = register.currency.symbol;
     final dateFormat = DateFormat('dd/MM/yyyy HH:mm');
+    final localDate = register.created_at.toLocal();
 
     return DraggableScrollableSheet(
       expand: false,
@@ -192,7 +193,7 @@ Future<bool> _cancelReserve() async {
                               //  Fecha
                               const SizedBox(height: 4),
                               Text(
-                                'Creado: ${dateFormat.format(register.created_at)}',
+                                'Creado: ${dateFormat.format(localDate)}',
                                 style: TextStyle(
                                   fontSize: 14,
                                   color: Theme.of(context).colorScheme.onSurface,

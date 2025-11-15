@@ -87,17 +87,48 @@ class RegisterController extends Controller {
     }
 
 
-    public function getByMoneyMaker($moneyMakerId) {
-        $user = auth()->user();
-        $registers = Register::with('currency', 'category', 'goal' ) // carga relación
-            ->where('user_id', $user->id)
-            ->where('moneyMaker_id', $moneyMakerId)
-            ->orderBy('created_at', 'desc')
-            ->get();
-        return response()->json([
-            'registers' => $registers
-        ]);
+    public function getByMoneyMaker(Request $request, $moneyMakerId) {
+    $user = auth()->user();
+
+    $query = Register::with(['currency', 'category', 'goal'])
+        ->where('user_id', $user->id)
+        ->where('moneyMaker_id', $moneyMakerId);
+    // Tipo
+    if ($request->has('type') && $request->type !== 'all') {
+        $query->where('type', $request->type);
     }
+    // Categoría
+    if ($request->has('category') && $request->category !== null) {
+        $query->whereHas('category', function ($q) use ($request) {
+            $q->where('name', $request->category);
+        });
+    }
+    // Desde
+    if ($request->has('from') && $request->from !== null) {
+        $query->whereDate('created_at', '>=', $request->from);
+    }
+    // Hasta
+    if ($request->has('to') && $request->to !== null) {
+        $query->whereDate('created_at', '<=', $request->to);
+    }
+    // Search
+    if ($request->has('search') && $request->search !== '') {
+        $query->where(function ($q) use ($request) {
+            $q->where('name', 'LIKE', '%' . $request->search . '%')
+              ->orWhereHas('category', function ($c) use ($request) {
+                  $c->where('name', 'LIKE', '%' . $request->search . '%');
+              });
+        });
+    }
+    // Orden final
+    $registers = $query
+        ->orderBy('created_at', 'desc')
+        ->get();
+
+    return response()->json([
+        'registers' => $registers
+    ]);
+}
 
     /**
      * Update the specified resource in storage.

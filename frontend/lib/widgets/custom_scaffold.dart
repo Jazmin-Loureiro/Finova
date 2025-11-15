@@ -31,7 +31,7 @@ class CustomScaffold extends StatelessWidget {
         return 1;
       case 'money_makers':
         return 3;
-      case 'user':
+      case 'statistics':
         return 4;
       default:
         return 0;

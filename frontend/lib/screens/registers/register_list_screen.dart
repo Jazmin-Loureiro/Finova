@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:frontend/widgets/category_summary_chart_widget.dart';
+import 'package:frontend/helpers/format_utils.dart';
 import 'package:frontend/widgets/empty_state_widget.dart';
+import 'package:frontend/widgets/generic_selector.dart';
 import 'package:frontend/widgets/loading_widget.dart';
-import 'package:frontend/widgets/month_header_widget.dart';
 import 'package:frontend/widgets/register_item_widget.dart';
 import 'package:frontend/widgets/custom_refresh_wrapper.dart';
 import '../../services/api_service.dart';
@@ -13,6 +13,7 @@ import '../../widgets/custom_scaffold.dart';
 class RegisterListScreen extends StatefulWidget {
   final int moneyMakerId;
   final String moneyMakerName;
+
   const RegisterListScreen({
     super.key,
     required this.moneyMakerId,
@@ -26,130 +27,333 @@ class RegisterListScreen extends StatefulWidget {
 class _RegisterListScreenState extends State<RegisterListScreen> {
   final ApiService api = ApiService();
   bool isLoading = true;
-  List<Register> registers = [];
+  List<Register> allRegisters = [];
+  Map<String, List<Register>> groupedByDate = {};
   String? symbol = '';
 
-  DateTime selectedDate = DateTime.now();
+  // ==== FILTROS ====
+  String selectedType = "all"; 
+  String? selectedCategory;
+  DateTime? selectedFromDate;
+  DateTime? selectedToDate;
+  String searchQuery = "";
 
   @override
   void initState() {
     super.initState();
-    _fetchRegisters();
-    getSymbol();
+    _initData();
+  }
+
+  Future<void> _initData() async {
+    setState(() => isLoading = true);
+    await Future.wait([
+      _fetchRegisters(),
+      getSymbol(),
+    ]);
+    setState(() => isLoading = false);
   }
 
   Future<void> _fetchRegisters() async {
-    setState(() => isLoading = true);
     try {
-      registers = await api.getRegistersByMoneyMaker(widget.moneyMakerId);
-      registers = registers.where((r) {
-        return r.created_at.year == selectedDate.year &&
-            r.created_at.month == selectedDate.month;
-      }).toList();
+      final result = await api.getRegistersByMoneyMaker( widget.moneyMakerId, type: selectedType, category: selectedCategory, from: selectedFromDate, to: selectedToDate, search: searchQuery,);
+      allRegisters = result;
+      _applyGrouping();
     } catch (e) {
-      registers = [];
-    } finally {
-      setState(() => isLoading = false);
-    }
+      allRegisters = [];
+      _applyGrouping();
+    } 
   }
 
   Future<void> getSymbol() async {
     final user = await api.getUser();
-    final currencySymbol = user?['currency_symbol'];
-    setState(() => symbol = currencySymbol?.toString());
+    symbol = user?['currency_symbol'];
   }
 
-  Map<String, double> getTotalsByCategory() {
-    final Map<String, double> totals = {};
-    for (var r in registers) {
-      final category = r.category.name;
-      totals[category] = (totals[category] ?? 0) + r.balance;
+  void _applyGrouping() {
+    final Map<String, List<Register>> map = {};
+    for (var r in allRegisters) {
+      final key = DateFormat('dd/MM/yyyy').format(r.created_at);
+      map[key] = (map[key] ?? [])..add(r);
     }
-    return totals;
+    final sortedKeys = map.keys.toList()
+      ..sort((a, b) {
+        final da = DateFormat('dd/MM/yyyy').parse(a);
+        final db = DateFormat('dd/MM/yyyy').parse(b);
+        return db.compareTo(da);
+      });
+    setState(() {
+      groupedByDate = {for (var k in sortedKeys) k: map[k]!};
+    });
   }
 
-  Map<String, Color> getCategoryColors() {
-    final Map<String, Color> map = {};
-    for (var r in registers) {
-      map[r.category.name] =
-          Color(int.parse('0xff${r.category.color.substring(1)}'));
+    void _openSelector<T>({
+      required String title,
+      required List<T> items,
+      required String Function(T) itemLabel,
+      required ValueChanged<T> onSelected,
+      }) {
+        showModalBottomSheet(
+          context: context,
+          isScrollControlled: true,
+          backgroundColor: Theme.of(context).colorScheme.surface,
+          shape: const RoundedRectangleBorder(
+            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+          ),
+          builder: (_) => GenericSelector<T>(
+            title: title,
+            items: items,
+            itemLabel: itemLabel,
+            onSelected: onSelected,
+          ),
+        );
+      }
+
+  // SELECTOR TIPO
+  void _openTypeSelector() {
+    _openSelector<String>(
+      title: "Tipo",
+      items: ["all", "income", "expense"],
+      itemLabel: (v) {
+        switch (v) {
+          case "income": return "Ingresos";
+          case "expense": return "Gastos";
+          default: return "Todos";
+        }
+      },
+      onSelected: (v) {
+        selectedType = v;
+        _fetchRegisters();
+      },
+    );
+  }
+
+  //  SELECTOR CATEGORÍA
+  void _openCategorySelector() {
+    final categories =
+        allRegisters.map((r) => r.category.name).toSet().toList();
+
+    _openSelector<String>(
+      title: "Categoría",
+      items: ["Todas", ...categories],
+      itemLabel: (v) => v,
+      onSelected: (v) {
+        selectedCategory = v == "Todas" ? null : v;
+        _fetchRegisters();
+      },
+    );
+  }
+
+  //  SELECTOR FECHA
+  void _openDateSelector() async {
+    final range = await showDateRangePicker(
+      context: context,
+      firstDate: DateTime(2020),
+      lastDate: DateTime(2100),
+    );
+    if (range != null) {
+      selectedFromDate = DateTime(range.start.year, range.start.month, range.start.day, 0, 0, 0,);
+      selectedToDate = DateTime(range.end.year, range.end.month, range.end.day, 23, 59, 59,);
+      _fetchRegisters();
     }
-    return map;
   }
 
   @override
   Widget build(BuildContext context) {
-    final dateFormat = DateFormat('dd/MM/yyyy');
-    final totals = getTotalsByCategory();
-    final colorsMap = getCategoryColors();
-    final hasData = totals.values.any((v) => v > 0);
-
     return CustomScaffold(
       title: 'Registros de ${widget.moneyMakerName}',
       currentRoute: '/registers',
       body: isLoading
           ? const Center(child: LoadingWidget())
           : CustomRefreshWrapper(
-              onRefresh: _fetchRegisters, 
+              onRefresh: _fetchRegisters,
               padding: const EdgeInsets.only(bottom: 20),
-              child: Column(
+              child: ListView(
+                padding: const EdgeInsets.only(top: 10),
                 children: [
-                  MonthHeaderWidget(
-                    date: selectedDate,
-                    onPrevious: () {
-                      setState(() {
-                        selectedDate = DateTime(
-                          selectedDate.year,
-                          selectedDate.month - 1,
-                        );
-                      });
-                      _fetchRegisters();
-                    },
-                    onNext: () {
-                      setState(() {
-                        selectedDate = DateTime(
-                          selectedDate.year,
-                          selectedDate.month + 1,
-                        );
-                      });
-                      _fetchRegisters();
-                    },
+                  // ==== FILTROS ====
+                  SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    child: Row(
+                      children: [
+                        // Tipo
+                        FilterChip(
+                          label: Row(
+                            children: [
+                              Text(selectedType == "all" ? "Tipo: Todos"
+                                    : selectedType == "income"
+                                     ? "Ingresos" : "Gastos",
+                              ),
+                              if (selectedType != "all")
+                                const Padding(
+                                  padding: EdgeInsets.only(left: 6),
+                                  child: Icon(Icons.close, size: 16),
+                                ),
+                            ],
+                          ),
+                          selected: selectedType != "all",
+                          onSelected: (_) {
+                            if (selectedType != "all") {
+                              selectedType = "all";
+                              _fetchRegisters();
+                            } else {
+                              _openTypeSelector();
+                            }
+                          },
+                        ),
+
+                        const SizedBox(width: 10),
+
+                        // Categoría
+                        FilterChip(
+                          label: Row(
+                            children: [
+                              Text(selectedCategory ?? "Categoría: Todas"),
+                              if (selectedCategory != null)
+                                const Padding(
+                                  padding: EdgeInsets.only(left: 6),
+                                  child: Icon(Icons.close, size: 16),
+                                ),
+                            ],
+                          ),
+                          selected: selectedCategory != null,
+                          onSelected: (_) {
+                            if (selectedCategory != null) {
+                              selectedCategory = null;
+                              _fetchRegisters();
+                            } else {
+                              _openCategorySelector();
+                            }
+                          },
+                        ),
+
+                        const SizedBox(width: 10),
+
+                        // Fecha
+                        FilterChip(
+                          label: Row(
+                            children: [
+                              Text(
+                                selectedFromDate == null ? "Fecha"
+                                    : "${DateFormat('dd/MM/yyyy').format(selectedFromDate!)} → " "${DateFormat('dd/MM/yyy').format(selectedToDate!)}",
+                              ),
+                              if (selectedFromDate != null)
+                                const Padding(
+                                  padding: EdgeInsets.only(left: 6),
+                                  child: Icon(Icons.close, size: 16),
+                                ),
+                            ],
+                          ),
+                          selected: selectedFromDate != null,
+                          onSelected: (_) {
+                            if (selectedFromDate != null) {
+                              selectedFromDate = null;
+                              selectedToDate = null;
+                              _fetchRegisters();
+                            } else {
+                              _openDateSelector();
+                            }
+                          },
+                        ),
+                      ],
+                    ),
                   ),
 
-                  const SizedBox(height: 10),
+                  const SizedBox(height: 5),
 
-                  if (hasData)
-                    CategorySummaryChartWidget(
-                      totals: totals,
-                      colorsMap: colorsMap,
-                      symbol: symbol,
+                  // Buscador
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    child: TextField(
+                      onChanged: (value) {
+                        searchQuery = value;
+                        _fetchRegisters();
+                      },
+                      decoration: InputDecoration(
+                        hintText: "Buscar registro...",
+                        prefixIcon: const Icon(Icons.search),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
                     ),
-                  const SizedBox(height: 8),
+                  ),
 
-                  registers.isEmpty
-                      ? const EmptyStateWidget(
-                          title: "Aún no hay registros.",
-                          message: "No has reservado ninguna cantidad aún.",
-                          icon: Icons.receipt_long,
-                        )
-                      : ListView.builder(
-                          physics: const NeverScrollableScrollPhysics(),
-                          shrinkWrap: true,
-                          padding: const EdgeInsets.symmetric(horizontal: 10),
-                          itemCount: registers.length,
-                          itemBuilder: (context, index) {
-                            final r = registers[index];
-                            return RegisterItemWidget(
+                  const SizedBox(height: 15),
+
+                  // ==== LISTA ====
+                  if (groupedByDate.isEmpty)
+                    const EmptyStateWidget(
+                      title: "Sin registros",
+                      message: "No hay movimientos con estos filtros.",
+                      icon: Icons.receipt_long,
+                    )
+                  else
+                    ...groupedByDate.entries.map((entry) {
+                      final date = entry.key;
+                      final items = entry.value;
+                      final totalOfDay = items.fold<double>( 0,(sum, r) => sum + r.balance);
+                      final parsed = DateFormat('dd/MM/yyyy').parse(date);
+
+                      final prettyDate = DateFormat( "d 'de' MMMM 'de' yyyy",Localizations.localeOf(context).toString(),).format(parsed);
+
+                      return Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // Header
+                            Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                          margin: const EdgeInsets.only(top: 4),
+                          decoration: BoxDecoration(
+                            color: Theme.of(context).colorScheme.primary,
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              // FECHA (izquierda)
+                              Text(
+                                prettyDate,
+                                style: TextStyle(
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.w600,
+                                  color: Theme.of(context).colorScheme.onPrimary,
+                                ),
+                              ),
+
+                              // TOTAL DEL DÍA (derecha)
+                            Text(
+                                formatCurrency(
+                                  totalOfDay,
+                                  Localizations.localeOf(context).toString(),
+                                  symbolOverride: symbol,
+                                ),
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.bold,
+                                  color: Theme.of(context).colorScheme.onPrimary,
+                                ),
+                              ),
+
+                            ],
+                          ),
+                        ),
+
+                          ...items.map(
+                            (r) => RegisterItemWidget(
                               register: r,
-                              dateFormat: dateFormat,
+                              dateFormat: DateFormat('dd/MM/yyyy'),
                               fromHex: (hex) {
                                 hex = hex.toUpperCase().replaceAll("#", "");
                                 if (hex.length == 6) hex = "FF$hex";
                                 return Color(int.parse(hex, radix: 16));
                               },
-                            );
-                          },
-                        ),
+                            ),
+                          ),
+                          const SizedBox(height: 10),
+                        ],
+                      );
+                    }).toList(),
                 ],
               ),
             ),

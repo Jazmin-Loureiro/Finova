@@ -13,6 +13,7 @@ use App\Http\Controllers\GamificationController;
 use App\Http\Controllers\GoalController;
 use App\Http\Controllers\SimulationController;
 use App\Http\Controllers\DataApiReadController;
+use App\Http\Controllers\StatisticsController;
 ///////////////////////////////////////////////////
 
 ////////////////////////////////////////////////////
@@ -86,6 +87,9 @@ Route::middleware('auth:sanctum')->group(function () {
     // Eliminar categoria
     Route::delete('/categories/{id}', [CategoryController::class, 'destroy']);
 
+    /////////////////////////////////////////////////////////////////////////////
+    Route::get('/statistics', [StatisticsController::class, 'index']);
+    
 ////////////////////////////////////////////////////////////////////////////////
     // Reenviar email de verificación que todavia no se usa
     Route::post('/email/resend', [AuthController::class, 'resendVerification'])

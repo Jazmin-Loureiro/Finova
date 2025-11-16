@@ -259,6 +259,15 @@ class _ConfigurationScreenState extends State<ConfigurationScreen>
                         setState(() {
                           userFuture = api.getUser();
                         });
+
+                        // 🎉 MOSTRAR SUCCESS COMO EN GOAL
+                        await showDialog(
+                          context: context,
+                          builder: (_) => const SuccessDialogWidget(
+                            title: "Éxito",
+                            message: "Usuario actualizado con éxito.",
+                          ),
+                        );
                       }
                     }
                   },

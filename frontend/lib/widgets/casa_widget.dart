@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:provider/provider.dart';
 import '../providers/house_provider.dart';
+import '../widgets/loading_widget.dart'; // 👈 IMPORTANTE
 
 class CasaWidget extends StatefulWidget {
   const CasaWidget({super.key});
@@ -12,11 +13,9 @@ class CasaWidget extends StatefulWidget {
 
 class _CasaWidgetState extends State<CasaWidget>
     with SingleTickerProviderStateMixin {
-  // 🔹 Escalas
   final double houseScale = 1.35;
   final double groundScale = 0.12;
 
-  // 🔹 Offsets
   final double houseOffsetX = 0;
   final double houseOffsetY = -14.5;
   final double groundOffsetX = 0;
@@ -86,15 +85,17 @@ class _CasaWidgetState extends State<CasaWidget>
     final screenWidth = MediaQuery.of(context).size.width;
 
     final houseData = context.watch<HouseProvider>().houseData;
+
+    // 🔹 APLICADO TU LOADER
     if (houseData == null) {
-      return const Center(child: CircularProgressIndicator());
+      return const LoadingWidget(message: "Cargando casa...");
     }
 
     final casa = houseData['casa'];
 
     return Stack(
       children: [
-        // --- 🌤 CIELO con fade suave (4s) ---
+        // 🌤 Cielo
         SizedBox(
           width: screenWidth,
           height: screenHeight + 1000,
@@ -111,17 +112,13 @@ class _CasaWidgetState extends State<CasaWidget>
           ),
         ),
 
-        // --- 🌱 SUELO con fade global ---
+        // 🌱 Suelo
         Positioned(
           bottom: groundOffsetY,
           left: groundOffsetX,
           right: groundOffsetX,
           child: AnimatedSwitcher(
             duration: const Duration(seconds: 1),
-            switchInCurve: Curves.easeInOut,
-            switchOutCurve: Curves.easeInOut,
-            transitionBuilder: (child, anim) =>
-                FadeTransition(opacity: anim, child: child),
             child: SizedBox(
               key: ValueKey(casa['suelo'].toString()),
               width: screenWidth,
@@ -139,7 +136,7 @@ class _CasaWidgetState extends State<CasaWidget>
           ),
         ),
 
-        // --- 🚗 CALLE (fija) ---
+        // 🚗 Calle
         Positioned(
           bottom: 20,
           left: 0,
@@ -147,7 +144,7 @@ class _CasaWidgetState extends State<CasaWidget>
           child: buildLayer('calle/calle.svg'),
         ),
 
-        // --- 🏠 CASA con fade global ---
+        // 🏠 Casa
         Positioned(
           bottom: (screenHeight * groundScale) + houseOffsetY,
           left: houseOffsetX,
@@ -157,10 +154,6 @@ class _CasaWidgetState extends State<CasaWidget>
             child: Center(
               child: AnimatedSwitcher(
                 duration: const Duration(seconds: 1),
-                switchInCurve: Curves.easeInOut,
-                switchOutCurve: Curves.easeInOut,
-                transitionBuilder: (child, anim) =>
-                    FadeTransition(opacity: anim, child: child),
                 child: SizedBox(
                   key: ValueKey(casa.toString()),
                   width: screenWidth * 0.8,

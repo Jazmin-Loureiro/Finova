@@ -119,50 +119,91 @@ class _RegisterScreenState extends State<RegisterScreen> {
     }
   }
 
-  void _showAvatarPicker() async {
+  int _avatarStyle = 0;
+List<String> _currentSeeds = [];
+
+void _showAvatarPicker() async {
+  void generateSeeds() {
     final base = email.isNotEmpty ? email : 'default';
-    final seeds = List.generate(
+
+    _currentSeeds = List.generate(
       6,
       (i) => "$base-${DateTime.now().microsecondsSinceEpoch}-$i",
     );
-
-    final selected = await showModalBottomSheet<String>(
-      context: context,
-      backgroundColor: Theme.of(context).colorScheme.surfaceContainerHighest,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (_) {
-        return GridView.builder(
-          padding: const EdgeInsets.all(16),
-          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 3,
-            mainAxisSpacing: 10,
-            crossAxisSpacing: 10,
-          ),
-          itemCount: seeds.length,
-          itemBuilder: (context, index) {
-            final svgCode = multiavatar(seeds[index]);
-            return GestureDetector(
-              onTap: () => Navigator.pop(context, seeds[index]),
-              child: CircleAvatar(
-                radius: 40,
-                backgroundColor: Colors.grey[100],
-                child: SvgPicture.string(svgCode),
-              ),
-            );
-          },
-        );
-      },
-    );
-
-    if (selected != null) {
-      setState(() {
-        selectedAvatarSeed = selected;
-        icon = null;
-      });
-    }
   }
+
+  // Generar seeds iniciales
+  generateSeeds();
+
+  final selected = await showModalBottomSheet<String>(
+    context: context,
+    isScrollControlled: true,
+    backgroundColor: Theme.of(context).colorScheme.surfaceContainerHighest,
+    shape: const RoundedRectangleBorder(
+      borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+    ),
+    builder: (_) {
+      return StatefulBuilder(
+        builder: (context, setModalState) {
+          return Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const SizedBox(height: 12),
+
+              // 🔄 REFRESCAR AVATARS
+              Padding(
+                padding: const EdgeInsets.only(bottom: 12),
+                child: ElevatedButton.icon(
+                  onPressed: () {
+                    setModalState(() {
+                      generateSeeds();
+                    });
+                  },
+                  icon: const Icon(Icons.refresh),
+                  label: const Text("Refrescar avatares"),
+                ),
+              ),
+
+              // 🟣 GRID DE AVATARES
+              SizedBox(
+                height: 360,
+                child: GridView.builder(
+                  padding: const EdgeInsets.all(16),
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 3,
+                    crossAxisSpacing: 10,
+                    mainAxisSpacing: 10,
+                  ),
+                  itemCount: _currentSeeds.length,
+                  itemBuilder: (context, index) {
+                    final seed = _currentSeeds[index];
+                    final svgCode = multiavatar(seed);
+
+                    return GestureDetector(
+                      onTap: () => Navigator.pop(context, seed),
+                      child: CircleAvatar(
+                        radius: 40,
+                        backgroundColor: Colors.grey[100],
+                        child: SvgPicture.string(svgCode),
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ],
+          );
+        },
+      );
+    },
+  );
+
+  if (selected != null) {
+    setState(() {
+      selectedAvatarSeed = selected;
+      icon = null; // Si elige avatar, ignoramos foto local
+    });
+  }
+}
 
   void registerUser() async {
     if (!_formKey.currentState!.validate()) return;

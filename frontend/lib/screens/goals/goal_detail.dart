@@ -21,18 +21,30 @@ class _GoalDetailScreenState extends State<GoalDetailScreen> {
   final ApiService api = ApiService();
   List<Register> registers = [];
   bool isLoading = true;
+  late Goal currentGoal;
 
   @override
   void initState() {
     super.initState();
+    currentGoal = widget.goal; // meta inicial
     _fetchRegistersGoal();
+  }
+
+  //  Refrescar la meta desde el backend
+  Future<void> _refreshGoal() async {
+    try { final updatedGoal = await api.fetchGoal(currentGoal.id);
+      setState(() { currentGoal = updatedGoal; });
+      await _fetchRegistersGoal();
+    } catch (e) {
+      debugPrint("Error refrescando meta: $e");
+    }
   }
 
 Future<void> _fetchRegistersGoal() async {
   try {
-    final data = await api.fetchRegistersByGoal(widget.goal.id);
+    final data = await api.fetchRegistersByGoal(currentGoal.id);
     setState(() {
-      registers = data; // registers es List<Register>
+      registers = data;
     });
   } catch (e) {
     debugPrint('Error al cargar registros: $e');
@@ -43,16 +55,15 @@ Future<void> _fetchRegistersGoal() async {
   }
 }
 
-
   @override
   Widget build(BuildContext context) {
     final dateFormat = DateFormat('dd/MM/yyyy');
-    final currencySymbol = widget.goal.currency?.symbol ?? '';
+    final currencySymbol = currentGoal.currency?.symbol ?? '';
     final hasRegisters = registers.isNotEmpty;
-        final progress = (widget.goal.balance / widget.goal.targetAmount).clamp(0.0, 1.0);
+    final progress =(currentGoal.balance / currentGoal.targetAmount).clamp(0.0, 1.0);
 
     return CustomScaffold(
-      title: 'Detalle de ${widget.goal.name}',
+      title: 'Detalle de ${currentGoal.name}',
       currentRoute: '/goal-detail',
       showNavigation: false,
       body: isLoading
@@ -62,7 +73,6 @@ Future<void> _fetchRegistersGoal() async {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  //  Datos de la meta
                   Card(
                     elevation: 4,
                     shape: RoundedRectangleBorder(
@@ -77,7 +87,7 @@ Future<void> _fetchRegistersGoal() async {
                             children: [
                               Expanded(
                                 child: Text(
-                                  widget.goal.name,
+                                  currentGoal.name,
                                   style: const TextStyle(
                                       fontSize: 20, fontWeight: FontWeight.bold),
                                 ),
@@ -86,44 +96,44 @@ Future<void> _fetchRegistersGoal() async {
                                 padding: const EdgeInsets.symmetric(
                                     horizontal: 10, vertical: 4),
                                 decoration: BoxDecoration(
-                                  color: !widget.goal.active ?
+                                  color: !currentGoal.active ?
                                   Colors.grey.withOpacity(0.2)
-                                  : widget.goal.state == 'completed'
-                                      ? Colors.green.withOpacity(0.2)
-                                      : Colors.blue.withOpacity(0.2),
+                                      : currentGoal.state == 'completed'
+                                          ? Colors.green.withOpacity(0.2)
+                                          : Colors.blue.withOpacity(0.2),
                                   borderRadius: BorderRadius.circular(12),
                                 ),
                                 child: Text(
-                                  widget.goal.state == 'completed'
+                                  currentGoal.state == 'completed'
                                       ? 'Completada'
-                                      : widget.goal.active
+                                      : currentGoal.active
                                           ? 'En progreso'
                                           : 'Cancelada',
                                   style: TextStyle(
                                     fontSize: 14,
-                                    color: !widget.goal.active ?
-                                  Colors.grey.withOpacity(0.2)
-                                  : widget.goal.state == 'completed'
-                                        ? Colors.green[800]
-                                        : Colors.blue[800],
+                                    color: !currentGoal.active
+                                        ? Colors.grey[600]
+                                        : currentGoal.state == 'completed'
+                                            ? Colors.green[800]
+                                            : Colors.blue[800],
                                   ),
                                 ),
                               ),
-                            if (widget.goal.active && widget.goal.state == 'in_progress')
-                             IconButton(
-                                icon: const Icon(Icons.edit, size: 20),
-                                tooltip: 'Editar meta',
-                                onPressed: () {
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                        builder: (context) =>
-                                            GoalFormScreen(goal: widget.goal)),
-                                  ).then((value) {
-                                    if (value == true) {
-                                      // Si se editó la meta, recargar los datos
-                                      setState(() {});
-                                    }
+                              if (currentGoal.active && currentGoal.state == 'in_progress')
+                                IconButton(
+                                  icon: const Icon(Icons.edit, size: 20),
+                                  tooltip: 'Editar meta',
+                                  onPressed: () {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (_) => GoalFormScreen( goal: currentGoal,
+                                        ),
+                                      ),
+                                    ).then((value) {
+                                        setState(() { isLoading = true;  });                                      if (value == true) {
+                                        _refreshGoal(); 
+                                      setState(() { isLoading = false; });                                   }
                                   });
                                 },
                               ),
@@ -131,34 +141,26 @@ Future<void> _fetchRegistersGoal() async {
                           ),
                           
                          const SizedBox(height: 10),
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start, // ← alinea a la izquierda
-                            children: [
                               Text(
-                                'Objetivo: $currencySymbol${formatCurrency(widget.goal.targetAmount, widget.goal.currency?.code ?? '')} ${widget.goal.currency?.code ?? ''}',
+                                'Objetivo: $currencySymbol${formatCurrency(currentGoal.targetAmount, currentGoal.currency?.code ?? '')} ${currentGoal.currency?.code ?? ''}',
                                 style: const TextStyle(fontSize: 15),
                               ),
-                              const SizedBox(height: 6), // ← separación entre ambos textos
+                              const SizedBox(height: 6),
+
                               Text(
-                                'Saldo actual: $currencySymbol${formatCurrency(widget.goal.balance, widget.goal.currency?.code ?? '')} ${widget.goal.currency?.code ?? ''}',
+                                'Saldo actual: $currencySymbol${formatCurrency(currentGoal.balance, currentGoal.currency?.code ?? '')} ${currentGoal.currency?.code ?? ''}',
                                 style: const TextStyle(fontSize: 15),
                               ),
-                            ],
-                          ),
-                          
                           const SizedBox(height: 10),
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              Text(
-                                'Progreso:',
-                                style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
-                              ),
+                              const Text('Progreso:'),
                               Text(
                                 '${(progress * 100).toStringAsFixed(0)}%',
                                 style: TextStyle(
-                                fontWeight: FontWeight.bold,
-                                color: progress >= 1 ? Theme.of(context).colorScheme.secondary
+                                  fontWeight: FontWeight.bold,
+                                  color: progress >= 1 ? Colors.green
                                       : Colors.blue,
                                 ),
                               ),
@@ -168,16 +170,14 @@ Future<void> _fetchRegistersGoal() async {
                           LinearProgressIndicator(
                             value: progress,
                             backgroundColor: Colors.grey[300],
-                            color: progress >= 1
-                                ? Theme.of(context).colorScheme.secondary
-                                : Colors.blue,
+                            color:progress >= 1 ? Colors.green : Colors.blue,
                             minHeight: 6,
                             borderRadius: BorderRadius.circular(10),
                           ),
                           const SizedBox(height: 12),
 
                           // 🔹 Aviso si la meta es parte de un desafío
-                          if (widget.goal.isChallengeGoal)
+                          if (currentGoal.isChallengeGoal)
                             Padding(
                               padding: const EdgeInsets.only(bottom: 8.0),
                               child: Row(
@@ -202,17 +202,16 @@ Future<void> _fetchRegistersGoal() async {
                                 ],
                               ),
                             ),
-
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
                               Text(
-                                'Creado: ${widget.goal.createdAt != null ? dateFormat.format(widget.goal.createdAt!.toLocal()) : '-'}',
+                                'Creado: ${currentGoal.createdAt != null ? dateFormat.format(currentGoal.createdAt!.toLocal()) : '-'}',
                                 style: const TextStyle(
                                     fontSize: 12, color: Colors.grey),
                               ),
                               Text(
-                                'Límite: ${widget.goal.dateLimit != null ? dateFormat.format(widget.goal.dateLimit!.toLocal()) : '-'}',
+                                'Límite: ${currentGoal.dateLimit != null ? dateFormat.format(currentGoal.dateLimit!.toLocal()) : '-'}',
                                 style: const TextStyle(
                                     fontSize: 12, color: Colors.grey),
                               ),

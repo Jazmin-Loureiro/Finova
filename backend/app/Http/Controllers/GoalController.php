@@ -55,10 +55,15 @@ class GoalController extends Controller
      * @param  \App\Models\Goal  $goal
      * @return \Illuminate\Http\Response
      */
-    public function show(Goal $goal)
-    {
-        //
-    }
+    public function show(Goal $goal) {
+            if ($goal->user_id !== auth()->id()) {
+                return response()->json([
+                    'message' => 'No autorizado'
+                ], 403);
+            }
+            $goal->load('currency');
+            return response()->json($goal);
+        }
 
     /**
      * Update the specified resource in storage.

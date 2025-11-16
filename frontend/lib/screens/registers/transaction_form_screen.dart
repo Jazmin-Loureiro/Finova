@@ -114,33 +114,6 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
   }
 
 
-  Future<void> _showRewardsDialog(List rewards) async {
-    if (rewards.isEmpty) return;
-
-    String rewardMessage = "";
-    for (final reward in rewards) {
-      final points = reward['points_earned'] ?? 0;
-      final newLevel = reward['new_level'];
-      final leveledUp = reward['leveled_up'] == true;
-      final badge = reward['badge_earned'];
-
-      rewardMessage += "🏆 ¡Ganaste $points puntos!\n";
-      if (leveledUp) rewardMessage += "🎉 ¡Subiste al nivel $newLevel!\n";
-      if (badge != null && badge['name'] != null) {
-        rewardMessage += "🏅 Nueva insignia: ${badge['name']}\n";
-      }
-      rewardMessage += "\n";
-    }
-
-    await showDialog(
-      context: context,
-      builder: (_) => SuccessDialogWidget(
-        title: "¡Desafío completado!",
-        message: rewardMessage.trim(),
-      ),
-    );
-  }
-
   Future<void> _saveTransaction() async {
     if (!_formKey.currentState!.validate()) return;
     final amount =

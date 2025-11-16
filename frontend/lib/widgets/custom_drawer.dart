@@ -1,10 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:frontend/screens/Soap/investment_rates_screen.dart';
-import 'package:frontend/screens/user_screen.dart';
 
 // 🔹 Importá tus pantallas reales
-import '../screens/dashboard_screen.dart';
-import '../screens/configuration_screen.dart';
 import '../screens/challenge_screen.dart';
 import '../screens/currency_converter_screen.dart';
 import '../screens/export_reports_screen.dart';

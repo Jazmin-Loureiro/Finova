@@ -4,7 +4,6 @@ import '../widgets/custom_scaffold.dart';
 import '../widgets/loading_widget.dart';
 import '../widgets/success_dialog_widget.dart';
 import '../widgets/confirm_dialog_widget.dart';
-import 'challenge_profile_screen.dart';
 import '../../main.dart'; // 👈 para usar routeObserver
 import '../widgets/custom_refresh_wrapper.dart';
 

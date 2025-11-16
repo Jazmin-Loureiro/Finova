@@ -67,92 +67,133 @@ class _UserFormScreenState extends State<UserFormScreen> {
     }
   }
 
-  int _avatarStyle = 0;
-List<String> _currentSeeds = [];
+  bool _isRotating = false;
 
-void _showAvatarPicker() async {
-  void generateSeeds() {
-    final base = emailController.text.isNotEmpty
-        ? emailController.text
-        : 'default';
+  List<String> _currentSeeds = [];
 
-    _currentSeeds = List.generate(
-      6,
-      (i) => "$base-${DateTime.now().microsecondsSinceEpoch}-$i",
-    );
-  }
+  void _showAvatarPicker() async {
+    void generateSeeds() {
+      final base = emailController.text.isNotEmpty
+          ? emailController.text
+          : 'default';
 
-  generateSeeds();
-
-  final selected = await showModalBottomSheet<String>(
-    context: context,
-    isScrollControlled: true,
-    backgroundColor: Theme.of(context).colorScheme.surfaceContainerHighest,
-    shape: const RoundedRectangleBorder(
-      borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-    ),
-    builder: (_) {
-      return StatefulBuilder(
-        builder: (context, setModalState) {
-          return Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const SizedBox(height: 12),
-
-              // 🔄 REFRESCAR AVATARS
-              Padding(
-                padding: const EdgeInsets.only(bottom: 12),
-                child: ElevatedButton.icon(
-                  onPressed: () {
-                    setModalState(() {
-                      generateSeeds();
-                    });
-                  },
-                  icon: const Icon(Icons.refresh),
-                  label: const Text("Refrescar avatares"),
-                ),
-              ),
-
-              // 🟣 GRID
-              SizedBox(
-                height: 360,
-                child: GridView.builder(
-                  padding: const EdgeInsets.all(16),
-                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 3,
-                    mainAxisSpacing: 10,
-                    crossAxisSpacing: 10,
-                  ),
-                  itemCount: _currentSeeds.length,
-                  itemBuilder: (context, index) {
-                    final seed = _currentSeeds[index];
-                    final svgCode = multiavatar(seed);
-
-                    return GestureDetector(
-                      onTap: () => Navigator.pop(context, seed),
-                      child: CircleAvatar(
-                        radius: 40,
-                        backgroundColor: Colors.grey[200],
-                        child: SvgPicture.string(svgCode),
-                      ),
-                    );
-                  },
-                ),
-              ),
-            ],
-          );
-        },
+      _currentSeeds = List.generate(
+        6,
+        (i) => "$base-${DateTime.now().microsecondsSinceEpoch}-$i",
       );
-    },
-  );
+    }
 
-  if (selected != null) {
-    setState(() {
-      selectedAvatarSeed = selected;
-      newIcon = null;
-    });
+    generateSeeds();
+
+    final selected = await showModalBottomSheet<String>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Theme.of(context).colorScheme.surfaceContainerHighest,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (_) {
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+            return Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const SizedBox(height: 12),
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 12),
+                  child: InkWell(
+                    borderRadius: BorderRadius.circular(14),
+                    onTap: () {
+                      setModalState(() {
+                        _isRotating = true;      // activar animación
+                        generateSeeds();         // refrescar avatares
+                      });
+
+                      // detener animación después de 600ms
+                      Future.delayed(const Duration(milliseconds: 600), () {
+                        if (mounted) {
+                          setModalState(() => _isRotating = false);
+                        }
+                      });
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                      decoration: BoxDecoration(
+                        color: Theme.of(context).colorScheme.primary.withOpacity(0.10),
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(
+                          color: Theme.of(context).colorScheme.primary.withOpacity(0.25),
+                          width: 1,
+                        ),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          // Ícono refrescar con animación
+                          AnimatedRotation(
+                            turns: _isRotating ? 1 : 0,
+                            duration: const Duration(milliseconds: 550),
+                            curve: Curves.easeOut,
+                            child: Icon(
+                              Icons.refresh_rounded,
+                              size: 18,
+                              color: Theme.of(context).colorScheme.primary,
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            "Regenerar avatares",
+                            style: TextStyle(
+                              fontSize: 13.5,
+                              fontWeight: FontWeight.w600,
+                              color: Theme.of(context).colorScheme.primary,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+                // 🟣 GRID
+                SizedBox(
+                  height: 360,
+                  child: GridView.builder(
+                    padding: const EdgeInsets.all(16),
+                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: 3,
+                      mainAxisSpacing: 10,
+                      crossAxisSpacing: 10,
+                    ),
+                    itemCount: _currentSeeds.length,
+                    itemBuilder: (context, index) {
+                      final seed = _currentSeeds[index];
+                      final svgCode = multiavatar(seed);
+
+                      return GestureDetector(
+                        onTap: () => Navigator.pop(context, seed),
+                        child: CircleAvatar(
+                          radius: 40,
+                          backgroundColor: Colors.grey[200],
+                          child: SvgPicture.string(svgCode),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+
+    if (selected != null) {
+      setState(() {
+        selectedAvatarSeed = selected;
+        newIcon = null;
+      });
+    }
   }
-}
 
   void _submitForm() {
     if (!_formKey.currentState!.validate()) return;

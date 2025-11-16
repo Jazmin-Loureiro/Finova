@@ -118,6 +118,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::put('goals/{goal}', [GoalController::class, 'update']);
     Route::delete('goals/{goal}', [GoalController::class, 'delete']);
     Route::get('goals/{goal}/registers', [GoalController::class, 'fetchRegistersByGoal']);
+    Route::get('goals/{goal}', [GoalController::class, 'show']);
     });
 
     // 📊 Rutas para simulaciones de préstamos e inversiones

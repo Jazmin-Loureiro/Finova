@@ -293,21 +293,6 @@ Future<void> _checkExpiredGoals() async {
                           ),
                         ),
                       ),
-                      if (goal.active && goal.state == 'in_progress')
-                        IconButton(
-                          icon: const Icon(Icons.edit, size: 20),
-                          tooltip: 'Editar meta',
-                          onPressed: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                  builder: (context) =>
-                                      GoalFormScreen(goal: goal)),
-                            ).then((value) {
-                              if (value == true) _fetchGoals();
-                            });
-                          },
-                        ),
                     ],
                   ),
                   const SizedBox(height: 8),
@@ -361,19 +346,49 @@ Future<void> _checkExpiredGoals() async {
                   const SizedBox(height: 6),
 
                   // Fechas
-                  Row(
+                 Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text(
-                        'Creado: ${goal.createdAt != null ? DateFormat('dd/MM/yyyy').format(goal.createdAt!.toLocal()) : '-'}',
+                      Text('Creado: ${goal.createdAt != null ? DateFormat('dd/MM/yyyy').format(goal.createdAt!.toLocal()) : '-'}',
                         style: const TextStyle(fontSize: 12, color: Colors.grey),
                       ),
-                      Text(
-                        'Fecha Limite: ${goal.dateLimit != null ? DateFormat('dd/MM/yyyy').format(goal.dateLimit!.toLocal()) : '-'}',
-                        style: const TextStyle(fontSize: 12, color: Colors.grey),
-                      ),
+                      (() {
+                        // Si la meta está completada → usar updatedAt
+                        if (goal.state == 'completed') {
+                          final finishedDate = goal.updatedAt != null ? DateFormat('dd/MM/yyyy').format(goal.updatedAt!.toLocal()): '-';
+
+                          return Text('Completada el $finishedDate',
+                            style: const TextStyle(fontSize: 12, color: Colors.grey),
+                          );
+                        }
+                        if (goal.active && goal.state == 'in_progress') {
+                          final today = DateTime.now();
+                          final limit = goal.dateLimit!;
+                          final daysLeft = limit.difference(today).inDays;
+
+                          late String message;
+
+                          if (daysLeft > 0) {
+                            message = 'Te quedan $daysLeft días';
+                          } else if (daysLeft == 0) {
+                            message = 'Vence hoy';
+                          } else {
+                            message = 'Venció hace ${daysLeft.abs()} días';
+                          }
+
+                          return Text(
+                            message,
+                            style: const TextStyle(fontSize: 12, color: Colors.grey),
+                          );
+                        }
+                        // Si está cancelada o inactiva
+                        return const Text(
+                          'Sin fecha límite',
+                          style: TextStyle(fontSize: 12, color: Colors.grey),
+                        );
+                      })(),
                     ],
-                  ),
+                  )
                 ],
               ),
             ),

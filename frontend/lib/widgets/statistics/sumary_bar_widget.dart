@@ -26,6 +26,10 @@ class SummaryBarCardWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final primary = theme.colorScheme.primary;
+    final textColor = theme.colorScheme.onSurface;
+
     if (totals.isEmpty) {
       return const EmptyStateWidget(
         title: 'No hay datos',
@@ -35,7 +39,6 @@ class SummaryBarCardWidget extends StatelessWidget {
     }
 
     double totalGeneral = 0;
-    // Calcular total en moneda del usuario si showTotal = true
     if (showTotal && userCurrency != null) {
       totalGeneral = totals.values.fold<double>(
         0.0,
@@ -44,37 +47,71 @@ class SummaryBarCardWidget extends StatelessWidget {
     }
 
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surface,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(18),
+        color: theme.colorScheme.surface,
         boxShadow: [
           BoxShadow(
-            blurRadius: 8,
-            color: Colors.black.withOpacity(0.08),
-            offset: const Offset(0, 3),
+            color: Colors.black.withOpacity(0.12),
+            blurRadius: 18,
+            offset: const Offset(0, 6),
           ),
         ],
+        border: Border.all(
+          color: primary.withOpacity(0.30),
+          width: 1.5,
+        ),
       ),
 
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // TÍTULOS
-          Text(
-            title,
-            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(12),
+              color: primary.withOpacity(0.9),
+              boxShadow: [
+                BoxShadow(
+                  color: primary.withOpacity(0.3),
+                  blurRadius: 10,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+              border: Border.all(
+                color: Colors.white.withOpacity(0.25),
+                width: 1.2,
+              ),
+            ),
+            child: Row(
+              children: [
+                Icon(Icons.attach_money, color: Colors.white, size: 20),
+                const SizedBox(width: 6),
+                Text(
+                  title,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w800,
+                    color: Colors.white,
+                  ),
+                ),
+              ],
+            ),
           ),
-          const SizedBox(height: 4),
 
+          const SizedBox(height: 10),
           Text(
             subtitle,
-            style: TextStyle(color: Colors.grey[600], fontSize: 13),
+            style: TextStyle(
+              color: Theme.of(context).colorScheme.onSurface.withOpacity(0.75),
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+            ),
           ),
           const SizedBox(height: 14),
 
-         
           if (showTotal && userCurrency != null)
             Text(
               formatCurrency(
@@ -82,42 +119,60 @@ class SummaryBarCardWidget extends StatelessWidget {
                 userCurrency!.code,
                 symbolOverride: userCurrency!.symbol,
               ),
-              style: const TextStyle(
-                fontSize: 28,
+              style: TextStyle(
+                fontSize: 30,
                 fontWeight: FontWeight.bold,
+                color: primary.withOpacity(0.85),
+                shadows: [
+                  Shadow(
+                    color: primary.withOpacity(0.3),
+                    blurRadius: 6,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
               ),
             ),
 
-          if (showTotal && userCurrency != null) const SizedBox(height: 16),
+          if (showTotal && userCurrency != null)
+            const SizedBox(height: 16),
 
-          // LISTA DE SALDOS
           ...totals.entries.map((entry) {
             final label = entry.key;
             final BalanceItem item = entry.value;
 
-            return Padding(
-              padding: const EdgeInsets.symmetric(vertical: 8),
+            return Container(
+              padding: const EdgeInsets.symmetric(vertical: 10),
+              decoration: BoxDecoration(
+                border: Border(
+                  bottom: BorderSide(
+                    color: Colors.grey,
+                    width: 1,
+                  ),
+                ),
+              ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  // NOMBRE DE CUENTA/MONEDA
                   Expanded(
                     child: Text(
                       label,
-                      style: const TextStyle(fontSize: 14),
+                      style: TextStyle(
+                        fontSize: 16,
+                        color: textColor.withOpacity(0.85),
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                   ),
-
-                  // MONTO
                   Text(
-                    formatCurrency(
+                    '${formatCurrency(
                       item.amount,
                       item.currency.code,
                       symbolOverride: item.currency.symbol,
-                    ),
-                    style: const TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
+                    )} ${item.currency.code}',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w700,
+                      color: primary,
                     ),
                   ),
                 ],

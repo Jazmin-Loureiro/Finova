@@ -106,7 +106,7 @@ Future<void> _loadStatistics() async {
     };
 
   } catch (e) {
-    debugPrint("❌ Error loading statistics: $e");
+    debugPrint("Error loading statistics: $e");
   } finally {
     setState(() => isLoading = false);
   }
@@ -147,10 +147,8 @@ Future<void> _loadStatistics() async {
                               subtitle: "¿De dónde proviene mi dinero?",
                               totals: incomeTotals,
                               userCurrency: userCurrency,
-                                colorsMap: incomeColors,
-                                  iconsMap: incomeIcons,   // <-- nuevo
-
-
+                              colorsMap: incomeColors,
+                              iconsMap: incomeIcons,   // <-- nuevo
                             ),
                           ),
                         ],
@@ -164,10 +162,8 @@ Future<void> _loadStatistics() async {
                               subtitle: "¿En qué estoy gastando más?",
                               totals: expenseTotals,
                               userCurrency: userCurrency,
-                                colorsMap: expenseColors,
-                                  iconsMap: expenseIcons,   // <-- nuevo
-
-
+                              colorsMap: expenseColors,
+                              iconsMap: expenseIcons,   // <-- nuevo
                             ),
                           ),
                         ],
@@ -254,5 +250,4 @@ Future<void> _loadStatistics() async {
         ),
       );
     }
-
 }

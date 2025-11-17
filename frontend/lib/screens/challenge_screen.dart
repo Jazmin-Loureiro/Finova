@@ -526,12 +526,102 @@ class _ChallengeScreenState extends State<ChallengeScreen>
                     return AnimatedOpacity(
                       duration: const Duration(milliseconds: 200),
                       opacity: locked ? 0.55 : 1.0,
-                      child: InkWell(
-                        borderRadius: BorderRadius.circular(16),
-                        onTap: locked ? null : () => _acceptChallenge(ch['id'], ch['name']),
-                        child: card,
+                      child: Card(
+                        margin: const EdgeInsets.only(bottom: 14),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        elevation: 3,
+                        child: InkWell(
+                          borderRadius: BorderRadius.circular(16),
+                          onTap: locked ? null : () => _acceptChallenge(ch['id'], ch['name']),
+                          child: Padding(
+                            padding: const EdgeInsets.all(16.0),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                // 🔹 Título + candado
+                                Row(
+                                  children: [
+                                    Expanded(
+                                      child: Text(
+                                        ch['name'] ?? '',
+                                        style: const TextStyle(
+                                          fontSize: 18,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ),
+                                    if (locked)
+                                      Tooltip(
+                                        message: lockedReason,
+                                        child: Icon(
+                                          Icons.lock_outline,
+                                          size: 20,
+                                          color: cs.onSurfaceVariant,
+                                        ),
+                                      ),
+                                  ],
+                                ),
+                                const SizedBox(height: 8),
+
+                                // 🔹 Descripción (si existe)
+                                if ((ch['description'] as String?)?.isNotEmpty == true)
+                                  Text(
+                                    ch['description'],
+                                    style: TextStyle(
+                                      fontSize: 14,
+                                      color: cs.onSurfaceVariant,
+                                    ),
+                                  ),
+
+                                // 🔹 Hint numérico
+                                if (hint.isNotEmpty) ...[
+                                  const SizedBox(height: 10),
+                                  Text(
+                                    hint,
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      color: cs.primary,
+                                      fontSize: 14,
+                                    ),
+                                  ),
+                                ],
+
+                                const SizedBox(height: 12),
+
+                                // 🔹 Chips
+                                MetaChipsWidget(challenge: ch),
+
+                                // 🔹 Mensaje bloqueado (si aplica)
+                                if (locked) ...[
+                                  const SizedBox(height: 12),
+                                  Row(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Icon(Icons.info_outline,
+                                          size: 16, color: cs.onSurfaceVariant),
+                                      const SizedBox(width: 6),
+                                      Expanded(
+                                        child: Text(
+                                          lockedReason,
+                                          style: TextStyle(
+                                            fontSize: 12,
+                                            color: cs.onSurface.withOpacity(0.80),
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              ],
+                            ),
+                          ),
+                        ),
                       ),
                     );
+
                   },
                 ),
         );

@@ -21,17 +21,16 @@ Widget build(BuildContext context) {
       ch['pivot']?['state'] ?? (completed ? 'completed' : 'in_progress');
 
   return Card(
-    margin: const EdgeInsets.symmetric(vertical: 8),
-    color: cs.surface,
-    shape: RoundedRectangleBorder(
-      borderRadius: BorderRadius.circular(16),
-      side: BorderSide(
-        color: cs.outlineVariant.withOpacity(0.4),
-        width: 1.2,
-      ),
-    ),
+  margin: const EdgeInsets.only(bottom: 14),
+  elevation: 3, // ✔ igual que Goals
+  shape: RoundedRectangleBorder(
+    borderRadius: BorderRadius.circular(16),
+  ),
+  child: InkWell(
+    borderRadius: BorderRadius.circular(16),
+    onTap: () {}, // dejalo vacío o agregá acción si querés
     child: Padding(
-      padding: const EdgeInsets.all(16), // 🔹 cambio: da aire a todo el contenido
+      padding: const EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -41,10 +40,9 @@ Widget build(BuildContext context) {
               Expanded(
                 child: Text(
                   ch['name'] ?? '',
-                  style: TextStyle(
-                    color: cs.onSurface,
+                  style: const TextStyle(
+                    fontSize: 18,
                     fontWeight: FontWeight.w600,
-                    fontSize: 16,
                   ),
                 ),
               ),
@@ -65,7 +63,9 @@ Widget build(BuildContext context) {
           if ((ch['description'] as String?)?.isNotEmpty == true) ...[
             Text(
               ch['description'] ?? '',
-              style: TextStyle(color: cs.onSurface.withOpacity(0.85)),
+              style: TextStyle(
+                color: cs.onSurface.withOpacity(0.85),
+              ),
             ),
             const SizedBox(height: 8),
           ],
@@ -87,61 +87,55 @@ Widget build(BuildContext context) {
               hint,
               style: TextStyle(
                 fontWeight: FontWeight.w700,
-                color: cs.onSurface,
+                color: cs.primary,
               ),
             );
           }),
 
-          const SizedBox(height: 8),
+          const SizedBox(height: 12),
 
           // 🔹 Chips
           MetaChipsWidget(challenge: ch),
 
-          const SizedBox(height: 8),
+          const SizedBox(height: 12),
 
-          // 🔹 Progreso (barra + texto)
+          // 🔹 Progreso
           _progressBar(context, ch, state, progress),
 
-          const SizedBox(height: 8),
+          const SizedBox(height: 12),
 
           // 🔹 Estado final
           _statusRow(context, ch, progress, state),
         ],
       ),
     ),
-  );
+  ),
+);
+
 }
 
 
   Widget _progressBar(
     BuildContext context, Map<String, dynamic> ch, String state, double progress) {
-  final cs = Theme.of(context).colorScheme;
-  final p = ChallengeUtils.decodePayload(ch['pivot']?['payload'] ?? ch['payload']);
-  final type = ch['type'];
+    final cs = Theme.of(context).colorScheme;
+    final p = ChallengeUtils.decodePayload(ch['pivot']?['payload'] ?? ch['payload']);
+    final type = ch['type'];
 
-  Color trackColor = cs.surfaceContainerHighest.withOpacity(0.25);
+    Color trackColor = cs.surfaceContainerHighest.withOpacity(0.25);
 
-  Widget progressContainer(double value, Color fillColor) {
-    return Container(
-      height: 8,
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(6),
-        border: Border.all(
-          color: cs.outlineVariant.withOpacity(0.7),
-          width: 1,
-        ),
-      ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(5),
-        child: LinearProgressIndicator(
-          value: value,
-          color: fillColor,
-          backgroundColor: trackColor,
-          minHeight: 6,
-        ),
+    Widget progressContainer(double value, Color fillColor) {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(10), // ✔ igual que Goals
+      child: LinearProgressIndicator(
+        value: value,
+        color: fillColor,
+        backgroundColor: Colors.grey[300], // ✔ mismo fondo de Goals
+        minHeight: 6,
+        borderRadius: BorderRadius.circular(10), // ✔ igual que Goals
       ),
     );
   }
+
 
   if (type == 'SAVE_AMOUNT') {
     final double goal = (p['goal_amount'] ?? p['amount'] ?? 0).toDouble();

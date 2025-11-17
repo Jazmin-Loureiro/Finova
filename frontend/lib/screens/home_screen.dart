@@ -5,6 +5,7 @@ import '../widgets/casa_widget.dart';
 import '../widgets/home_info_widget.dart';
 import '../widgets/success_dialog_widget.dart';
 import '../widgets/custom_scaffold.dart';
+import '../widgets/loading_widget.dart';   // 👈 AGREGAR IMPORT
 
 class HomeScreen extends StatefulWidget {
   final bool showSuccessDialog;
@@ -18,10 +19,13 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   final ApiService api = ApiService();
 
+  bool isLoading = true; // 👈 LOADING GENERAL
+
   @override
   void initState() {
     super.initState();
 
+    // Dialog de inicio correcto
     if (widget.showSuccessDialog) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         showDialog(
@@ -34,26 +38,31 @@ class _HomeScreenState extends State<HomeScreen> {
         );
       });
     }
+
+    // Simular carga general de la screen mientras cargan los widgets
+    Future.wait([
+      Future.delayed(const Duration(milliseconds: 300)), 
+    ]).then((_) {
+      if (mounted) setState(() => isLoading = false);
+    });
   }
 
   void logout() async {
     await api.logout();
     if (!mounted) return;
-    await storage.delete(key: 'token'); // Elimina el token almacenado
-    Navigator.pushAndRemoveUntil( // Navega al login y elimina el historial
+
+    await storage.delete(key: 'token');
+    Navigator.pushAndRemoveUntil(
       context,
       MaterialPageRoute(builder: (_) => const LoginScreen()),
-      (route) => false, // Elimina todas las rutas anteriores
+      (route) => false,
     );
   }
 
   @override
   Widget build(BuildContext context) {
     return WillPopScope(
-      onWillPop: () async {
-        // 🔒 Evita que el botón "atrás" cierre el Home o vuelva al login
-        return false;
-      },
+      onWillPop: () async => false,
       child: CustomScaffold(
         title: 'Inicio',
         currentRoute: '/home',
@@ -62,6 +71,7 @@ class _HomeScreenState extends State<HomeScreen> {
         body: Stack(
           children: [
             const CasaWidget(),
+
             SafeArea(
               child: SingleChildScrollView(
                 padding: const EdgeInsets.all(16),
@@ -73,6 +83,12 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
               ),
             ),
+
+            // 👇 LOADING GENERAL SOBRE TODA LA SCREEN
+            if (isLoading)
+              const Positioned.fill(
+                child: LoadingWidget(message: "Cargando inicio..."),
+              ),
           ],
         ),
       ),

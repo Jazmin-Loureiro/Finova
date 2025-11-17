@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/house_provider.dart';
 import '../services/api_service.dart';
-import 'package:frontend/helpers/format_utils.dart';
+import '../helpers/format_utils.dart';
+import '../widgets/loading_widget.dart'; // 👈 IMPORTANTE
 
 class HomeInfoWidget extends StatefulWidget {
   const HomeInfoWidget({super.key});
@@ -33,7 +34,6 @@ class _HomeInfoWidgetState extends State<HomeInfoWidget> {
       final userCurrency =
           currencies.firstWhere((c) => c.id == userCurrencyId);
 
-      // Calcular el valor de 1 USD en la moneda base del usuario
       final valor = userCurrency.rate! / usd.rate!;
 
       setState(() {
@@ -42,7 +42,7 @@ class _HomeInfoWidgetState extends State<HomeInfoWidget> {
         userCurrencySymbol = userCurrency.symbol;
         isLoadingDolar = false;
       });
-    } catch (e) {
+    } catch (_) {
       setState(() {
         dolarValue = null;
         userCurrencyCode = null;
@@ -67,15 +67,15 @@ class _HomeInfoWidgetState extends State<HomeInfoWidget> {
   Widget build(BuildContext context) {
     final houseData = context.watch<HouseProvider>().houseData;
 
+    // 🔹 APLICADO TU LOADER
     if (houseData == null) {
-      return const Center(child: CircularProgressIndicator());
+      return const LoadingWidget(message: "Cargando información...");
     }
 
     final balance = double.tryParse(houseData['balance'].toString()) ?? 0;
     final balanceColor = balance > 0 ? Colors.green[700] : Colors.red[700];
     final currencySymbol = houseData['currency_symbol'] ?? '\$';
     final currencyCode = houseData['currency_code'] ?? 'ARS';
-
 
     return Center(
       child: Container(
@@ -95,7 +95,6 @@ class _HomeInfoWidgetState extends State<HomeInfoWidget> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            // 🔹 Título
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
@@ -114,11 +113,8 @@ class _HomeInfoWidgetState extends State<HomeInfoWidget> {
             ),
             const SizedBox(height: 10),
 
-            // 🔹 Balance con animación
             AnimatedSwitcher(
               duration: const Duration(milliseconds: 600),
-              transitionBuilder: (child, anim) =>
-                  FadeTransition(opacity: anim, child: child),
               child: RichText(
                 key: ValueKey(balance),
                 text: TextSpan(
@@ -128,10 +124,12 @@ class _HomeInfoWidgetState extends State<HomeInfoWidget> {
                     color: balanceColor,
                   ),
                   children: [
-                    TextSpan(text: "$currencySymbol${formatCurrency(balance, currencyCode)}"),
+                    TextSpan(
+                        text:
+                            "$currencySymbol${formatCurrency(balance, currencyCode)}"),
                     TextSpan(
                       text: currencyCode,
-                      style: TextStyle(
+                      style: const TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w400,
                         color: Colors.black54,
@@ -144,11 +142,9 @@ class _HomeInfoWidgetState extends State<HomeInfoWidget> {
 
             const SizedBox(height: 14),
 
-            // 🔹 Info extra (fecha + dólar)
             Column(
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                // 📅 Fecha
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
@@ -157,13 +153,12 @@ class _HomeInfoWidgetState extends State<HomeInfoWidget> {
                     const SizedBox(width: 4),
                     Text(
                       getFormattedDate(),
-                      style:
-                          const TextStyle(fontSize: 13, color: Colors.black54),
+                      style: const TextStyle(
+                          fontSize: 13, color: Colors.black54),
                     ),
                   ],
                 ),
 
-                // 💵 Dólar (solo si la moneda base no es USD)
                 if (userCurrencyCode != 'USD') ...[
                   const SizedBox(height: 6),
                   Row(
@@ -172,13 +167,15 @@ class _HomeInfoWidgetState extends State<HomeInfoWidget> {
                       const Icon(Icons.attach_money,
                           size: 16, color: Colors.grey),
                       const SizedBox(width: 4),
+
+                      // 🔹 No tocamos la lógica del dólar: solo el estilo
                       if (isLoadingDolar)
                         const Text(
                           "Cargando dólar...",
-                          style:
-                              TextStyle(fontSize: 13, color: Colors.black45),
+                          style: TextStyle(
+                              fontSize: 13, color: Colors.black45),
                         )
-                      else if (dolarValue != null && userCurrencyCode != null)
+                      else if (dolarValue != null)
                         Text(
                           "1 USD = $userCurrencySymbol ${formatCurrency(dolarValue!, userCurrencyCode!)}",
                           style: const TextStyle(

@@ -205,37 +205,18 @@ Future<void> _checkCurrency() async {
       physics: const BouncingScrollPhysics(),
       children: [
         const SizedBox(height: 10),
-        Center(
-          child: Text(
-            "Simulá tu Plazo Fijo",
-            style: theme.textTheme.headlineSmall?.copyWith(
-              color: textColor,
-              fontWeight: FontWeight.bold,
-              letterSpacing: 0.8,
-            ),
-          ),
-        ),
-        const SizedBox(height: 6),
-        const Center(
-          child: InfoIcon(
-            title: "¿Qué es un plazo fijo?",
-            message:
-                "Es una inversión donde depositás dinero durante un tiempo determinado "
-                "y obtenés intereses al finalizar. No podés retirarlo antes del vencimiento.\n\n"
-                "Ejemplo: \$100.000 a 30 días genera una ganancia aprox. de \$9.410 con una TNA del 114,4%.",
-          ),
-        ),
-        const SizedBox(height: 25),
-
         // Formulario
         Container(
-          padding: const EdgeInsets.all(22),
+          margin: const EdgeInsets.symmetric(horizontal: 10),
+          padding: const EdgeInsets.all(20),
           decoration: BoxDecoration(
-            color: surface.withOpacity(0.08),
+            color: surface.withOpacity(0.12),
             borderRadius: BorderRadius.circular(20),
+            border:
+              Border.all(color: primary.withOpacity(0.30), width: 1.5),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.1),
+                color: theme.shadowColor.withOpacity(0.25),
                 blurRadius: 15,
                 offset: const Offset(0, 6),
               ),
@@ -245,6 +226,31 @@ Future<void> _checkCurrency() async {
             key: _formKeyPf,
             child: Column(
               children: [
+             Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    "Simulá tu Plazo Fijo",
+                    style: theme.textTheme.headlineSmall?.copyWith(
+                      color: textColor,
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: 0.8,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  // Ícono de información
+                  const InfoIcon(
+                    title: "¿Qué es un plazo fijo?",
+                    message:
+                        "Es una inversión donde depositás dinero durante un tiempo determinado "
+                        "y obtenés intereses al finalizar. No podés retirarlo antes del vencimiento.\n\n"
+                        "Ejemplo: \$100.000 a 30 días genera una ganancia aprox. de \$9.410 con una TNA del 114,4%.",
+                    iconSize: 22, // opcional
+                  ),
+                ],
+              ),
+
+               const SizedBox(height: 25),
                  CurrencyTextField(
                     controller: montoController,
                     currencies: currencies,
@@ -289,7 +295,7 @@ Future<void> _checkCurrency() async {
                     onPressed: isLoadingPf ? null : simulatePlazoFijo,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: primary,
-                      foregroundColor: Colors.black,
+                      foregroundColor: Colors.white,
                       padding: const EdgeInsets.symmetric(vertical: 16),
                       textStyle: const TextStyle(
                           fontWeight: FontWeight.bold, fontSize: 16),
@@ -305,12 +311,11 @@ Future<void> _checkCurrency() async {
           ),
         ),
 
-        const SizedBox(height: 35),
+        const SizedBox(height: 15),
 
         if (isLoadingPf)
           const LoadingWidget(message: "Simulando inversión..."),
         if (!isLoadingPf && resultadoPf != null) ...[
-          const SizedBox(height: 20),
           if (resultadoPf!['error'] != null)
             Text(resultadoPf!['error'],
                 style: const TextStyle(color: Colors.red, fontSize: 16),
@@ -332,35 +337,17 @@ Future<void> _checkCurrency() async {
       physics: const BouncingScrollPhysics(),
       children: [
         const SizedBox(height: 10),
-        Center(
-          child: Text(
-            "Simulá tu inversión en Cripto",
-            style: theme.textTheme.headlineSmall?.copyWith(
-              color: textColor,
-              fontWeight: FontWeight.bold,
-              letterSpacing: 0.8,
-            ),
-          ),
-        ),
-        const SizedBox(height: 6),
-        const Center(
-          child: InfoIcon(
-            title: "¿Qué es una inversión cripto?",
-            message:
-                "Invertir en criptomonedas significa comprar activos digitales como Bitcoin o Ethereum, "
-                "esperando que su valor aumente con el tiempo. Son volátiles, por lo que el riesgo es mayor.",
-          ),
-        ),
-        const SizedBox(height: 25),
-
         Container(
-          padding: const EdgeInsets.all(22),
+          margin: const EdgeInsets.symmetric(horizontal: 10),
+          padding: const EdgeInsets.all(20),
           decoration: BoxDecoration(
-            color: surface.withOpacity(0.08),
+            color: surface.withOpacity(0.12),
             borderRadius: BorderRadius.circular(20),
+            border:
+              Border.all(color: primary.withOpacity(0.30), width: 1.5),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.1),
+                color: theme.shadowColor.withOpacity(0.25),
                 blurRadius: 15,
                 offset: const Offset(0, 6),
               ),
@@ -370,6 +357,32 @@ Future<void> _checkCurrency() async {
             key: _formKeyCrypto,
             child: Column(
               children: [
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    Text(
+                      "Simulá tu inversión\n en Cripto",
+                      textAlign: TextAlign.center,
+                      style: theme.textTheme.headlineSmall?.copyWith(
+                        color: textColor,
+                        fontWeight: FontWeight.bold,
+                        letterSpacing: 0.8,
+                      ),
+                    ),
+
+                    const SizedBox(height: 6),
+
+                    const InfoIcon(
+                      title: "¿Qué es una inversión cripto?",
+                      message:
+                          "Invertir en criptomonedas significa comprar activos digitales como Bitcoin o Ethereum, "
+                          "esperando que su valor aumente con el tiempo. Son volátiles, por lo que el riesgo es mayor.",
+                      iconSize: 20,
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 25),
+
                   CurrencyTextField(
                     controller: montoCryptoController,
                     currencies: currencies,
@@ -377,8 +390,11 @@ Future<void> _checkCurrency() async {
                     label: 'Monto a invertir (USD)',
                     validator: (value) {
                     if (value == null || value.isEmpty) return 'Ingresá un monto';
-                      final clean = value.replaceAll('.', '').replaceAll(',', '.');
-                              final parsed = double.tryParse(clean);
+                      String clean =   value;
+                      clean = clean.replaceAll(RegExp(r'(?<=\d)[.,](?=\d{3}\b)'), '');
+                      if (clean.contains(',')) {
+                      clean = clean.replaceAll(',', '.'); }    // convierte decimal
+                      final parsed = double.tryParse(clean);
                     if (parsed == null || parsed < 10) {
                       return 'El monto mínimo es \$10 USD';
                     }
@@ -452,7 +468,7 @@ Future<void> _checkCurrency() async {
                           },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: primary,
-                      foregroundColor: Colors.black,
+                      foregroundColor: Colors.white,
                       padding: const EdgeInsets.symmetric(vertical: 16),
                       textStyle: const TextStyle(
                           fontWeight: FontWeight.bold, fontSize: 16),
@@ -468,11 +484,10 @@ Future<void> _checkCurrency() async {
           ),
         ),
 
-        const SizedBox(height: 35),
+        const SizedBox(height: 15),
         if (isLoadingCrypto)
           const LoadingWidget(message: "Simulando inversión..."),
         if (!isLoadingCrypto && resultadoCrypto != null) ...[
-          const SizedBox(height: 20),
           if (resultadoCrypto!['error'] != null)
             Text(resultadoCrypto!['error'],
                 style: const TextStyle(color: Colors.red))

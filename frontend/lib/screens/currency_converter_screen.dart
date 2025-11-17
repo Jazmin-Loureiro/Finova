@@ -1,6 +1,8 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:frontend/helpers/format_utils.dart';
+import 'package:frontend/widgets/bottom_sheet_pickerField.dart';
+import 'package:frontend/widgets/info_icon_widget.dart';
 import 'package:frontend/widgets/loading_widget.dart';
 import 'package:intl/intl.dart';
 import '../models/currency.dart';
@@ -16,7 +18,7 @@ class CurrencyConverterScreen extends StatefulWidget {
 }
 
 class _CurrencyConverterScreenState extends State<CurrencyConverterScreen> {
-  final _formKey = GlobalKey<FormState>();  // ✅ Correcto
+  final _formKey = GlobalKey<FormState>(); 
   final ApiService api = ApiService();
   List<Currency> currencies = [];
   Currency? fromCurrency;
@@ -60,6 +62,7 @@ class _CurrencyConverterScreenState extends State<CurrencyConverterScreen> {
 
       // 🔹 Opción 1: limpiar resultado (recomendado)
       convertedValue = null;
+      amountController.clear(); // hay q limpiar el monto también si no se rompe por la separación de miles
 
       // 🔹 Opción 2 (activar si querés recalcular automáticamente):
       // convertLocal();
@@ -87,245 +90,242 @@ class _CurrencyConverterScreenState extends State<CurrencyConverterScreen> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final primary = theme.colorScheme.primary;
-    final background = theme.scaffoldBackgroundColor;
     final surface = theme.colorScheme.surface;
     final textColor = theme.colorScheme.onSurface;
 
     return CustomScaffold(
-  title: 'Conversor',
-  currentRoute: 'currency_converter',
-  showNavigation: false,
-  body: isLoading
-      ? const Center(child: LoadingWidget())
-      : Form (
-          key: _formKey,
-          child: Padding(
-            padding: const EdgeInsets.all(18.0),
-            child: ListView(
-              physics: const BouncingScrollPhysics(),
-              children: [
-                const SizedBox(height: 20),
-              Center(
-                child: Text(
-                  'Conversor de monedas',
-                  style: theme.textTheme.headlineSmall?.copyWith(
-                    color: textColor,
-                    fontWeight: FontWeight.bold,
-                    letterSpacing: 0.8,
-                  ),
-                ),
-              ),
-              const SizedBox(height: 25),
-
-                    // 💳 Tarjeta translúcida
-                    Container(
-                        padding: const EdgeInsets.all(20),
-                        decoration: BoxDecoration(
-                          color: theme.cardColor.withOpacity(0.95), // ✅ usa color global
-                          borderRadius: BorderRadius.circular(20),
-                          border: Border.all(
-                            color: theme.colorScheme.primary.withOpacity(0.15),
-                            width: 1,
-                          ),
-                          boxShadow: [
-                            BoxShadow(
-                              color: theme.shadowColor.withOpacity(0.25),
-                              blurRadius: 15,
-                              offset: const Offset(0, 6),
+      title: 'Conversor',
+      currentRoute: 'currency_converter',
+      showNavigation: false,
+      body: isLoading
+          ? const Center(child: LoadingWidget())
+          : Form (
+              key: _formKey,
+              child: Padding(
+                padding: const EdgeInsets.all(10.0),
+                child: ListView(
+                  physics: const BouncingScrollPhysics(),
+                  children: [
+                        Container(
+                          padding: const EdgeInsets.all(20),
+                          decoration: BoxDecoration(
+                            color: theme.colorScheme.surface.withOpacity( 0.12),
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(
+                              color: theme.colorScheme.primary.withOpacity(0.30),
+                              width: 1.5,
                             ),
-                          ],
-                        ),
-                        child: Column(
-                          children: [
-                            CurrencyTextField(
-                              controller: amountController,
-                              currencies: currencies,
-                              selectedCurrency: fromCurrency,
-                              label: 'Monto a convertir',
-                              onChanged: (val) {
-                              // 🔹 Ejemplo de debounce si más adelante querés recalcular automáticamente
-                              if (_debounce?.isActive ?? false) _debounce!.cancel();
-                              _debounce = Timer(const Duration(milliseconds: 600), () {
-                                // convertLocal(); // <— activar si querés recalcular al escribir
-                              });
-                            },
-                           validator: (val) {
-                            if (val == null || val.trim().isEmpty) {
-                              return 'Ingrese un monto';
-                            }
-                            final parsed = double.tryParse(val.replaceAll(',', '.'));
-                            if (parsed == null || parsed <= 0) {
-                              return 'Ingrese un monto válido';
-                            }
-                            return null;
-                          },
-
-                          ),
-                          const SizedBox(height: 20),
-
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Expanded(child: _buildDropdown(true, theme)),
-                              IconButton(
-                                icon: Icon(Icons.swap_horiz, color: primary, size: 32),
-                                onPressed: swapCurrencies,
+                            boxShadow: [
+                              BoxShadow(
+                                color: theme.shadowColor.withOpacity(0.25),
+                                blurRadius: 15,
+                                offset: const Offset(0, 6),
                               ),
-                              Expanded(child: _buildDropdown(false, theme)),
                             ],
                           ),
-                        ],
-                      ),
-                    ),
 
-                    const SizedBox(height: 30),
-
-                    //  Botón principal Finova
-                    ElevatedButton(
-                    onPressed: () {
-                        if (_formKey.currentState!.validate()) {
-                          convertLocal();
-                        }
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: primary,
-                        foregroundColor: Colors.black,
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                        textStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                        elevation: 6,
-                      ),
-                      child: const Text('Convertir'),
-                    ),
-
-                    const SizedBox(height: 35),
-
-                    // 💰 Resultado animado + texto de tasa
-                    AnimatedSwitcher(
-                      duration: const Duration(milliseconds: 400),
-                      transitionBuilder: (child, anim) =>
-                          FadeTransition(opacity: anim, child: child),
-                      child: convertedValue == null
-                          ? const SizedBox.shrink()
-                          : Column(
-                              key: ValueKey(convertedValue),
-                              children: [
-                                Container(
-                                  padding: const EdgeInsets.all(24),
-                                  decoration: BoxDecoration(
-                                    color: surface.withOpacity(0.12),
-                                    borderRadius: BorderRadius.circular(16),
-                                    border:
-                                        Border.all(color: primary.withOpacity(0.3), width: 1),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            children: [
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Text(
+                                    'Conversor de monedas',
+                                    style: TextStyle(
+                                      fontSize: 22,
+                                      color: textColor,
+                                      fontWeight: FontWeight.bold,
+                                    ),
                                   ),
-                                  child: Column(
-                                    children: [
-                                      Text(
-                                        'Resultado',
-                                        style: TextStyle(
-                                            color: textColor.withOpacity(0.7), fontSize: 15),
+                                  const SizedBox(width: 6),
+                                  InfoIcon(
+                                    title: 'Conversión de moneda',
+                                    message:
+                                        'Fuente: Open Exchange Rates\n'
+                                        'Última actualización: ${DateFormat('dd/MM/yyyy').format(toCurrency!.updatedAt!)}\n\n'
+                                        'Este valor es estimativo y puede variar según el mercado.',
+                                    iconSize: 20,
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 20),
+
+                              CurrencyTextField(
+                                controller: amountController,
+                                currencies: currencies,
+                                selectedCurrency: fromCurrency,
+                                label: 'Monto a convertir',
+                                onChanged: (val) {
+                                  if (_debounce?.isActive ?? false) _debounce!.cancel();
+                                  _debounce = Timer(const Duration(milliseconds: 600), () {});
+                                },
+                                validator: (val) {
+                                  if (val == null || val.trim().isEmpty) {
+                                    return 'Ingrese un monto';
+                                  }
+                                  // Elimina separadores de miles y arregla decimales
+                                    String clean = val;
+                                      clean = clean.replaceAll(RegExp(r'(?<=\d)[.,](?=\d{3}\b)'), '');
+                                      if (clean.contains(',')) {
+                                        clean = clean.replaceAll(',', '.');
+                                      }   
+                                      final parsed = double.tryParse(clean);
+                                      if (parsed == null || parsed <= 0) {
+                                      return 'Ingrese un monto válido';
+                                    }
+                                  return null;
+                                },
+                              ),
+
+                              const SizedBox(height: 22),
+
+                              Row(
+                                children: [
+                                  Expanded(child: _buildDropdown(true, theme)),
+                                  const SizedBox(width: 1),
+                                  IconButton(
+                                    icon: Icon(Icons.swap_horiz, color: primary, size: 32),
+                                    onPressed: swapCurrencies,
+                                  ),
+                                  const SizedBox(width: 1),
+                                  Expanded(child: _buildDropdown(false, theme)),
+                                ],
+                              ),
+
+                              const SizedBox(height: 26),
+
+                              SizedBox(
+                                width: double.infinity,
+                                child: ElevatedButton(
+                                  onPressed: () {
+                                    if (_formKey.currentState!.validate()) {
+                                      convertLocal();
+                                    }
+                                  },
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: primary,
+                                    foregroundColor: Colors.white,
+                                    padding: const EdgeInsets.symmetric(vertical: 16),
+                                    textStyle: const TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 16,
+                                      letterSpacing: 0.5,
+                                    ),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(14),
+                                    ),
+                                    shadowColor: Theme.of(context).colorScheme.primary.withOpacity(0.4),
+                                    elevation: 8,
+                                  ),
+                                  child: const Text('Convertir'),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+
+
+                        const SizedBox(height: 15),
+
+                        //  Resultado animado + texto de tasa
+                        AnimatedSwitcher(
+                          duration: const Duration(milliseconds: 400),
+                          transitionBuilder: (child, anim) =>
+                              FadeTransition(opacity: anim, child: child),
+                          child: convertedValue == null
+                              ? const SizedBox.shrink()
+                              : Column(
+                                  key: ValueKey(convertedValue),
+                                  children: [
+                                    Container(
+                                      padding: const EdgeInsets.all(24),
+                                      decoration: BoxDecoration(
+                                        color: surface.withOpacity(0.12),
+                                        borderRadius: BorderRadius.circular(16),
+                                        border:
+                                            Border.all(color: primary.withOpacity(0.30), width: 1.5),
                                       ),
-                                      const SizedBox(height: 10),
-                                      Text(
-                                        NumberFormat.currency(symbol: toCurrency?.symbol ?? '')
-                                            .format(convertedValue),
-                                        style: TextStyle(
-                                          fontSize: 34,
-                                          color: textColor,
-                                          fontWeight: FontWeight.bold,
-                                        ),
+                                      child: Column(
+                                        children: [
+                                          Text(
+                                            'Resultado',
+                                            style: TextStyle(
+                                                color: textColor.withOpacity(0.7), fontSize: 15),
+                                          ),
+                                          const SizedBox(height: 10),
+                                          Text(
+                                            '${toCurrency?.symbol ?? ''}' +
+                                            formatCurrency(
+                                              convertedValue!,
+                                              toCurrency!.code,
+                                            ),
+                                            style: TextStyle(
+                                              fontSize: 34,
+                                              color: textColor,
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                          ),
+                                          Text(
+                                            '${fromCurrency?.symbol ?? ''}1 ${fromCurrency?.code ?? ''} = '
+                                            '${toCurrency?.symbol ?? ''}' '${NumberFormat("#,##0.####").format(toCurrency!.rate! / fromCurrency!.rate!)} '
+                                            '${toCurrency?.code ?? ''}',
+                                            style: TextStyle(
+                                              color: textColor.withOpacity(0.8),
+                                              fontSize: 15,
+                                              fontWeight: FontWeight.w500,
+                                            ),
+                                          ),
+                                          const SizedBox(height: 4),
+                                          Text(
+                                            '(Tasa actualizada ${_formatElapsedTime(mockLastUpdated)})',
+                                            style: TextStyle(
+                                              color: textColor.withOpacity(0.6),
+                                              fontSize: 13,
+                                            ),
+                                          ),
+                                        ],
                                       ),
-                                    ],
-                                  ),
+                                    ),
+                                  ],
                                 ),
-                                const SizedBox(height: 12),
-
-                                // 💬 Texto informativo de tasa
-                                Text(
-                                  '1 ${fromCurrency?.code ?? ''} = '
-                                  '${NumberFormat("#,##0.####").format(toCurrency!.rate! / fromCurrency!.rate!)} '
-                                  '${toCurrency?.code ?? ''}',
-                                  style: TextStyle(
-                                    color: textColor.withOpacity(0.8),
-                                    fontSize: 15,
-                                    fontWeight: FontWeight.w500,
-                                  ),
-                                ),
-                                const SizedBox(height: 4),
-                                Text(
-                                  '(Tasa actualizada ${_formatElapsedTime(mockLastUpdated)})',
-                                  style: TextStyle(
-                                    color: textColor.withOpacity(0.6),
-                                    fontSize: 13,
-                                  ),
-                                ),
-                              ],
-                            ),
+                        ),
+                      ],
                     ),
-                  ],
-                ),
-              ),
-        )
-    );
-  }
-
-  // 🔽 Dropdown con solo iniciales y limpieza de resultado
-  Widget _buildDropdown(bool isFrom, ThemeData theme) {
-    final surface = theme.colorScheme.surface;
-    final textColor = theme.colorScheme.onSurface;
-    final primary = theme.colorScheme.primary;
-
-    return Container(
-      decoration: BoxDecoration(
-        color: theme.cardColor.withValues(alpha: 0.85), // 👈 contraste sutil
-      borderRadius: BorderRadius.circular(12),
-      border: Border.all(
-        color: primary.withValues(alpha: 0.25),
-        width: 1,
-      ),
-      boxShadow: [
-        BoxShadow(
-          color: theme.shadowColor.withValues(alpha: 0.2),
-          blurRadius: 8,
-          offset: const Offset(0, 3),
-        ),
-      ],
-    ),
-      padding: const EdgeInsets.symmetric(horizontal: 8),
-      child: DropdownButtonHideUnderline(
-        child: DropdownButton<Currency>(
-          value: isFrom ? fromCurrency : toCurrency,
-          dropdownColor: surface.withValues(alpha: 0.8),
-          icon: Icon(Icons.arrow_drop_down, color: primary),
-          style: TextStyle(color: textColor, fontWeight: FontWeight.w500, fontSize: 15),
-          menuMaxHeight: 300,
-          isExpanded: true,
-          items: currencies
-              .map(
-                (c) => DropdownMenuItem(
-                  value: c,
-                  child: Text(
-                    '${c.code}', // 👈 solo iniciales
-                    style: TextStyle(color: textColor, fontSize: 15),
                   ),
-                ),
-              )
-              .toList(),
-          onChanged: (c) => setState(() {
-            if (isFrom) {
-              fromCurrency = c;
-            } else {
-              toCurrency = c;
-            }
+            )
+        );
+      }
 
-            // 🔹 Opción 1: limpiar resultado para evitar confusión
-            convertedValue = null;
-
-            // 🔹 Opción 2: recalcular automáticamente
-            // convertLocal();
-          }),
+        Widget _buildDropdown(bool isFrom, ThemeData theme) {
+          return Container(
+            child: BottomSheetPickerField<Currency>(
+        key: ValueKey(isFrom ? fromCurrency?.id : toCurrency?.id),
+        label: 'Divisa',
+        items: currencies,
+        itemLabel: (c) => '${c.code}',
+        itemIcon: (c) => CircleAvatar(
+          radius: 16,
+          backgroundColor: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+          child: Text(
+            c.symbol,
+            style: TextStyle(
+              color: Theme.of(context).colorScheme.primary,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
         ),
-      ),
+        initialValue: isFrom ? fromCurrency : toCurrency,
+        onChanged: (value) => setState(() {
+          if (isFrom) {
+            fromCurrency = value;
+          } else {
+            toCurrency = value;
+          }
+          convertedValue = null;
+        }),
+        validator: (value) => value == null ? 'Debes seleccionar una moneda' : null,
+      )
     );
   }
 }

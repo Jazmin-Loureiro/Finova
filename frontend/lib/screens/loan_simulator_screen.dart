@@ -88,56 +88,68 @@ class _LoanSimulatorScreenState extends State<LoanSimulatorScreen> {
           )
         :  Container(
         child: Padding(
-          padding: const EdgeInsets.all(18.0),
+          padding: const EdgeInsets.all(10.0),
           child: ListView(
             physics: const BouncingScrollPhysics(),
             children: [
-              const SizedBox(height: 10),
-              Center(
-                child: Text(
-                  'Simulá tu préstamo',
-                  style: theme.textTheme.headlineSmall?.copyWith(
-                    color: textColor,
-                    fontWeight: FontWeight.bold,
-                    letterSpacing: 0.8,
-                  ),
-                ),
-              ),
-
-              const SizedBox(height: 25),
-
               //  Tarjeta principal del simulador
               Container(
-                padding: const EdgeInsets.all(22),
+                padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
-                  color: surface.withOpacity(0.08),
+                  color: surface.withOpacity(0.12),
                   borderRadius: BorderRadius.circular(20),
+                  border: Border.all(
+                    color: theme.colorScheme.primary.withOpacity(0.30),
+                    width: 1.5),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.1),
+                      color: theme.shadowColor.withOpacity(0.25),
                       blurRadius: 15,
                       offset: const Offset(0, 6),
                     ),
                   ],
                 ),
+                
                 child: Form(
                   key: _formKey,
                   child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
-                       CurrencyTextField(
-                          controller: capitalController,
-                          currencies: currencies,
-                          selectedCurrency: fromCurrency,
-                          label: 'Monto a convertir',
-                          validator: (value) {
-                              if (value == null || value.trim().isEmpty)  return 'Ingresá un monto';
-                              final clean = value.replaceAll('.', '').replaceAll(',', '.');
-                              final parsed = double.tryParse(clean);
-                              if (parsed == null || parsed < 10000) return 'El monto mínimo es \$10.000';
-                              return null;
-                            },
-                          ),
-                      const SizedBox(height: 16),
+                      Text(
+                        'Simulá tu préstamo',
+                        style: theme.textTheme.headlineSmall?.copyWith(
+                          color: textColor,
+                          fontWeight: FontWeight.bold,
+                          letterSpacing: 0.8,
+                        ),
+                      ),
+
+                      const SizedBox(height: 22),
+
+                      CurrencyTextField(
+                        controller: capitalController,
+                        currencies: currencies,
+                        selectedCurrency: fromCurrency,
+                        label: 'Monto del préstamo',
+                        validator: (value) {
+                          if (value == null || value.trim().isEmpty) {
+                            return 'Ingresá un monto';
+                          }
+
+                          final clean = value
+                              .replaceAll(RegExp(r'(?<=\d)[.,](?=\d{3}\b)'), '')
+                              .replaceAll(',', '.');
+
+                          final parsed = double.tryParse(clean);
+                          if (parsed == null || parsed < 10000) {
+                            return 'El monto mínimo es \$10.000';
+                          }
+                          return null;
+                        },
+                      ),
+
+                      const SizedBox(height: 20),
+
                       DropdownButtonFormField<int>(
                         initialValue: cuotas,
                         decoration: InputDecoration(
@@ -147,7 +159,7 @@ class _LoanSimulatorScreenState extends State<LoanSimulatorScreen> {
                           ),
                         ),
                         items: [6, 12, 18, 24, 36, 48, 60]
-                            .map((e) => DropdownMenuItem<int>(
+                            .map((e) => DropdownMenuItem(
                                   value: e,
                                   child: Text('$e cuotas'),
                                 ))
@@ -156,7 +168,8 @@ class _LoanSimulatorScreenState extends State<LoanSimulatorScreen> {
                           if (val != null) setState(() => cuotas = val);
                         },
                       ),
-                      const SizedBox(height: 22),
+
+                      const SizedBox(height: 26),
 
                       SizedBox(
                         width: double.infinity,
@@ -169,12 +182,10 @@ class _LoanSimulatorScreenState extends State<LoanSimulatorScreen> {
                             textStyle: const TextStyle(
                               fontWeight: FontWeight.bold,
                               fontSize: 16,
-                              letterSpacing: 0.5,
                             ),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(14),
                             ),
-                            shadowColor: primary.withOpacity(0.4),
                             elevation: 8,
                           ),
                           child: const Text('Simular préstamo'),
@@ -185,7 +196,7 @@ class _LoanSimulatorScreenState extends State<LoanSimulatorScreen> {
                 ),
               ),
 
-              const SizedBox(height: 35),
+              const SizedBox(height: 15),
 
               //  Loading o resultado
               if (isLoading)

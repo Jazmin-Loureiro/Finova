@@ -205,7 +205,7 @@ class _CurrencyConverterScreenState extends State<CurrencyConverterScreen> {
                                   },
                                   style: ElevatedButton.styleFrom(
                                     backgroundColor: primary,
-                                    foregroundColor: Colors.white,
+                                    foregroundColor: Theme.of(context).colorScheme.onPrimary,
                                     padding: const EdgeInsets.symmetric(vertical: 16),
                                     textStyle: const TextStyle(
                                       fontWeight: FontWeight.bold,

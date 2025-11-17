@@ -26,7 +26,7 @@ class ButtonSave extends StatelessWidget {
       label: Text(label),
       style: ElevatedButton.styleFrom(
         backgroundColor: colorScheme.primary,
-        foregroundColor: Colors.white,
+        foregroundColor: colorScheme.onPrimary,
         minimumSize: const Size(double.infinity, 48),
         padding: const EdgeInsets.symmetric(vertical: 16),
          textStyle: const TextStyle(

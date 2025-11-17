@@ -295,7 +295,7 @@ Future<void> _checkCurrency() async {
                     onPressed: isLoadingPf ? null : simulatePlazoFijo,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: primary,
-                      foregroundColor: Colors.white,
+                      foregroundColor: theme.colorScheme.onPrimary,
                       padding: const EdgeInsets.symmetric(vertical: 16),
                       textStyle: const TextStyle(
                           fontWeight: FontWeight.bold, fontSize: 16),
@@ -468,7 +468,7 @@ Future<void> _checkCurrency() async {
                           },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: primary,
-                      foregroundColor: Colors.white,
+                      foregroundColor: theme.colorScheme.onPrimary,
                       padding: const EdgeInsets.symmetric(vertical: 16),
                       textStyle: const TextStyle(
                           fontWeight: FontWeight.bold, fontSize: 16),

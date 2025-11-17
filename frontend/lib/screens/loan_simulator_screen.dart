@@ -177,7 +177,7 @@ class _LoanSimulatorScreenState extends State<LoanSimulatorScreen> {
                           onPressed: isLoading ? null : simulateLoan,
                           style: ElevatedButton.styleFrom(
                             backgroundColor: primary,
-                            foregroundColor: Colors.white,
+                            foregroundColor: Theme.of(context).colorScheme.onPrimary,
                             padding: const EdgeInsets.symmetric(vertical: 16),
                             textStyle: const TextStyle(
                               fontWeight: FontWeight.bold,

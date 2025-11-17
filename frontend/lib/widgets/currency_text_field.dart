@@ -74,12 +74,12 @@ String _getLocaleForCurrency(String code) {
     return TextFormField(
       controller: controller,
       keyboardType: const TextInputType.numberWithOptions(decimal: true),
-      maxLength: 10,
+     // maxLength: 10,
       decoration: InputDecoration(
         labelText: label,
         border: const OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(12))),
         prefixText: selectedCurrency != null ? '${selectedCurrency!.symbol} ' : '',
-        counterText: '',
+       // counterText: '',
       ),
       // FORMATEO QUE FUNCIONA PARA CUALQUIER MONEDA
       inputFormatters: [

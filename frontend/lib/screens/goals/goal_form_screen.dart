@@ -195,7 +195,10 @@ Widget build(BuildContext context) {
                     if (val == null || val.trim().isEmpty) {
                       return 'Ingrese un monto';
                     }
-                    final clean = val.replaceAll('.', '').replaceAll(',', '.');   // decimal
+                   //  Elimina separadores de miles y arregla decimales
+                    String clean = val;
+                    clean = clean.replaceAll(RegExp(r'(?<=\d)[.,](?=\d{3}\b)'), '');
+                    if (clean.contains(',')) { clean = clean.replaceAll(',', '.'); }    // convierte decimales
                     final parsed = double.tryParse(clean);
                     if (parsed == null || parsed <= 0) { return 'Monto inválido';}
                     return null;

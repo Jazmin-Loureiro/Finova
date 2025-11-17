@@ -151,7 +151,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
               mainAxisSize: MainAxisSize.min,
               children: [
                 const SizedBox(height: 12),
-Padding(
+                Padding(
                   padding: const EdgeInsets.only(bottom: 12),
                   child: InkWell(
                     borderRadius: BorderRadius.circular(14),
@@ -503,7 +503,12 @@ Padding(
                                 onChanged: (val) => balanceStr = val,
                                 validator: (value) {
                                   if (value == null || value.trim().isEmpty) return null;
-                                  final clean = value.replaceAll('.', '').replaceAll(',', '.');
+                                 // Elimina separadores de miles y arregla decimales
+                                  String clean = value;
+                                    clean = clean.replaceAll(RegExp(r'(?<=\d)[.,](?=\d{3}\b)'), '');
+                                    if (clean.contains(',')) {
+                                      clean = clean.replaceAll(',', '.');
+                                    }    // convierte decimales
                                   final parsed = double.tryParse(clean);
                                   if (parsed == null || parsed < 0) return 'Ingresá un monto válido';
                                   return null;

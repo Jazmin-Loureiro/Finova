@@ -36,26 +36,12 @@ String formatCurrency(double? value, String currencyCode, {String? symbolOverrid
   }
 }
 
-/// Devuelve el locale apropiado según la moneda.
-String _getLocaleForCurrency(String currencyCode) {
-  switch (currencyCode.toUpperCase()) {
-    case 'USD':
+String _getLocaleForCurrency(String code) {
+  final c = code.toUpperCase();
+    if (c == 'USD' || c == 'GBP' || c == 'JPY' || c == 'CNY') {
       return 'en_US';
-    case 'EUR':
-      return 'es_ES';
-    case 'GBP':
-      return 'en_GB';
-    case 'JPY':
-      return 'ja_JP';
-    case 'BRL':
-      return 'pt_BR';
-    case 'ARS':
-      return 'es_AR';
-    case 'MXN':
-      return 'es_MX';
-    default:
-      return 'en_US';
-  }
+    }
+    return 'es_ES'; 
 }
 
 /// Ajusta los decimales según la moneda.
@@ -67,4 +53,20 @@ int _getDecimalDigitsForCurrency(String currencyCode) {
     default:
       return 2;
   }
+}
+
+/// Convierte un string formateado (según la moneda) en double usable por el backend.
+
+double parseCurrency(String formatted, String currencyCode) {
+  if (formatted.isEmpty) return 0;
+  final locale = _getLocaleForCurrency(currencyCode);
+  // Obtener símbolos locales 
+  final symbols = NumberFormat("#,##0.###", locale).symbols;
+  final decimalSeparator = symbols.DECIMAL_SEP;   // ',' o '.'
+  final thousandSeparator = symbols.GROUP_SEP;    // '.' o ','
+  // 1) Remover separador de miles
+  String cleaned = formatted.replaceAll(thousandSeparator, "");
+  // 2) Reemplazar separador decimal por "."
+  cleaned = cleaned.replaceAll(decimalSeparator, ".");
+  return double.tryParse(cleaned) ?? 0.0;
 }

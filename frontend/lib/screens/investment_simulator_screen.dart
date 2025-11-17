@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:frontend/helpers/format_utils.dart';
+import 'package:frontend/models/currency.dart';
+import 'package:frontend/widgets/currency_text_field.dart';
 import '../services/api_service.dart';
 import '../widgets/custom_scaffold.dart';
 import '../widgets/simulation_result_card_widget.dart';
@@ -45,6 +48,11 @@ class _InvestmentSimulatorScreenState extends State<InvestmentSimulatorScreen>
   String? fuenteCrypto;
   DateTime? lastUpdateCrypto;
 
+  late List<Currency> currencies;
+  late Currency fromCurrency;
+  late Currency usdCurrency;
+
+
   int? userCurrencyId;
   bool isLoadingCurrency = true;
 
@@ -66,13 +74,19 @@ class _InvestmentSimulatorScreenState extends State<InvestmentSimulatorScreen>
     });
   }
 
-  Future<void> _checkCurrency() async {
-    final id = await api.getUserCurrency();
-    setState(() {
-      userCurrencyId = id;
-      isLoadingCurrency = false;
-    });
+Future<void> _checkCurrency() async {
+  final id = await api.getUserCurrency();
+  final data = await api.getCurrencies();
+  if (data.isNotEmpty) {
+    fromCurrency = data.firstWhere((c) => c.code == 'ARS');
+    usdCurrency = data.firstWhere((c) => c.code == 'USD');
   }
+  setState(() {
+    userCurrencyId = id;
+    currencies = data;
+    isLoadingCurrency = false;
+  });
+}
 
 
   // Carga cotización cripto
@@ -104,7 +118,7 @@ class _InvestmentSimulatorScreenState extends State<InvestmentSimulatorScreen>
     });
 
     try {
-      final monto = double.tryParse(montoController.text) ?? 100000;
+     final monto = parseCurrency(montoController.text, fromCurrency.code);
       final dias = int.tryParse(diasController.text) ?? 30;
       final data = await api.simulatePlazoFijo(monto: monto, dias: dias);
       setState(() => resultadoPf = data);
@@ -127,7 +141,8 @@ class _InvestmentSimulatorScreenState extends State<InvestmentSimulatorScreen>
       title: 'Simulador de Inversiones',
       currentRoute: 'investment_simulation',
       showNavigation: false,
-      body: Column(
+      body: isLoadingCurrency ? const Center(child: LoadingWidget())
+    : Column(
         children: [
           // 🔹 Tabs superiores (idéntico a ChallengeScreen)
           Container(
@@ -173,7 +188,7 @@ class _InvestmentSimulatorScreenState extends State<InvestmentSimulatorScreen>
     ThemeData theme, Color surface, Color 
     textColor, Color primary) {
       if (isLoadingCurrency) {
-      return const Center(child: CircularProgressIndicator());
+      return const Center(child: LoadingWidget());
     }
 
     if (userCurrencyId != 3) {
@@ -230,25 +245,22 @@ class _InvestmentSimulatorScreenState extends State<InvestmentSimulatorScreen>
             key: _formKeyPf,
             child: Column(
               children: [
-                TextFormField(
-                  controller: montoController,
-                  keyboardType: TextInputType.number,
-                  decoration: InputDecoration(
-                    labelText: 'Monto a invertir',
-                    prefixIcon: Icon(Icons.attach_money, color: primary),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                  validator: (value) {
+                 CurrencyTextField(
+                    controller: montoController,
+                    currencies: currencies,
+                    selectedCurrency: fromCurrency,
+                    label: 'Monto a convertir',
+                    validator: (value) {
                     if (value == null || value.isEmpty) return 'Ingresá un monto';
-                    final monto = double.tryParse(value);
-                    if (monto == null || monto < 1000) {
+                      final clean = value.replaceAll('.', '').replaceAll(',', '.');
+                      final parsed = double.tryParse(clean);
+                    if (parsed == null || parsed < 1000) {
                       return 'El monto mínimo es \$1.000';
                     }
                     return null;
                   },
                 ),
+            
                 const SizedBox(height: 16),
                 TextFormField(
                   controller: diasController,
@@ -358,20 +370,18 @@ class _InvestmentSimulatorScreenState extends State<InvestmentSimulatorScreen>
             key: _formKeyCrypto,
             child: Column(
               children: [
-                TextFormField(
-                  controller: montoCryptoController,
-                  keyboardType: TextInputType.number,
-                  decoration: InputDecoration(
-                    labelText: 'Monto a invertir (USD)',
-                    prefixIcon: Icon(Icons.attach_money, color: primary),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                  validator: (v) {
-                    if (v == null || v.isEmpty) return 'Ingresá un monto';
-                    final monto = double.tryParse(v);
-                    if (monto == null || monto < 10) return 'Mínimo USD 10';
+                  CurrencyTextField(
+                    controller: montoCryptoController,
+                    currencies: currencies,
+                    selectedCurrency: usdCurrency,
+                    label: 'Monto a invertir (USD)',
+                    validator: (value) {
+                    if (value == null || value.isEmpty) return 'Ingresá un monto';
+                      final clean = value.replaceAll('.', '').replaceAll(',', '.');
+                              final parsed = double.tryParse(clean);
+                    if (parsed == null || parsed < 10) {
+                      return 'El monto mínimo es \$10 USD';
+                    }
                     return null;
                   },
                 ),
@@ -429,9 +439,7 @@ class _InvestmentSimulatorScreenState extends State<InvestmentSimulatorScreen>
                               isLoadingCrypto = true;
                               resultadoCrypto = null;
                             });
-                            final monto =
-                                double.tryParse(montoCryptoController.text) ??
-                                    1000;
+                            final monto = parseCurrency(montoCryptoController.text, usdCurrency.code);
                             final dias =
                                 int.tryParse(diasCryptoController.text) ?? 30;
                             await _loadQuote(coin);

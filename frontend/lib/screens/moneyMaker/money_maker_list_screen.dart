@@ -152,48 +152,69 @@ class _MoneyMakerListScreenState extends State<MoneyMakerListScreen> {
 
                             bool isColorDark(Color color) {
                               double luminance = (0.299 * color.red + 0.587 * color.green + 0.114 * color.blue) / 255;
-                              return luminance < 0.5;
+                              return luminance > 0.92;
                             }
 
                             final isDark = isColorDark(baseColor);
-                            final textColor = isDark ? Colors.white : Colors.black87;
-                            final subTextColor = isDark ? Colors.white.withOpacity(0.9) : Colors.black;
+                            final textColor = !isDark ? Colors.white : Colors.black87;
+                            final subTextColor = !isDark ? Colors.white.withOpacity(0.9) : Colors.black;
 
                             return AnimatedContainer(
                               duration: const Duration(milliseconds: 400),
                               curve: Curves.easeOut,
-                              margin: EdgeInsets.symmetric(
-                                horizontal: isSelected ? 0 : 10,
-                              ),
+                             margin: EdgeInsets.symmetric(horizontal: isSelected ? 0 : 10),
                               decoration: BoxDecoration(
                                 gradient: LinearGradient(
-                                  colors: [
-                                    baseColor.withOpacity(0.9),
-                                    baseColor.withOpacity(0.6),
-                                  ],
-                                  begin: Alignment.topLeft,
-                                  end: Alignment.bottomRight,
-                                ),
-                                borderRadius: BorderRadius.circular(22),
-                                border: Border.all(
-                                  color: isDark
-                                      ? Colors.white.withOpacity(0.6): Colors.black.withOpacity(0.5),
+                              colors: [
+                                scheme.primary.withOpacity(0.80),
+                                baseColor,                       
+                                baseColor,
+                              ],
+                              stops: const [0.0, 0.55, 1.0],
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                            ),
+                            borderRadius: BorderRadius.circular(22),
+                            border: Border.all(
+                                  color: !isDark
+                                      ? Colors.white.withOpacity(0.2): Colors.black.withOpacity(0.5),
                                   width: 1,
                                 ),
                               ),
-                              child: Stack(
-                                children: [
-                                  Positioned(
-                                    bottom: -40,
-                                    right: -30,
-                                    child: Icon(
-                                      Icons.blur_on,
-                                      size: 160,
-                                      color: isDark
+
+                                child: ClipRRect(
+                                  borderRadius: BorderRadius.circular(26),
+                                  child: Stack(
+                                    children: [
+                                      Positioned(
+                                        top: -60,
+                                        right: -40,
+                                        child: Container(
+                                          width: 180,
+                                          height: 180,
+                                          decoration: BoxDecoration(
+                                            shape: BoxShape.circle,
+                                          color: isDark
                                           ? Colors.white.withOpacity(0.08)
                                           : Colors.black.withOpacity(0.05),
-                                    ),
-                                  ),
+                                          ),
+                                        ),
+                                      ),
+
+                                      Positioned(
+                                        bottom: -50,
+                                        left: -30,
+                                        child: Container(
+                                          width: 150,
+                                          height: 150,
+                                          decoration: BoxDecoration(
+                                            shape: BoxShape.circle,
+                                          color: isDark
+                                          ? Colors.white.withOpacity(0.08)
+                                          : Colors.black.withOpacity(0.05),
+                                          ),
+                                        ),
+                                      ),
                                   Padding(
                                     padding: const EdgeInsets.all(20),
                                     child: Column(
@@ -308,11 +329,12 @@ class _MoneyMakerListScreenState extends State<MoneyMakerListScreen> {
                                           ),
                                         ),
                                         padding: const EdgeInsets.all(8),
-                                        child: Icon(Icons.edit, color: textColor, size: 18),
+                                        child: Icon( Icons.edit,color: textColor, size: 18),
                                       ),
                                     ),
                                   ),
                                 ],
+                             ),                           
                               ),
                             );
                           },

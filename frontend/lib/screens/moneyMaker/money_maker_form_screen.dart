@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:frontend/helpers/format_utils.dart';
 import 'package:frontend/models/money_maker_type.dart';
 import 'package:frontend/widgets/bottom_sheet_pickerField.dart';
 import 'package:frontend/widgets/buttons/button_delete.dart';
@@ -73,7 +74,7 @@ class _MoneyMakerFormScreenState extends State<MoneyMakerFormScreen> {
 
     final isEditing = widget.moneyMaker != null;
     final name = nameController.text.trim();
-    final balance = double.tryParse(balanceController.text) ?? 0;
+    final double balance = parseCurrency(balanceController.text, selectedCurrency!.code);
     final colorHex =
         '#${selectedColor!.toARGB32().toRadixString(16).substring(2)}';
 
@@ -209,7 +210,7 @@ Widget build(BuildContext context) {
                       ),
                     ),
                     initialValue: selectedCurrency,
-                    onChanged: (value) => setState(() => selectedCurrency = value),
+                    onChanged: (value) =>   setState(() { selectedCurrency = value; balanceController.clear(); }), 
                     validator: (value) =>
                         value == null ? 'Debes seleccionar una moneda' : null,
                   ),

@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:frontend/helpers/format_utils.dart';
 import 'package:frontend/widgets/bottom_sheet_pickerField.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -167,9 +168,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   void registerUser() async {
     if (!_formKey.currentState!.validate()) return;
 
-    final double balance = double.tryParse(
-            balanceStr.replaceAll(RegExp('[^0-9.]'), '')) ??
-        0;
+    final double balance = parseCurrency(balanceController.text, currencyBase!.code);
 
     setState(() => isLoading = true);
 
@@ -420,6 +419,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                 selectedCurrency: currencyBase,
                                 label: 'Saldo Inicial (opcional)',
                                 onChanged: (val) => balanceStr = val,
+                                validator: (value) {
+                                  if (value == null || value.trim().isEmpty) return null;
+                                  final clean = value.replaceAll('.', '').replaceAll(',', '.');
+                                  final parsed = double.tryParse(clean);
+                                  if (parsed == null || parsed < 0) return 'Ingresá un monto válido';
+                                  return null;
+                                },
                               ),
                             ),
                             const SizedBox(height: 24),

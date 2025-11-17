@@ -116,8 +116,7 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
 
   Future<void> _saveTransaction() async {
     if (!_formKey.currentState!.validate()) return;
-    final amount =
-        double.tryParse(amountController.text.replaceAll(',', '.')) ?? 0;
+    final amount =  parseCurrency(amountController.text, selectedCurrency!.code);
     if (amount <= 0) return;
 
     setState(() => isSaving = true);
@@ -293,6 +292,7 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
                               setState(() {
                                 selectedMoneyMaker = value;
                                 selectedCurrency = value?.currency;
+                                  amountController.clear();
                                 _filterGoalsByCurrency();
                               });
                             },
@@ -335,10 +335,9 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
                               if (val == null || val.trim().isEmpty) {
                                 return 'Ingrese un monto';
                               }
-                              final parsed = double.tryParse(
-                                      val.replaceAll(',', '.')) ??
-                                  0;
-                              if (parsed <= 0) return 'Ingrese un monto válido';
+                              final clean = val.replaceAll('.', '').replaceAll(',', '.');   // decimal
+                              final parsed = double.tryParse(clean);
+                              if (parsed! <= 0) return 'Ingrese un monto válido';
                               if (widget.type == 'expense' &&
                                   parsed > selectedMoneyMaker!.balance) {
                                 return 'El gasto supera el monto disponible (${selectedMoneyMaker!.balance.toStringAsFixed(2)})';

@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:frontend/helpers/format_utils.dart';
+import 'package:frontend/models/currency.dart';
+import 'package:frontend/widgets/currency_text_field.dart';
 import '../services/api_service.dart';
 import '../widgets/custom_scaffold.dart';
 import '../widgets/simulation_result_card_widget.dart';
@@ -30,7 +33,7 @@ class _LoanSimulatorScreenState extends State<LoanSimulatorScreen> {
     });
 
     final res = await api.simulateLoan(
-      capital: double.parse(capitalController.text),
+      capital:  parseCurrency(capitalController.text, fromCurrency.code),
       cuotas: cuotas,
     );
 
@@ -42,6 +45,8 @@ class _LoanSimulatorScreenState extends State<LoanSimulatorScreen> {
 
   int? userCurrencyId;
   bool isLoadingCurrency = true;
+  late List<Currency> currencies;
+  late Currency fromCurrency;
 
   @override
   void initState() {
@@ -50,6 +55,8 @@ class _LoanSimulatorScreenState extends State<LoanSimulatorScreen> {
   }
 
   Future<void> _checkCurrency() async {
+    currencies = await api.getCurrencies();
+    fromCurrency = currencies.firstWhere((c) => c.code == 'ARS');
     final id = await api.getUserCurrency();
     setState(() {
       userCurrencyId = id;
@@ -62,38 +69,24 @@ class _LoanSimulatorScreenState extends State<LoanSimulatorScreen> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final primary = theme.colorScheme.primary;
-    final background = theme.scaffoldBackgroundColor;
     final surface = theme.colorScheme.surface;
     final textColor = theme.colorScheme.onSurface;
-
-  if (isLoadingCurrency) {
-    return const Scaffold(
-      body: Center(child: CircularProgressIndicator()),
-      );
-    }
-
-    // ⚠️ Bloquear si la moneda no es ARS (id = 3)
-    if (userCurrencyId != 3) {
-      return CustomScaffold(
-    title: 'Simulador',
-    currentRoute: 'loan_simulation',
-    showNavigation: false,
-    body: const EmptyStateWidget(
-      icon: Icons.block,
-      title: "Función no disponible",
-      message:
-          "Esta sección solo puede usarse si tu moneda base es el Peso Argentino (ARS). "
-          "Podés cambiarla desde tu perfil si querés acceder al simulador de préstamos.",
-    ),
-  );
-  }
-
-
+    
     return CustomScaffold(
       title: 'Simulador',
       currentRoute: 'loan_simulation',
       showNavigation: false,
-      body: Container(
+      body:isLoadingCurrency
+    ? const Center(child: LoadingWidget())
+    : (userCurrencyId != 3)
+        ? const EmptyStateWidget(
+            icon: Icons.block,
+            title: "Función no disponible",
+            message:
+                "Esta sección solo puede usarse si tu moneda base es el Peso Argentino (ARS). "
+                "Podés cambiarla desde tu perfil si querés acceder al simulador de inversiones.",
+          )
+        :  Container(
         child: Padding(
           padding: const EdgeInsets.all(18.0),
           child: ListView(
@@ -113,7 +106,7 @@ class _LoanSimulatorScreenState extends State<LoanSimulatorScreen> {
 
               const SizedBox(height: 25),
 
-              // 💳 Tarjeta principal del simulador
+              //  Tarjeta principal del simulador
               Container(
                 padding: const EdgeInsets.all(22),
                 decoration: BoxDecoration(
@@ -131,27 +124,19 @@ class _LoanSimulatorScreenState extends State<LoanSimulatorScreen> {
                   key: _formKey,
                   child: Column(
                     children: [
-                      TextFormField(
-                        controller: capitalController,
-                        keyboardType: TextInputType.number,
-                        decoration: InputDecoration(
-                          labelText: 'Monto a solicitar',
-                          prefixIcon: Icon(Icons.attach_money, color: primary),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
+                       CurrencyTextField(
+                          controller: capitalController,
+                          currencies: currencies,
+                          selectedCurrency: fromCurrency,
+                          label: 'Monto a convertir',
+                          validator: (value) {
+                              if (value == null || value.trim().isEmpty)  return 'Ingresá un monto';
+                              final clean = value.replaceAll('.', '').replaceAll(',', '.');
+                              final parsed = double.tryParse(clean);
+                              if (parsed == null || parsed < 10000) return 'El monto mínimo es \$10.000';
+                              return null;
+                            },
                           ),
-                        ),
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return 'Ingresá un monto';
-                          }
-                          final monto = double.tryParse(value);
-                          if (monto == null || monto < 10000) {
-                            return 'El monto mínimo es \$10.000';
-                          }
-                          return null;
-                        },
-                      ),
                       const SizedBox(height: 16),
                       DropdownButtonFormField<int>(
                         initialValue: cuotas,
@@ -173,7 +158,6 @@ class _LoanSimulatorScreenState extends State<LoanSimulatorScreen> {
                       ),
                       const SizedBox(height: 22),
 
-                      // 🔘 BOTÓN MODERNO (sin fade ni cambio visual)
                       SizedBox(
                         width: double.infinity,
                         child: ElevatedButton(
@@ -203,7 +187,7 @@ class _LoanSimulatorScreenState extends State<LoanSimulatorScreen> {
 
               const SizedBox(height: 35),
 
-              // 🔹 Loading o resultado
+              //  Loading o resultado
               if (isLoading)
                 const LoadingWidget(message: "Calculando préstamo..."),
               if (!isLoading && resultado != null) ...[

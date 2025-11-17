@@ -1,5 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:frontend/helpers/format_utils.dart';
+import 'package:frontend/widgets/loading_widget.dart';
 import 'package:intl/intl.dart';
 import '../models/currency.dart';
 import '../services/api_service.dart';
@@ -14,6 +16,7 @@ class CurrencyConverterScreen extends StatefulWidget {
 }
 
 class _CurrencyConverterScreenState extends State<CurrencyConverterScreen> {
+  final _formKey = GlobalKey<FormState>();  // ✅ Correcto
   final ApiService api = ApiService();
   List<Currency> currencies = [];
   Currency? fromCurrency;
@@ -65,7 +68,7 @@ class _CurrencyConverterScreenState extends State<CurrencyConverterScreen> {
 
   void convertLocal() {
     if (fromCurrency == null || toCurrency == null) return;
-    final amount = double.tryParse(amountController.text.replaceAll(RegExp('[^0-9.]'), '')) ?? 0;
+    final amount = parseCurrency(amountController.text, fromCurrency!.code);
     if (amount <= 0) return;
 
     final result = amount * (toCurrency!.rate! / fromCurrency!.rate!);
@@ -93,13 +96,15 @@ class _CurrencyConverterScreenState extends State<CurrencyConverterScreen> {
   currentRoute: 'currency_converter',
   showNavigation: false,
   body: isLoading
-      ? const Center(child: CircularProgressIndicator())
-      : Padding(
-          padding: const EdgeInsets.all(18.0),
-          child: ListView(
-            physics: const BouncingScrollPhysics(),
-            children: [
-              const SizedBox(height: 20),
+      ? const Center(child: LoadingWidget())
+      : Form (
+          key: _formKey,
+          child: Padding(
+            padding: const EdgeInsets.all(18.0),
+            child: ListView(
+              physics: const BouncingScrollPhysics(),
+              children: [
+                const SizedBox(height: 20),
               Center(
                 child: Text(
                   'Conversor de monedas',
@@ -114,36 +119,47 @@ class _CurrencyConverterScreenState extends State<CurrencyConverterScreen> {
 
                     // 💳 Tarjeta translúcida
                     Container(
-  padding: const EdgeInsets.all(20),
-  decoration: BoxDecoration(
-    color: theme.cardColor.withOpacity(0.95), // ✅ usa color global
-    borderRadius: BorderRadius.circular(20),
-    border: Border.all(
-      color: theme.colorScheme.primary.withOpacity(0.15),
-      width: 1,
-    ),
-    boxShadow: [
-      BoxShadow(
-        color: theme.shadowColor.withOpacity(0.25),
-        blurRadius: 15,
-        offset: const Offset(0, 6),
-      ),
-    ],
-  ),
-  child: Column(
-    children: [
-      CurrencyTextField(
-        controller: amountController,
-        currencies: currencies,
-        selectedCurrency: fromCurrency,
-        label: 'Monto a convertir',
-        onChanged: (val) {
+                        padding: const EdgeInsets.all(20),
+                        decoration: BoxDecoration(
+                          color: theme.cardColor.withOpacity(0.95), // ✅ usa color global
+                          borderRadius: BorderRadius.circular(20),
+                          border: Border.all(
+                            color: theme.colorScheme.primary.withOpacity(0.15),
+                            width: 1,
+                          ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: theme.shadowColor.withOpacity(0.25),
+                              blurRadius: 15,
+                              offset: const Offset(0, 6),
+                            ),
+                          ],
+                        ),
+                        child: Column(
+                          children: [
+                            CurrencyTextField(
+                              controller: amountController,
+                              currencies: currencies,
+                              selectedCurrency: fromCurrency,
+                              label: 'Monto a convertir',
+                              onChanged: (val) {
                               // 🔹 Ejemplo de debounce si más adelante querés recalcular automáticamente
                               if (_debounce?.isActive ?? false) _debounce!.cancel();
                               _debounce = Timer(const Duration(milliseconds: 600), () {
                                 // convertLocal(); // <— activar si querés recalcular al escribir
                               });
                             },
+                           validator: (val) {
+                            if (val == null || val.trim().isEmpty) {
+                              return 'Ingrese un monto';
+                            }
+                            final parsed = double.tryParse(val.replaceAll(',', '.'));
+                            if (parsed == null || parsed <= 0) {
+                              return 'Ingrese un monto válido';
+                            }
+                            return null;
+                          },
+
                           ),
                           const SizedBox(height: 20),
 
@@ -164,9 +180,13 @@ class _CurrencyConverterScreenState extends State<CurrencyConverterScreen> {
 
                     const SizedBox(height: 30),
 
-                    // 🟩 Botón principal Finova
+                    //  Botón principal Finova
                     ElevatedButton(
-                      onPressed: convertLocal,
+                    onPressed: () {
+                        if (_formKey.currentState!.validate()) {
+                          convertLocal();
+                        }
+                      },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: primary,
                         foregroundColor: Colors.black,
@@ -245,6 +265,7 @@ class _CurrencyConverterScreenState extends State<CurrencyConverterScreen> {
                   ],
                 ),
               ),
+        )
     );
   }
 

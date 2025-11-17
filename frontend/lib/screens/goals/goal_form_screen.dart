@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:frontend/helpers/format_utils.dart';
 import 'package:frontend/widgets/bottom_sheet_pickerField.dart';
 import 'package:frontend/widgets/buttons/button_delete.dart';
 import 'package:frontend/widgets/buttons/button_save.dart';
@@ -37,7 +38,7 @@ class _GoalFormScreenState extends State<GoalFormScreen> {
       _name = widget.goal!.name;
       _dateLimit = widget.goal!.dateLimit;
       selectedCurrency = widget.goal!.currency;
-      _amountController.text = widget.goal!.targetAmount.toString();
+      _amountController.text = formatCurrency(widget.goal!.targetAmount, selectedCurrency!.code);
     }
       _loadCurrencies();
   }
@@ -69,7 +70,7 @@ class _GoalFormScreenState extends State<GoalFormScreen> {
   Future<void> _submitForm() async {
     if (_formKey.currentState?.validate() ?? false) {
       _formKey.currentState?.save();
-      final parsedAmount = double.tryParse(_amountController.text.replaceAll(',', '.')) ?? 0;
+      final double parsedAmount = parseCurrency(_amountController.text, selectedCurrency!.code);
       final data = {
         'name': _name,
         'target_amount': parsedAmount,
@@ -174,7 +175,9 @@ Widget build(BuildContext context) {
                           ),
                         ),
                         initialValue: selectedCurrency,
-                        onChanged: (value) => setState(() => selectedCurrency = value),
+                        onChanged: (value) { 
+                          setState(() { selectedCurrency = value; _amountController.clear(); }); 
+                        },
                         validator: (value) => value == null ? 'Seleccione una moneda' : null,
                       ),
 
@@ -192,9 +195,9 @@ Widget build(BuildContext context) {
                     if (val == null || val.trim().isEmpty) {
                       return 'Ingrese un monto';
                     }
-                    final parsed =
-                        double.tryParse(val.replaceAll(',', '.')) ?? 0;
-                    if (parsed <= 0) return 'Ingrese un monto válido';
+                    final clean = val.replaceAll('.', '').replaceAll(',', '.');   // decimal
+                    final parsed = double.tryParse(clean);
+                    if (parsed == null || parsed <= 0) { return 'Monto inválido';}
                     return null;
                   },
                 ),

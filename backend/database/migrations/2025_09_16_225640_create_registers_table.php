@@ -19,8 +19,8 @@ return new class extends Migration
             $table->foreignId('category_id')->constrained('categories')->onDelete('cascade');
             $table->foreignId('moneyMaker_id')->constrained('money_makers')->onDelete('cascade');
             $table->string('name'); 
-            $table->decimal('balance', 12, 2);
-            $table->decimal('reserved_for_goal', 12, 2)->default(0);    
+            $table->decimal('balance', 20, 2);
+            $table->decimal('reserved_for_goal', 20, 2)->default(0);    
             //$table->string('typeMoney');
             $table->foreignId('currency_id') // clave foránea a la tabla currencies
             ->constrained('currencies');

@@ -18,9 +18,9 @@ return new class extends Migration
             $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
             $table->foreignId('currency_id')->constrained('currencies')->onDelete('cascade'); // clave foránea a la tabla currencies
             $table->string('name');
-            $table->decimal('target_amount', 12, 2);
+            $table->decimal('target_amount', 20, 2);
             $table->date('date_limit');
-            $table->decimal('balance', 12, 2)->default(0);
+            $table->decimal('balance', 20, 2)->default(0);
             $table->string('state')->default('in_progress'); // in_progress, completed,
             $table->boolean('active')->default(true); 
             $table->timestamps();

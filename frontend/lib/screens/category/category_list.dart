@@ -131,38 +131,62 @@ class _CategoryListScreenState extends State<CategoryListScreen>
       itemBuilder: (context, i) {
         final c = categories[i];
         final color = Color(int.parse(c.color.substring(1), radix: 16) + 0xFF000000) ;
-        return Card(
-          margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),  
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-            child: Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(10),
-                  decoration: BoxDecoration(
-                    color: color,
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(
-                    AppIcons.fromName(c.icon),
-                    color: Colors.white,
-                    size: 22,
+       return Container(
+          margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+          decoration: BoxDecoration(
+            color: Theme.of(context).colorScheme.surface,
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(
+              color: Theme.of(context).colorScheme.primary.withOpacity(0.15),
+              width: 1,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.10),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: color,
+                  shape: BoxShape.circle,
+                  boxShadow: [
+                    BoxShadow(
+                      color: color.withOpacity(0.3),
+                      blurRadius: 8,
+                      offset: const Offset(0, 3),
+                    )
+                  ],
+                ),
+                child: Icon(
+                  AppIcons.fromName(c.icon),
+                  color: Colors.white,
+                  size: 22,
+                ),
+              ),
+
+              const SizedBox(width: 12),
+
+              Expanded(
+                child: Text(
+                  c.name,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
                   ),
                 ),
-                const SizedBox(width: 12),
-                // Nombre 
-                Expanded(
-                  child: Text(
-                    c.name,
-                    style: const TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 16,
-                    ),
-                  ),
-                ),
-                if (!c.isDefault) ...[
+              ),
+
+              if (!c.isDefault) ...[
                 IconButton(
-                  icon:  Icon(Icons.edit, color: Theme.of(context).colorScheme.primary),
+                  icon: Icon(Icons.edit,
+                      color: Theme.of(context).colorScheme.primary),
                   onPressed: () {
                     Navigator.push(
                       context,
@@ -175,11 +199,11 @@ class _CategoryListScreenState extends State<CategoryListScreen>
                     ).then((value) => _fetchCategories());
                   },
                 ),
-                ]
               ],
-            ),
+            ],
           ),
         );
+
       },
     );
   }

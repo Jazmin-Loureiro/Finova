@@ -117,8 +117,12 @@ class RegisterItemWidget extends StatelessWidget {
 
                     //  Monto
                     Text(
-                      '${r.currency.symbol}${formatCurrency(r.balance, r.currency.code)} ${r.currency.code}',
-                      style: const TextStyle(fontSize: 14),
+                      '${r.type == "income" ? "+" : "-"}${r.currency.symbol}${formatCurrency(r.balance, r.currency.code)} ${r.currency.code}',
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: r.type == "income" ? Colors.green : Colors.red,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   ],
                 ),

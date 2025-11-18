@@ -149,6 +149,7 @@ class _MoneyMakerListScreenState extends State<MoneyMakerListScreen> {
                             final m = moneyMakers[index];
                             final isSelected = selectedIndex == index;
                             final baseColor = fromHex(m.color);
+                            final bool isDisabled = !m.active;
 
                             bool isColorDark(Color color) {
                               double luminance = (0.299 * color.red + 0.587 * color.green + 0.114 * color.blue) / 255;
@@ -164,7 +165,14 @@ class _MoneyMakerListScreenState extends State<MoneyMakerListScreen> {
                               curve: Curves.easeOut,
                              margin: EdgeInsets.symmetric(horizontal: isSelected ? 0 : 10),
                               decoration: BoxDecoration(
-                                gradient: LinearGradient(
+                              gradient:isDisabled ? LinearGradient(
+                                colors: [
+                                  Colors.grey.shade400,
+                                  Colors.grey.shade300,
+                                ],
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                              ) : LinearGradient(
                               colors: [
                                 scheme.primary.withOpacity(0.80),
                                 baseColor,                       
@@ -296,6 +304,30 @@ class _MoneyMakerListScreenState extends State<MoneyMakerListScreen> {
                                                     'Este valor es estimativo y puede variar según el mercado.',
                                                 iconSize: 20,
                                               ),
+                                            ],
+                                          ),
+                                          Column(
+                                            crossAxisAlignment: CrossAxisAlignment.start,
+                                            children: [
+                                              if (isDisabled)
+                                                Align(
+                                                  alignment: Alignment.centerRight,
+                                                  child: Container(
+                                                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                                    decoration: BoxDecoration(
+                                                      color: Theme.of(context).colorScheme.error.withOpacity(0.12),
+                                                      borderRadius: BorderRadius.circular(6),
+                                                    ),
+                                                    child: Text(
+                                                      'Inactiva',
+                                                      style: TextStyle(
+                                                        color: Theme.of(context).colorScheme.error,
+                                                        fontWeight: FontWeight.w700,
+                                                        fontSize: 15,
+                                                      ),
+                                                    ),
+                                                  ),
+                                                ),
                                             ],
                                           ),
                                       ],

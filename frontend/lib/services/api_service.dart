@@ -503,6 +503,42 @@ Future<List<dynamic>> getExpiredGoals() async {
   return [];
 }
 
+Future<List<Register>> getAllRegister({
+  String type = "all",
+  String? category,
+  DateTime? from,
+  DateTime? to,
+  String search = "",
+}) async {
+  final token = await storage.read(key: 'token');
+  if (token == null) return [];
+
+  // Parámetros opcionales
+  final params = {
+    'type': type,
+    'search': search,
+  };
+
+  if (category != null) params['category'] = category;
+  if (from != null) params['from'] = from.toIso8601String();
+  if (to != null) params['to'] = to.toIso8601String();
+
+  // Construir URL con query
+  final uri = Uri.parse('$apiUrl/transactions')
+      .replace(queryParameters: params);
+
+  final res = await http.get(uri, headers: jsonHeaders(token));
+
+  if (res.statusCode == 200) {
+    final data = jsonDecode(res.body);
+    return (data['registers'] as List)
+        .map((j) => Register.fromJson(j))
+        .toList();
+  }
+
+  return [];
+}
+
 Future<List<Register>> getRegistersByMoneyMaker(
   int moneyMakerId, {
   String type = "all",
@@ -628,6 +664,19 @@ Future<void> deleteMoneyMaker(int id) async {
   if (token == null) return;
   final response = await http.delete(
     Uri.parse('$apiUrl/moneyMakers/$id'),
+    headers: jsonHeaders(token),
+  );
+  final data = jsonDecode(response.body);
+  if (response.statusCode != 200) {
+    throw Exception(data['message']);
+  }
+}
+///////////////////////////////////////////////////////// Activar fuente de pago
+Future<void> activeMoneyMaker(int id) async {
+  final token = await storage.read(key: 'token');
+  if (token == null) return;
+  final response = await http.post(
+    Uri.parse('$apiUrl/moneyMakers/$id/activate'),
     headers: jsonHeaders(token),
   );
   final data = jsonDecode(response.body);
@@ -775,7 +824,8 @@ Future<Map<String, dynamic>> getTransactionFormData(String type) async {
 
   final categories = results[0] as List<Map<String, dynamic>>;
   final moneyMakersData = results[1] as Map<String, dynamic>;
-  final moneyMakers = moneyMakersData['moneyMakers'] as List<MoneyMaker>;
+  final allMoneyMakers = moneyMakersData['moneyMakers'] as List<MoneyMaker>;
+  final moneyMakers = allMoneyMakers.where((mm) => mm.active).toList();
   final currencyCode = moneyMakersData['currency_base'] as String?;
   final currencies = results[2] as List<Currency>;
   final goals = results[3] as List<Goal>;

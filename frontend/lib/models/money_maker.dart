@@ -14,6 +14,7 @@ class MoneyMaker {
  // final String? currencyBase; // moneda base del usuario
   String? currencySymbol; // símbolo de la moneda
    List<Register> registers ; // Lista de registros asociados
+   final bool active; // Indica si la fuente de dinero está activa
 
   MoneyMaker({
     required this.id,
@@ -27,6 +28,7 @@ class MoneyMaker {
    // this.currencyBase, // moneda base del usuario
     this.currencySymbol, // símbolo de la moneda
     this.registers = const [], // Inicializar con lista vacía
+    this.active = true, // Por defecto está activa
   });
 
   factory MoneyMaker.fromJson(Map<String, dynamic> json) {
@@ -46,6 +48,10 @@ class MoneyMaker {
             .map((r) => Register.fromJson(r))
             .toList()
         : [],
+      active: json['active'] is bool
+    ? json['active']
+    : json['active'] == 1 || json['active'] == "1",
+
     );
   }
   @override
@@ -71,6 +77,7 @@ Map<String, dynamic> toJson() {
      // 'currencyBase': currencyBase,
       'currencySymbol': currencySymbol,
       'registers': registers.map((r) => r.toJson()).toList(),
+      'active': active,
     };
   }
 

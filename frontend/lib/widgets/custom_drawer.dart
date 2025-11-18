@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:frontend/screens/Soap/investment_rates_screen.dart';
+import 'package:frontend/screens/registers/register_list_screen.dart';
 
 // 🔹 Importá tus pantallas reales
 import '../screens/challenge_screen.dart';
@@ -183,14 +184,23 @@ class CustomDrawer extends StatelessWidget {
                     routeName: 'investment_simulation',
                     screen: const InvestmentSimulatorScreen(),
                   ),
+
+                   buildMenuItem(
+                      icon: Icons.list,
+                      title: 'Todos los registros',
+                      routeName: 'register_list',
+                      screen: const RegisterListScreen(
+                        moneyMakerId: null,       // ← esto es correcto
+                        moneyMakerName: null,     // opcional si querés ocultar el nombre
+                      ),
+                    ),
+                  /*
                    buildMenuItem(
                     icon: Icons.list,
                     title: 'Lista de Inversiones',
                     routeName: 'investment_list',
                     screen: const InvestmentRatesScreen(),
-                  ),
-                  
-
+                  ), */
                 ],
               ),
             ),

@@ -108,8 +108,8 @@ class _MoneyMakerFormScreenState extends State<MoneyMakerFormScreen> {
     await showDialog(
       context: context,
       builder: (_) => const SuccessDialogWidget(
-        title: "Fuente eliminada",
-        message: "La fuente fue eliminada exitosamente.",
+        title: "Fuente pausada",
+        message: "La fuente fue pausada exitosamente. Recuerda que puedes reactivarla cuando quieras.",
         buttonText: "Aceptar",
       ),
     );
@@ -121,11 +121,36 @@ class _MoneyMakerFormScreenState extends State<MoneyMakerFormScreen> {
       context: context,
       builder: (_) => SuccessDialogWidget(
         isFailure: true,
-        title: "No se pudo eliminar",
+        title: "Error",
         message: e.toString().replaceAll("Exception: ", ""),
       ),
     );
   }
+}
+
+  Future<void> _activeMoneyMaker() async {
+  if (widget.moneyMaker == null) return;
+  try {
+    await api.activeMoneyMaker(widget.moneyMaker!.id);
+    if (!mounted) return;
+    await showDialog(
+      context: context,
+      builder: (_) => const SuccessDialogWidget(
+        title: "Fuente activada",
+        message: "La fuente fue activada exitosamente.",
+        buttonText: "Aceptar",
+      ),
+    );
+    if (!mounted) return;
+    Navigator.pop(context, true);
+  } catch (e) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(e.toString().replaceAll("Exception: ", "")),
+      ),
+    );
+}
 }
 
   @override
@@ -248,11 +273,20 @@ Widget build(BuildContext context) {
                 const SizedBox(height: 12),
 
                 if (widget.moneyMaker != null)
+                widget.moneyMaker!.active ? 
                   ButtonDelete(
-                    title: "Eliminar Fuente",
-                    message: "¿Seguro que quieres deshabilitar esta fuente?",
+                    title: "Pausar Fuente",
+                    message: "¿Seguro que quieres pausar esta fuente?\nSu dinero quedara pausado y podrás reactivarla cuando quieras.",
                     onConfirm: _deleteMoneyMaker,
-                  ),
+                    label: 'Pausar',
+                    icon: Icons.pause_circle_outline,
+                  )
+                : ButtonSave(
+                  label: 'Reactivar',
+                  variant: true,
+                  title: 'Activar Fuente', 
+                  message: '¿Seguro que quieres reactivar esta fuente? Su saldo volverá a estar disponible.', 
+                  onConfirm: _activeMoneyMaker),
                 ],
             ),
           ),

@@ -340,7 +340,7 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
                               if (parsed! <= 0) return 'Ingrese un monto válido';
                               if (widget.type == 'expense' &&
                                   parsed > selectedMoneyMaker!.balance) {
-                                return 'El gasto supera el monto disponible (${selectedMoneyMaker!.balance.toStringAsFixed(2)})';
+                                return 'Sin monto disponible (${selectedMoneyMaker!.currency!.symbol}${formatCurrency(selectedMoneyMaker!.balance, selectedMoneyMaker!.currency!.code)})';
                               }
                               return null;
                             },
@@ -421,10 +421,13 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
                       label: 'Meta (opcional)',
                       title: 'Seleccionar meta',
                       items: [
+                        null,
                         ...goals, // tus metas disponibles
                       ],
-                    itemLabel: (g) {
-                      final goal = g!;
+                    itemLabel: 
+                    (g) {
+                      if (g == null) return 'Sin meta';
+                      final goal = g;
                       final balance = goal.balance;
                       final target = goal.targetAmount;
                       final code = goal.currency?.code ?? '---';

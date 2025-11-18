@@ -7,6 +7,7 @@ class ButtonSave extends StatelessWidget {
   final VoidCallback onConfirm; 
   final String label;         
   final Color color;           
+  final bool variant;    
   final GlobalKey<FormState>? formKey; 
 
   const ButtonSave({
@@ -16,6 +17,7 @@ class ButtonSave extends StatelessWidget {
     required this.onConfirm,
     this.label = "Guardar",
     this.color = Colors.green,
+    this.variant = false,
     this.formKey,
   });
 
@@ -24,8 +26,9 @@ class ButtonSave extends StatelessWidget {
     final colorScheme = Theme.of(context).colorScheme;
     return ElevatedButton.icon(
       label: Text(label),
+      icon: variant ? Icon(Icons.refresh) : Icon(Icons.check_circle),
       style: ElevatedButton.styleFrom(
-        backgroundColor: colorScheme.primary,
+        backgroundColor: variant ? Colors.greenAccent.shade700 : colorScheme.primary,
         foregroundColor: colorScheme.onPrimary,
         minimumSize: const Size(double.infinity, 48),
         padding: const EdgeInsets.symmetric(vertical: 16),
@@ -51,7 +54,7 @@ class ButtonSave extends StatelessWidget {
           builder: (_) => ConfirmDialogWidget(
             title: title,
             message: message,
-            confirmText: "Guardar",
+            confirmText: "Confirmar",
             cancelText: "Cancelar",
             confirmColor: color,
           ),

@@ -11,13 +11,13 @@ import 'package:intl/intl.dart';
 import '../../widgets/custom_scaffold.dart';
 
 class RegisterListScreen extends StatefulWidget {
-  final int moneyMakerId;
-  final String moneyMakerName;
+  final int? moneyMakerId;
+  final String? moneyMakerName;
 
   const RegisterListScreen({
     super.key,
-    required this.moneyMakerId,
-    required this.moneyMakerName,
+     this.moneyMakerId,
+     this.moneyMakerName,
   });
 
   @override
@@ -53,16 +53,23 @@ class _RegisterListScreenState extends State<RegisterListScreen> {
     setState(() => isLoading = false);
   }
 
-  Future<void> _fetchRegisters() async {
-    try {
-      final result = await api.getRegistersByMoneyMaker( widget.moneyMakerId, type: selectedType, category: selectedCategory, from: selectedFromDate, to: selectedToDate, search: searchQuery,);
-      allRegisters = result;
+ Future<void> _fetchRegisters() async {
+  try {
+    //  Traer TODOS los registros si NO hay moneyMakerId
+    if (widget.moneyMakerId == null) {
+      allRegisters = await api.getAllRegister(type: selectedType, category: selectedCategory, from: selectedFromDate, to: selectedToDate, search: searchQuery);
       _applyGrouping();
-    } catch (e) {
-      allRegisters = [];
-      _applyGrouping();
-    } 
+      return;
+    }
+    //  Caso contrario → traer registros por moneyMakerId
+    final result = await api.getRegistersByMoneyMaker(widget.moneyMakerId!,type: selectedType, category: selectedCategory,  from: selectedFromDate, to: selectedToDate,  search: searchQuery,);
+    allRegisters = result;
+    _applyGrouping();
+  } catch (e) {
+    allRegisters = [];
+    _applyGrouping();
   }
+}
 
   Future<void> getSymbol() async {
     final user = await api.getUser();
@@ -160,7 +167,9 @@ class _RegisterListScreenState extends State<RegisterListScreen> {
   @override
   Widget build(BuildContext context) {
     return CustomScaffold(
-      title: 'Registros de ${widget.moneyMakerName}',
+    title: widget.moneyMakerName != null
+        ? 'Registros de ${widget.moneyMakerName}'
+        : 'Registros',
       currentRoute: '/registers',
       showNavigation: false,
       body: isLoading
@@ -293,7 +302,7 @@ class _RegisterListScreenState extends State<RegisterListScreen> {
                     ...groupedByDate.entries.map((entry) {
                       final date = entry.key;
                       final items = entry.value;
-                      final totalOfDay = items.fold<double>( 0,(sum, r) => sum + r.balance);
+                      final totalOfDay = items.fold<double>( 0,(sum, r) => sum + (r.type == "income" ? r.balance : -r.balance));
                       final parsed = DateFormat('dd/MM/yyyy').parse(date);
 
                       final prettyDate = DateFormat( "d 'de' MMMM 'de' yyyy",Localizations.localeOf(context).toString(),).format(parsed);
@@ -322,8 +331,8 @@ class _RegisterListScreenState extends State<RegisterListScreen> {
                                 ),
                               ),
 
-                              // TOTAL DEL DÍA (derecha)
-                            Text(
+                            if (widget.moneyMakerId != null) // Mostrar total solo si es vista por fuente
+                              Text(
                                 formatCurrency(
                                   totalOfDay,
                                   Localizations.localeOf(context).toString(),

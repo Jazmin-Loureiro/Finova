@@ -52,7 +52,7 @@ class ExportXlsxServices {
         final formattedDate = DateFormat('dd/MM/yyyy').format(r.created_at);
         final symbol = m.currency?.symbol ?? '';
         final moneda = m.currency?.code ?? '';
-        final monto = r.balance;
+        final monto = r.type == 'income' ? r.balance : -r.balance;
 
         final row = [
           formattedDate,
@@ -83,8 +83,8 @@ class ExportXlsxServices {
 
         rowIndex++;
 
-        subtotalPorMoneda[moneda] = (subtotalPorMoneda[moneda] ?? 0) + monto;
-        totalPorMoneda[moneda] = (totalPorMoneda[moneda] ?? 0) + monto;
+        subtotalPorMoneda[moneda] = (subtotalPorMoneda[moneda] ?? 0) + (r.type == 'income' ? monto : -monto);
+        totalPorMoneda[moneda] = (totalPorMoneda[moneda] ?? 0) + (r.type == 'income' ? monto : -monto);
       }
 
       // Subtotal por moneda

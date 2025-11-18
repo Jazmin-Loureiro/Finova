@@ -34,7 +34,7 @@ class ExportCsvServices {
         final moneda = m.currency?.code ?? '';
         final monto = r.balance.toStringAsFixed(2);
 
-        total += r.balance;
+        total += r.type == 'income' ? r.balance : -r.balance;
 
         buffer.writeln(
           '$formattedDate,${r.name},${r.category.name},$tipo,$monto,$moneda'

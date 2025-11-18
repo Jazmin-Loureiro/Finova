@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:frontend/helpers/format_utils.dart';
 import 'package:frontend/models/currency.dart';
 import 'package:frontend/widgets/currency_text_field.dart';
+import 'package:frontend/widgets/info_icon_widget.dart';
 import '../services/api_service.dart';
 import '../widgets/custom_scaffold.dart';
 import '../widgets/simulation_result_card_widget.dart';
@@ -76,6 +77,18 @@ class _LoanSimulatorScreenState extends State<LoanSimulatorScreen> {
       title: 'Simulador',
       currentRoute: 'loan_simulation',
       showNavigation: false,
+     actions: [
+        Padding(
+          padding: const EdgeInsets.only(right: 16.0), // Margen a la derecha
+          child: InfoIcon(
+            title: "Simulador de préstamos fuente: BCRA",
+            message: "El simulador de préstamos te permite calcular el costo total de un préstamo personal en función del monto y la cantidad de cuotas seleccionadas. "
+                    "Esto es posible a través de las tasas de interés y otros costos asociados del BCRA.",
+            iconSize: 25,
+          ),
+        ),
+      ],
+      
       body:isLoadingCurrency
     ? const Center(child: LoadingWidget())
     : (userCurrencyId != 3)

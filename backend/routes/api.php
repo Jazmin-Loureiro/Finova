@@ -21,6 +21,9 @@ use App\Http\Controllers\CurrencyController;
 
 
 // Rutas públicas
+// Recuperación de contraseña
+Route::post('/forgot-password', [AuthController::class, 'forgotPassword']);
+Route::post('/reset-password', [AuthController::class, 'resetPassword']);
 // Registro y login
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);

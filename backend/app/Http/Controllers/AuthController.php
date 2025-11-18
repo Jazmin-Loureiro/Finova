@@ -7,6 +7,8 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\ValidationException;
 use Illuminate\Auth\Events\Registered;
 use App\Services\CategoryService;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 
 // 🔹 Importaciones nuevas para el mail personalizado
 use Illuminate\Support\Facades\Mail;
@@ -257,4 +259,81 @@ class AuthController extends Controller
         return response()->json(['message' => 'Te enviamos un nuevo correo de verificación. Revisá tu bandeja.']);
     }
 
+
+    public function forgotPassword(Request $request) {
+        $request->validate([
+            'email' => 'required|email'
+        ]);
+        $user = User::where('email', $request->email)->first();
+        if (!$user) {
+            return response()->json([
+                'status' => 'passwords.user'
+            ], 200);
+        }
+        //  Generar token plano
+        $token = Str::random(64);
+
+        //  Guardarlo en la tabla (hasheado)
+        DB::table('password_resets')->updateOrInsert(
+            ['email' => $request->email],
+            ['email' => $request->email,
+            'token' => Hash::make($token),
+            'created_at' => now()
+            ]
+        );
+        //  Link de recuperación
+        $url = "finova://reset-password?token={$token}&email={$request->email}";
+
+        Mail::html("
+            <p>Hola {$user->name}!  Has olvidado tu contraseña?</p>
+            <p>Para restablecer tu contraseña en <b>Finova</b>, hacé clic en el siguiente botón:</p>
+            <p>
+                <a href=\"{$url}\"
+                style=\"display:inline-block;padding:10px 18px;
+                        background-color:#7D2FFF;color:#ffffff;
+                        text-decoration:none;border-radius:8px;
+                        font-family:sans-serif;font-size:14px;\">
+                    Restablecer contraseña
+                </a>
+            </p>
+            <p>
+              si no solicitaste este cambio, podés ignorar este correo.
+            </p>
+        ", function ($m) use ($request) {
+            $m->to($request->email)
+            ->subject('Recuperación de contraseña - Finova');
+        });
+        return response()->json([
+            'status' => 'passwords.sent'
+        ], 200);
+    }
+
+    public function resetPassword(Request $request) {
+        $request->validate([
+            'email' => 'required|email',
+            'token' => 'required',
+            'password' => 'required|confirmed|min:6'
+        ]);
+
+        $record = DB::table('password_resets')->where('email', $request->email)->first();
+
+        if (!$record || !Hash::check($request->token, $record->token)) {
+            return response()->json([
+                'message' => 'Token inválido o expirado.'
+            ], 400);
+        }
+
+        // Actualizar contraseña
+        $user = User::where('email', $request->email)->first();
+        $user->password = Hash::make($request->password);
+        $user->updated_at = now();
+        $user->save();
+
+        // Borrar token usado
+        DB::table('password_resets')->where('email', $request->email)->delete();
+
+        return response()->json([
+            'message' => 'Contraseña actualizada correctamente.'
+        ], 200);
+    }
 }

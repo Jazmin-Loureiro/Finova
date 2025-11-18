@@ -54,6 +54,7 @@ dependencies:
   animated_text_kit: ^4.2.2
   animate_do: ^3.3.4
   url_launcher: ^6.3.2
+  app_links: ^3.4.1
 
 
 

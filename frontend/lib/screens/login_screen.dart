@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:animate_do/animate_do.dart';
+import 'package:frontend/screens/forgot_password_screen.dart';
 import '../services/api_service.dart';
 import 'register_screen.dart';
 import 'home_screen.dart';
@@ -327,7 +328,13 @@ class _LoginScreenState extends State<LoginScreen> {
                                         children: [
                                           TextButton(
                                             onPressed: () {
-                                              // TODO: recuperar contraseña
+                                              Navigator.push(
+                                                context,
+                                                MaterialPageRoute(
+                                                  builder: (_) =>
+                                                      const ForgotPasswordScreen(),
+                                                ),
+                                              );
                                             },
                                             style: TextButton.styleFrom(
                                               padding: EdgeInsets.zero,

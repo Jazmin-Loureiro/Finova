@@ -327,6 +327,65 @@ class ApiService {
   }
 }
 
+//////////////////////////////////////////////// Solicitar recuperacion contraseña
+Future<Map<String, dynamic>> sendForgotPassword(String email) async {
+  final url = Uri.parse('$apiUrl/forgot-password');
+  try {
+    final res = await http.post(
+      url,
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({'email': email}),
+    );
+    final data = jsonDecode(res.body);
+    if (data['status'] == 'passwords.sent') {
+      return {
+        'success': true,
+        'message': 'Se envió un email con instrucciones para recuperar tu contraseña.'
+      };
+    }
+
+    if (data['status'] == 'passwords.user') {
+      return {
+        'success': true,
+        'message': 'Si el correo está registrado, recibirás un email con instrucciones.'
+      };
+    }
+    return {'success': false, 'error': 'Error inesperado'};
+  } catch (e) {
+    return {'success': false, 'error': 'No se pudo conectar con el servidor'};
+  }
+}
+
+  Future<Map<String, dynamic>> resetPassword({
+    required String email,
+    required String token,
+    required String password,
+    required String passwordConfirmation,
+  }) async {
+    final url = Uri.parse('$apiUrl/reset-password');
+
+    try {
+      final res = await http.post(
+        url,
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'email': email,
+          'token': token,
+          'password': password,
+          'password_confirmation': passwordConfirmation,
+        }),
+      );
+      final data = jsonDecode(res.body);
+      if (res.statusCode == 200) {
+        return {'success': true, 'message': data['message']};
+      }
+      return {'success': false, 'message': data['message'] ?? 'Error'};
+    } catch (e) {
+      return {'success': false, 'error': 'No se pudo conectar con el servidor'};
+    }
+  }
+
+
 
   ///////////////////////////////////////// Obtener estado de la casa
   Future<Map<String, dynamic>> getHouseStatus() async {

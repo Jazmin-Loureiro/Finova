@@ -11,7 +11,7 @@ class GamificationService
 {
     /**
      * Asigna puntos e insignias cuando el usuario completa un desafío.
-     * Incluye insignias de evento y de progreso acumulativo.
+     * Ahora también devuelve insignias automáticas desbloqueadas.
      */
     public function rewardUser(User $user, Challenge $challenge)
     {
@@ -19,9 +19,9 @@ class GamificationService
         $pointsEarned = $challenge->reward_points ?? 0;
         $user->points = ($user->points ?? 0) + $pointsEarned;
 
-        // 2️⃣ Subida de nivel automática con curva progresiva
-        $baseThreshold = 150; // puntos base para pasar de nivel 1 a 2
-        $growthFactor  = 1.5; // cada nivel requiere 50% más puntos que el anterior
+        // 2️⃣ Subida de nivel con curva progresiva
+        $baseThreshold = 150;
+        $growthFactor  = 1.5;
 
         $initialLevel  = $user->level ?? 1;
         $currentLevel  = $initialLevel;
@@ -39,10 +39,10 @@ class GamificationService
 
         $user->points = $totalPoints;
         $user->level  = $currentLevel;
-        $leveledUp    = $user->level > $initialLevel;
+        $leveledUp    = $currentLevel > $initialLevel;
         $user->save();
 
-        // 3️⃣ Marcar SOLO el desafío en progreso como completado en la tabla pivote
+        // 3️⃣ Marcar pivot como completado
         $activePivot = UserChallenge::where('user_id', $user->id)
             ->where('challenge_id', $challenge->id)
             ->where('state', 'in_progress')
@@ -52,48 +52,73 @@ class GamificationService
         if ($activePivot) {
             $activePivot->update([
                 'state'    => 'completed',
-                'end_date' => now(),
                 'progress' => 100,
+                'end_date' => now(),
             ]);
         }
 
-        // 4️⃣ Asignar insignia por desafío específico (evento)
-        $badgeEarned = null;
+        // ============================================================
+        // 4️⃣ INSIGNIAS POR EVENTO (las que vienen en el desafío)
+        // ============================================================
+
+        $eventBadge = null;
+
         if ($challenge->reward_badge_id) {
             $badge = Badge::find($challenge->reward_badge_id);
+
             if ($badge && !$user->badges()->where('badge_id', $badge->id)->exists()) {
                 $user->badges()->attach($badge->id);
-                $badgeEarned = $badge;
+                $eventBadge = $badge;
             }
         }
 
-        // 6️⃣ Evaluar insignias automáticas (primer desafío + puntos)
-        $this->evaluateProgressBadges($user);
+        // ============================================================
+        // 5️⃣ INSIGNIAS AUTOMÁTICAS (acumulativas)
+        // ============================================================
+
+        $autoBadge = $this->evaluateProgressBadges($user);
+
+        // ============================================================
+        // 6️⃣ Devolver recompensa con la insignia que corresponda
+        // ============================================================
+
+        $badgeToReturn = null;
+
+        if ($autoBadge) {
+            $badgeToReturn = $autoBadge->only(['id', 'name', 'icon']);
+        } elseif ($eventBadge) {
+            $badgeToReturn = $eventBadge->only(['id', 'name', 'icon']);
+        }
 
         return [
-            'points_earned'      => $pointsEarned,
-            'new_total_points'   => $user->points,
-            'leveled_up'         => $leveledUp,
-            'new_level'          => $user->level,
-            'badge_earned'       => $badgeEarned ? $badgeEarned->only(['id', 'name', 'icon']) : null,
+            'points_earned'    => $pointsEarned,
+            'new_total_points' => $totalPoints,
+            'leveled_up'       => $leveledUp,
+            'new_level'        => $currentLevel,
+            'badge_earned'     => $badgeToReturn, // ESTA ES LA CLAVE PARA EL FRONT
         ];
     }
 
     /**
      * Evalúa y asigna insignias por progreso global (acumulativo).
+     * 🔥 AHORA devuelve la insignia recién desbloqueada si corresponde.
      */
-    private function evaluateProgressBadges(User $user): void
+    private function evaluateProgressBadges(User $user)
     {
-        // 🏅 1) Primer desafío completado
+        // 👉 Solo devolver UNA por vez (la primera que desbloquee en el orden)
+        // para evitar devolver varias en una sola pantalla.
+        
+        // 1️⃣ Primer desafío completado
         $completedCount = $user->challenges()
             ->wherePivot('state', 'completed')
             ->count();
 
-        if ($completedCount === 1) {
-            $this->assignBadgeIfNotExists($user, 'first_challenge');
+        $badge = $this->assignBadgeIfNotExists($user, 'first_challenge');
+        if ($completedCount === 1 && $badge) {
+            return $badge;
         }
 
-        // 💰 2) Por puntos totales
+        // 2️⃣ Por puntos acumulados
         $points = $user->points ?? 0;
         $tiers = [
             'saver_bronze' => 500,
@@ -103,38 +128,42 @@ class GamificationService
 
         foreach ($tiers as $slug => $threshold) {
             if ($points >= $threshold) {
-                $this->assignBadgeIfNotExists($user, $slug);
+                $badge = $this->assignBadgeIfNotExists($user, $slug);
+                if ($badge) return $badge;
             }
         }
 
-        // ⚡ 3) Desafiante — 10 desafíos completados
+        // 3️⃣ Completó 10 desafíos
         if ($completedCount >= 10) {
-            $this->assignBadgeIfNotExists($user, 'ten_challenges');
+            $badge = $this->assignBadgeIfNotExists($user, 'ten_challenges');
+            if ($badge) return $badge;
         }
 
-        // 🐷 4) Ahorrista Experto — 5 desafíos de tipo ahorro
+        // 4️⃣ 5 desafíos de ahorro
         $saverChallenges = $user->challenges()
             ->where('type', 'SAVE_AMOUNT')
             ->wherePivot('state', 'completed')
             ->count();
 
         if ($saverChallenges >= 5) {
-            $this->assignBadgeIfNotExists($user, 'saver_master');
+            $badge = $this->assignBadgeIfNotExists($user, 'saver_master');
+            if ($badge) return $badge;
         }
 
-        // 📉 5) Controlador de Gastos — 3 desafíos de gasto sin fallar
+        // 5️⃣ 3 desafíos de gasto sin fallar
         $spendChallenges = $user->challenges()
             ->where('type', 'REDUCE_SPENDING_PERCENT')
             ->get();
 
         $completedSpenders = $spendChallenges->where('pivot.state', 'completed')->count();
-        $failedSpenders = $spendChallenges->where('pivot.state', 'failed')->count();
+        $failedSpenders    = $spendChallenges->where('pivot.state', 'failed')->count();
 
         if ($completedSpenders >= 3 && $failedSpenders === 0) {
-            $this->assignBadgeIfNotExists($user, 'spender_control');
+            $badge = $this->assignBadgeIfNotExists($user, 'spender_control');
+            if ($badge) return $badge;
         }
 
-        // 🧭 6) Planificador Financiero — completó al menos un desafío de cada tipo
+        // 6️⃣ Completó al menos un desafío de cada tipo (SAVE + SPEND)
         $hasSave = $user->challenges()
             ->where('type', 'SAVE_AMOUNT')
             ->wherePivot('state', 'completed')
@@ -146,51 +175,45 @@ class GamificationService
             ->exists();
 
         if ($hasSave && $hasSpend) {
-            $this->assignBadgeIfNotExists($user, 'goal_creator');
+            $badge = $this->assignBadgeIfNotExists($user, 'goal_creator');
+            if ($badge) return $badge;
         }
 
-        // 🔁 7) Racha de Éxitos — completó 3 desafíos seguidos sin fallar
-        $completed = $user->challenges()->wherePivot('state', 'completed')->count();
-        $failed = $user->challenges()->wherePivot('state', 'failed')->count();
-
-        if ($completed >= 3 && $failed === 0) {
-            $this->assignBadgeIfNotExists($user, 'success_streak');
+        // 7️⃣ 3 desafíos seguidos completados
+        if ($completedCount >= 3 && $failedSpenders === 0) {
+            $badge = $this->assignBadgeIfNotExists($user, 'success_streak');
+            if ($badge) return $badge;
         }
 
-        // 🔥 8) Constancia Total — completó desafíos 7 días seguidos
-        $recentCompletions = $user->challenges()
-            ->wherePivot('state', 'completed')
-            ->wherePivot('end_date', '>=', now()->subDays(7))
-            ->count();
+        // 8️⃣ Racha semanal y mensual usando streak
+        $days = optional($user->streak)->current_streak ?? 0;
 
-        if ($recentCompletions >= 7) {
-            $this->assignBadgeIfNotExists($user, 'super_streak');
+        if ($days >= 7) {
+            $badge = $this->assignBadgeIfNotExists($user, 'weekly_streak');
+            if ($badge) return $badge;
         }
 
-        // 🟣 Racha Semanal (7 días seguidos con actividad diaria)
-        $days7 = optional($user->streak)->current_streak ?? 0;
-        if ($days7 >= 7) {
-            $this->assignBadgeIfNotExists($user, 'weekly_streak');
+        if ($days >= 30) {
+            $badge = $this->assignBadgeIfNotExists($user, 'monthly_streak');
+            if ($badge) return $badge;
         }
 
-        // 🔥 Racha Mensual (30 días seguidos)
-        $days30 = optional($user->streak)->current_streak ?? 0;
-        if ($days30 >= 30) {
-            $this->assignBadgeIfNotExists($user, 'monthly_streak');
-        }
-
+        return null;
     }
 
     /**
-     * Asigna una insignia si el usuario aún no la tiene.
+     * Asigna una insignia si no existía.
+     * 🔥 AHORA devuelve la insignia recién asignada.
      */
-    private function assignBadgeIfNotExists(User $user, string $slug): void
+    private function assignBadgeIfNotExists(User $user, string $slug)
     {
-        $badge = \App\Models\Badge::where('slug', $slug)->first();
+        $badge = Badge::where('slug', $slug)->first();
+
         if ($badge && !$user->badges()->where('badge_id', $badge->id)->exists()) {
             $user->badges()->attach($badge->id);
+            return $badge;  // 👉 DEVUELVE LA INSIGNIA GANADA
         }
+
+        return null;
     }
-
-
 }

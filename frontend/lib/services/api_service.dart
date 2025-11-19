@@ -15,9 +15,9 @@ import '../models/goal.dart';
 
 // URLs base
 //const String baseUrl = "http://192.168.1.113:8000"; //Jaz
-//const String baseUrl = "http://192.168.0.117:8000"; // Jaz 2
+const String baseUrl = "http://192.168.0.106:8000"; // Jaz 2
 //const String baseUrl = "http://192.168.1.45:8000"; //Jaz 3
-const String baseUrl = "http://192.168.0.162:8000";// guardo el mio je
+//const String baseUrl = "http://192.168.0.162:8000";// guardo el mio je
 //const String baseUrl = "http://127.0.0.1:8000"; //compu local
 //const String baseUrl = "http://172.16.195.79:8000"; // IP de la facu
 const String apiUrl = "$baseUrl/api";
@@ -345,6 +345,19 @@ class ApiService {
     }
   }
 
+// Marcar extra como mostrado
+Future<bool> markExtraShown(int extraId) async {
+  final token = await storage.read(key: 'token');
+  if (token == null) throw Exception('Usuario no logueado');
+
+  final res = await http.post(
+    Uri.parse('$apiUrl/house/extras/mark-shown'),
+    headers: jsonHeaders(token),
+    body: jsonEncode({'extra_id': extraId}),
+  );
+
+  return res.statusCode == 200;
+}
 
 ////////////////////////////////////////////////////////////////// Crear transacción ingreso/gasto
 Future<Map<String, dynamic>?> createTransaction(

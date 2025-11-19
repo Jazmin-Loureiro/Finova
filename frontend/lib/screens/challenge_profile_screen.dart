@@ -9,7 +9,7 @@ import '../widgets/custom_refresh_wrapper.dart';
 import '../../main.dart';
 import '../widgets/info_icon_widget.dart';
 import '../screens/configuration_screen.dart';
-
+import '../widgets/house_extras_widget.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:multiavatar/multiavatar.dart';
 
@@ -35,7 +35,23 @@ class _ChallengeProfileScreenState extends State<ChallengeProfileScreen>
   }
 
   void _loadProfile() {
-    _profileFuture = api.getGamificationProfile();
+    _profileFuture = Future.wait([
+      api.getGamificationProfile(),
+      api.getHouseStatus(),
+    ]).then((response) {
+      final profile = response[0];
+      final casa = response[1];
+
+      // PRINT PARA VER TODO
+      //print('🔥 PROFILE ===> $profile');
+      //print('🏡 CASA ===> $casa');
+      //print('🌿 EXTRAS ===> ${casa['casa']?['extras']}');
+
+      return {
+        ...profile,
+        'casa': casa['casa'], // 👈 AHORA EL PERFIL INCLUYE LOS EXTRAS
+      };
+    });
   }
 
   void _startPulse() {
@@ -322,6 +338,8 @@ class _ChallengeProfileScreenState extends State<ChallengeProfileScreen>
   }
 
   Widget _buildProfileContent(Map<String, dynamic> data) {
+    print("DATA ===> $data");
+
     final cs = Theme.of(context).colorScheme;
 
     final user = data['user'] ?? {};
@@ -607,8 +625,6 @@ class _ChallengeProfileScreenState extends State<ChallengeProfileScreen>
               ),
             ),
 
-            const SizedBox(height: 16),
-
             const SizedBox(height: 20),
 
             // Insignias
@@ -723,7 +739,15 @@ class _ChallengeProfileScreenState extends State<ChallengeProfileScreen>
                     ),
                 ],
               ),
-            )
+            ),
+            // Extras de la casa
+            if (data['casa'] != null &&
+              data['casa'] is Map &&
+              data['casa']!['extras'] != null)
+            HouseExtrasWidget(
+              extras: List.from(data['casa']!['extras']),
+              level: level,
+            ),
           ],
         ),
       ),

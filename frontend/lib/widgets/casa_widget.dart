@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:provider/provider.dart';
 import '../providers/house_provider.dart';
-import '../widgets/loading_widget.dart'; // 👈 IMPORTANTE
+import '../widgets/loading_widget.dart'; 
+import '../screens/extra_unlocked_screen.dart';
 
 class CasaWidget extends StatefulWidget {
   const CasaWidget({super.key});
@@ -167,6 +168,30 @@ class _CasaWidgetState extends State<CasaWidget>
                       ...List<Widget>.from(
                         (casa['deterioro'] as List).map((d) => buildLayer(d)),
                       ),
+                      ...List<Widget>.from(
+                        (casa['extras'] as List)
+                            .where((e) => e['unlocked'] == true)
+                            .toList()
+                            .map((extra) => Positioned(
+                                  child: buildLayer(extra['icon']),
+                                )),
+                      ),
+                      ElevatedButton(
+  onPressed: () {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => const ExtraUnlockedScreen(
+          extraName: "Maceta",
+          iconPath: "assets/extras/maceta_icon.svg",
+          levelUnlocked: 4,
+        ),
+      ),
+    );
+  },
+  child: const Text("TEST EXTRA SCREEN"),
+)
+
                     ],
                   ),
                 ),

@@ -298,13 +298,6 @@ if (!empty($pivot->end_date)) {
             return is_array($reward) ? $reward : null;
         }
 
-        // 🎁 Entregar recompensa solo si acaba de completarse
-        if (isset($update['state']) && $update['state'] === 'completed') {
-            $reward = app(\App\Services\Challenges\GamificationService::class)
-                ->rewardUser($user, $pivot->challenge);
-            return is_array($reward) ? $reward : null;
-        }
-
         return null;
     }
 

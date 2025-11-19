@@ -65,11 +65,6 @@ class User extends Authenticatable implements MustVerifyEmail
         return $this->belongsToMany(Badge::class, 'badge_user');
     }
 
-    public function userMissions()
-    {
-        return $this->hasMany(UserMission::class);
-    }
-
     public function streak()
     {
         return $this->hasOne(UserStreak::class);
@@ -89,6 +84,13 @@ class User extends Authenticatable implements MustVerifyEmail
                         'payload',
                         'target_amount',
                     ])
+                    ->withTimestamps();
+    }
+
+    public function unlockedExtras()
+    {
+        return $this->belongsToMany(HouseExtra::class, 'house_extra_user')
+                    ->withPivot('shown')
                     ->withTimestamps();
     }
 

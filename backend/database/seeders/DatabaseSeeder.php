@@ -19,7 +19,9 @@ class DatabaseSeeder extends Seeder
         $this->call(MoneyMakerTypeSeeder::class); // Asegura que los tipos de fuentes de dinero estén creados
         $this->call(BadgeSeeder::class); // Asegura que las insignias estén creadas
         //$this->call(MissionSeeder::class);
-        $this->call(ChallengeCatalogSeeder::class,); // Asegura que los desafíos base estén creados
+        $this->call(ChallengeCatalogSeeder::class,);
+        $this->call(HouseExtrasSeeder::class);
+        // Asegura que los desafíos base estén creados
         //$this->call(ChallengeProgressDemoSeeder::class);
         // \App\Models\User::factory()->create([
         //     'name' => 'Test User',

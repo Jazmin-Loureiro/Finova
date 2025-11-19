@@ -116,6 +116,16 @@ flutter:
     - assets/lottie/Errorfailure.json
     - assets/lottie/congratulationgoal.json
     - assets/lottie/confetti.json
+    - assets/extras/arbol.svg
+    - assets/extras/maceta.svg
+    - assets/extras/banquito.svg
+    - assets/extras/luz-centrada.svg
+    - assets/extras/luz.svg
+    - assets/extras/maceta_icon.svg
+    - assets/extras/banquito_icon.svg
+    - assets/extras/luz_icon.svg
+    - assets/extras/luz-centrada_icon.svg
+    - assets/extras/arbol_icon.svg
 
 
     

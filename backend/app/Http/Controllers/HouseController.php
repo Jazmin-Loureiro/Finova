@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\Models\DataApi;
 use App\Services\CurrencyService;
+use App\Models\HouseExtra;
 
 class HouseController extends Controller
 {
@@ -120,6 +121,38 @@ class HouseController extends Controller
         'garage'       => (bool) $house->unlocked_garage,
     ];
 
+    $extras = HouseExtra::orderBy('level_required')
+    ->get()
+    ->map(function ($extra) use ($user, $desbloqueado) {
+
+        $unlocked = $user->level >= $extra->level_required;
+
+        $tieneGarage = $desbloqueado['garage'] === true;
+
+        // 👇 Regla general para todos los extras:
+        // si NO hay garage y existe icon_path_centered → usarlo
+        // de lo contrario → icon normal
+        $icon = (!$tieneGarage && $extra->icon_path_centered)
+            ? $extra->icon_path_centered   // versión centrada
+            : $extra->icon_path;           // versión normal
+
+        $registro = $user->unlockedExtras()
+            ->where('house_extra_id', $extra->id)
+            ->first();
+
+        $alreadyShown = $registro?->pivot?->shown ?? false;
+
+        return [
+            'id' => $extra->id,
+            'name' => $extra->name,
+            'icon' => $icon,
+            'level_required' => $extra->level_required,
+            'unlocked' => $unlocked,
+            'already_shown' => $alreadyShown,
+            'z_index' => $extra->z_index,
+        ];
+    });
+
     return response()->json([
         'balance'            => number_format($balance, 2, '.', ''),
         'balance_referencia' => number_format($balanceRef, 2, '.', ''),
@@ -131,6 +164,7 @@ class HouseController extends Controller
             'modulos'   => $this->getModulos($desbloqueado, $balanceRef, $baseValor),
             'deterioro' => $this->getDeterioro($balanceRef, $desbloqueado, $baseValor),
             'suelo'     => $this->getSuelo($balanceRef, $baseValor),
+            'extras' => $extras->values()->toArray(),
         ],
     ])
         ->header('Cache-Control', 'no-cache, no-store, must-revalidate')
@@ -342,4 +376,21 @@ class HouseController extends Controller
 
         return $capas;
     }
+
+    public function markExtraShown(Request $request)
+{
+    $request->validate([
+        'extra_id' => 'required|exists:house_extras,id',
+    ]);
+
+    $user = Auth::user();
+    $extraId = $request->extra_id;
+
+    // Registrar o actualizar
+    $user->unlockedExtras()->syncWithoutDetaching([
+        $extraId => ['shown' => true],
+    ]);
+
+    return response()->json(['status' => 'ok']);
+}
 }

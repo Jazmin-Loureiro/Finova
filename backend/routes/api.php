@@ -98,6 +98,9 @@ Route::middleware('auth:sanctum')->group(function () {
     // Obtener estado de la casa
     Route::get('/house-status', [HouseController::class, 'getHouseStatus']);
 
+    // Obtener extras desbloqueados de la casa
+    Route::post('/house/extras/mark-shown', [HouseController::class, 'markExtraShown']);
+
     // 💪 Desafíos
     // 🔹 Desafíos base
     Route::get('/challenges/available', [ChallengeController::class, 'available']);

@@ -176,22 +176,6 @@ class _CasaWidgetState extends State<CasaWidget>
                                   child: buildLayer(extra['icon']),
                                 )),
                       ),
-                      ElevatedButton(
-  onPressed: () {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) => const ExtraUnlockedScreen(
-          extraName: "Maceta",
-          iconPath: "assets/extras/maceta_icon.svg",
-          levelUnlocked: 4,
-        ),
-      ),
-    );
-  },
-  child: const Text("TEST EXTRA SCREEN"),
-)
-
                     ],
                   ),
                 ),

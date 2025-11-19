@@ -210,12 +210,12 @@ class CategorySummaryChartWidget extends StatelessWidget {
                       ),
                       child: Icon(
                         AppIcons.fromName(iconsMap?[key]),
-                        size: 18,
+                        size: 16,
                         color: color.withOpacity(0.9),
                       ),
                     ),
 
-                    const SizedBox(width: 10),
+                    const SizedBox(width: 5),
 
                     Text(
                       key,
@@ -245,7 +245,7 @@ class CategorySummaryChartWidget extends StatelessWidget {
                   amount,
                   userCurrency!.code,
                   symbolOverride: userCurrency!.symbol,
-                )} ${userCurrency!.code}',
+                )}',
                 style: TextStyle(
                   fontSize: 15,
                   fontWeight: FontWeight.w700,

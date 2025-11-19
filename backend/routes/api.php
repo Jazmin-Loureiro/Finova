@@ -21,6 +21,9 @@ use App\Http\Controllers\CurrencyController;
 
 
 // Rutas públicas
+// Recuperación de contraseña
+Route::post('/forgot-password', [AuthController::class, 'forgotPassword']);
+Route::post('/reset-password', [AuthController::class, 'resetPassword']);
 // Registro y login
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
@@ -75,6 +78,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::put('/moneyMakers/{moneyMaker}', [MoneyMakerController::class, 'update']);
     //Eliminar Fuente de Dinero
     Route::delete('/moneyMakers/{moneyMaker}', [MoneyMakerController::class, 'destroy']);
+    //Reactivar Fuente de Dinero
+    Route::post('/moneyMakers/{id}/activate', [MoneyMakerController::class, 'activate']);
     // Obtener tipos de fuente de dinero
     Route::get('/moneyMakerTypes', [\App\Http\Controllers\MoneyMakerTypeController::class, 'index']);
 ////////////////////////////////////////////////////////////////////////////////

@@ -66,7 +66,7 @@ class ExportPdfServices {
 
             final totalLocal = moneyMaker.registers.fold<double>(
               0,
-              (sum, r) => sum + r.balance,
+              (sum, r) => sum + (r.type == 'income' ? r.balance : -r.balance),
             );
             content.add(
               pw.Column(

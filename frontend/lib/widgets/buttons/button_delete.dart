@@ -48,7 +48,7 @@ class ButtonDelete extends StatelessWidget {
           builder: (_) => ConfirmDialogWidget(
             title: title,
             message: message,
-            confirmText: "Eliminar",
+            confirmText: "Confirmar",
             cancelText: "Cancelar",
             confirmColor: color,
           ),

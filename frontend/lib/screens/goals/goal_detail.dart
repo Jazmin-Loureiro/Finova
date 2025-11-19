@@ -131,10 +131,13 @@ Future<void> _fetchRegistersGoal() async {
                                         ),
                                       ),
                                     ).then((value) {
-                                        setState(() { isLoading = true;  });                                      if (value == true) {
+                                       if (value == true) {
+                                        setState(() {
+                                          isLoading = true;
+                                        });
                                         _refreshGoal(); 
-                                      setState(() { isLoading = false; });                                   }
-                                  });
+                                      }
+                                    });
                                 },
                               ),
                             ],

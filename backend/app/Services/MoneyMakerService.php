@@ -14,7 +14,7 @@ class MoneyMakerService
     public function listForUser($user)
     {
         $toCurrency = $user->currency->code;
-        $moneyMakers = $user->moneyMakers()->where('active', true)->with('currency', 'type')->get();
+        $moneyMakers = $user->moneyMakers()->with('currency', 'type')->get();
 
         $totalInBase = 0;
 
@@ -25,7 +25,8 @@ class MoneyMakerService
                 : CurrencyService::getRate($fromCurrency, $toCurrency);
 
             $balanceConverted = round(($m->balance + $m->balance_reserved) * $rate, 2);
-            $totalInBase += $balanceConverted;
+          // Solo sumar si está activa
+            if ($m->active) $totalInBase += $balanceConverted;
 
             return [
                 'id'                => $m->id,
@@ -36,6 +37,7 @@ class MoneyMakerService
                 'balance_reserved'  => $m->balance_reserved,
                 'color'             => $m->color,
                 'currency'          => $m->currency,
+                'active'          => $m->active,
             ];
         });
 

@@ -80,5 +80,16 @@ class MoneyMakerController extends Controller {
         return response()->json(['message' => 'Fuente de dinero eliminada con éxito'], 200);
     }
 
+    public function activate(Request $request, $id) {
+        $moneyMaker = MoneyMaker::where('id', $id)->where('user_id', $request->user()->id)->first();
+        if (!$moneyMaker) {
+            return response()->json(['message' => 'Fuente de dinero no encontrada'], 404);
+        }
+        $moneyMaker->active = true;
+        $moneyMaker->updated_at = now();
+        $moneyMaker->save();
+        return response()->json(['message' => 'Fuente de dinero activada con éxito'], 200);
+    }
+
 }
 

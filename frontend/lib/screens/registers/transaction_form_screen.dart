@@ -428,10 +428,8 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
                                 return 'Ingrese un monto válido';
                               }
                               if (widget.type == 'expense' &&
-                                  parsed >
-                                      selectedMoneyMaker!
-                                          .balance) {
-                                return 'El gasto supera el monto disponible (${selectedMoneyMaker!.balance.toStringAsFixed(2)})';
+                                  parsed > selectedMoneyMaker!.balance) {
+                                return 'Sin monto disponible (${selectedMoneyMaker!.currency!.symbol}${formatCurrency(selectedMoneyMaker!.balance, selectedMoneyMaker!.currency!.code)})';
                               }
                               return null;
                             },
@@ -532,18 +530,20 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
 
                     // Meta
                     if (widget.type != 'expense') ...[
-                      BottomSheetPickerField<Goal?>(
-                        label: 'Meta (opcional)',
-                        title: 'Seleccionar meta',
-                        items: [...goals],
-                        itemLabel: (g) {
-                          final goal = g!;
-                          final balance = goal.balance;
-                          final target =
-                              goal.targetAmount;
-                          final code =
-                              goal.currency?.code ??
-                                  '---';
+                     BottomSheetPickerField<Goal?>(
+                      label: 'Meta (opcional)',
+                      title: 'Seleccionar meta',
+                      items: [
+                        null,
+                        ...goals, // tus metas disponibles
+                      ],
+                    itemLabel: 
+                    (g) {
+                      if (g == null) return 'Sin meta';
+                      final goal = g;
+                      final balance = goal.balance;
+                      final target = goal.targetAmount;
+                      final code = goal.currency?.code ?? '---';
 
                           return '${goal.name} (${goal.currency?.symbol}${formatCurrency(balance, code)} / ${goal.currency?.symbol}${formatCurrency(target, code)})';
                         },

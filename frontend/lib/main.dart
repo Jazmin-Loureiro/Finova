@@ -10,7 +10,11 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'screens/home/onboarding_screen.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter/services.dart';
+import 'package:app_links/app_links.dart';
+import 'dart:async';
+import 'package:frontend/screens/reset_password_screen.dart';
 
+final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 // 👇 Agregamos el observador global
 final RouteObserver<PageRoute> routeObserver = RouteObserver<PageRoute>();
 
@@ -35,12 +39,49 @@ void main() async {
   );
 }
 
-class MyApp extends StatelessWidget {
+class MyApp extends StatefulWidget {
   const MyApp({super.key});
+
+  @override
+  State<MyApp> createState() => _MyAppState();
+}
+class _MyAppState extends State<MyApp> {
+  StreamSubscription? _deepLinkSub;
+
+  @override
+  void initState() {
+    super.initState();
+
+    final appLinks = AppLinks();
+    _deepLinkSub = appLinks.uriLinkStream.listen((uri) {
+      if (uri.host == "reset-password") {
+        final email = uri.queryParameters["email"];
+        final token = uri.queryParameters["token"];
+
+        if (email != null && token != null) {
+          navigatorKey.currentState?.push(
+            MaterialPageRoute(
+              builder: (_) => ResetPasswordScreen(
+                email: email,
+                token: token,
+              ),
+            ),
+          );
+        }
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _deepLinkSub?.cancel();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      navigatorKey: navigatorKey,
       title: 'Finova',
 
       //  Tema claro

@@ -25,6 +25,7 @@ class _CurrencyConverterScreenState extends State<CurrencyConverterScreen> {
   Currency? toCurrency;
   final TextEditingController amountController = TextEditingController();
   double? convertedValue;
+  late DateTime lastUpdated;
   bool isLoading = true;
 
   // Simulación de fecha de actualización (si tu API no la devuelve aún)
@@ -44,6 +45,7 @@ class _CurrencyConverterScreenState extends State<CurrencyConverterScreen> {
       setState(() {
         fromCurrency = currencies.firstWhere((c) => c.code == 'ARS', orElse: () => currencies.first);
         toCurrency = currencies.firstWhere((c) => c.code == 'USD', orElse: () => currencies.last);
+        lastUpdated = toCurrency!.updatedAt!.toLocal();
         isLoading = false;
       });
     } catch (e) {
@@ -278,7 +280,7 @@ class _CurrencyConverterScreenState extends State<CurrencyConverterScreen> {
                                           ),
                                           const SizedBox(height: 4),
                                           Text(
-                                            '(Tasa actualizada ${_formatElapsedTime(mockLastUpdated)})',
+                                            '(Tasa actualizada ${_formatElapsedTime(lastUpdated)})',
                                             style: TextStyle(
                                               color: textColor.withOpacity(0.6),
                                               fontSize: 13,

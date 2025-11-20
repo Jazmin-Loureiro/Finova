@@ -142,6 +142,12 @@ class CustomDrawer extends StatelessWidget {
               child: ListView(
                 padding: const EdgeInsets.only(top: 8),
                 children: [
+                   buildMenuItem(
+                    icon: Icons.home,
+                    title: 'Inicio',
+                    routeName: 'home',
+                    screen: const HomeScreen(),
+                  ),
                   buildMenuItem(
                     icon: Icons.manage_accounts,
                     title: 'Perfil',

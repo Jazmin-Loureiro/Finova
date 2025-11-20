@@ -150,6 +150,7 @@ class _MoneyMakerListScreenState extends State<MoneyMakerListScreen> {
                             final isSelected = selectedIndex == index;
                             final baseColor = fromHex(m.color);
                             final bool isDisabled = !m.active;
+                            final fechaLocal = m.currency!.updatedAt!.toLocal();
 
                             bool isColorDark(Color color) {
                               double luminance = (0.299 * color.red + 0.587 * color.green + 0.114 * color.blue) / 255;
@@ -300,7 +301,7 @@ class _MoneyMakerListScreenState extends State<MoneyMakerListScreen> {
                                                 title: 'Conversión de moneda',
                                                 message:
                                                     'Fuente: Open Exchange Rates\n'
-                                                    'Última actualización: ${DateFormat('dd/MM/yyyy').format(m.currency!.updatedAt!)}\n\n'
+                                                    'Última actualización: ${DateFormat('dd/MM/yyyy HH:mm').format(fechaLocal)}\n\n'                                                    
                                                     'Este valor es estimativo y puede variar según el mercado.',
                                                 iconSize: 20,
                                               ),

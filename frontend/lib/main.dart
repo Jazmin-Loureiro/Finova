@@ -113,7 +113,7 @@ class _MyAppState extends State<MyApp> {
       // Tema oscuro
       darkTheme: ThemeData(
         colorScheme: const ColorScheme.dark(
-          primary: Color(0xFF7D2FFF),
+          primary: Color(0xFF914DFF),
           onPrimary: Colors.black,
           secondary: Color(0xFF00FF4C),
           onSecondary: Colors.white,

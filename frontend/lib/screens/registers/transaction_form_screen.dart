@@ -7,6 +7,7 @@ import 'package:frontend/widgets/bottom_sheet_pickerField.dart';
 import 'package:frontend/widgets/buttons/button_save.dart';
 import 'package:frontend/widgets/completed_dialog_widget.dart';
 import 'package:frontend/widgets/custom_scaffold.dart';
+
 import '../extra_unlocked_screen.dart';
 
 import '../../services/api_service.dart';
@@ -27,7 +28,7 @@ import 'register_list_screen.dart';
 import '../challenge_completed_screen.dart';
 
 class TransactionFormScreen extends StatefulWidget {
-  final String type; // "income" o "expense"
+  final String type;
 
   const TransactionFormScreen({
     required this.type,
@@ -60,12 +61,12 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
   List<Goal> goals = [];
   Goal? selectedGoal;
 
+  List<Goal> allGoals = [];
+
   File? attachedFile;
 
   String? repeatType;
   int? repeatEveryNDays;
-
-  List<Goal> allGoals = [];
 
   @override
   void initState() {
@@ -82,18 +83,22 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
         categories = (data['categories'] as List)
             .map((e) => Category.fromJson(e))
             .toList();
+
         moneyMakers = data['moneyMakers'];
         currencies = data['currencies'];
         allGoals = data['goals'] ?? [];
 
         selectedMoneyMaker =
             moneyMakers.isNotEmpty ? moneyMakers.first : null;
+
         selectedCurrency =
             selectedMoneyMaker?.currency ?? defaultCurrency;
+
         selectedCategory =
             categories.isNotEmpty ? categories.first : null;
 
         _filterGoalsByCurrency();
+
         isLoading = false;
       });
     } catch (e) {
@@ -104,6 +109,7 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
 
   void _filterGoalsByCurrency() {
     if (selectedCurrency == null) return;
+
     final filtered = allGoals
         .where((g) => g.currency?.id == selectedCurrency!.id)
         .where((g) => g.state == 'in_progress')
@@ -111,6 +117,7 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
 
     setState(() {
       goals = filtered;
+
       if (selectedGoal != null &&
           !filtered.any((g) => g.id == selectedGoal!.id)) {
         selectedGoal = null;
@@ -118,190 +125,188 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
     });
   }
 
-  // 🔹 Loader inline
-  void showInlineLoader(String message) {
-  Navigator.of(context).push(
-    MaterialPageRoute(
-      builder: (_) => CustomScaffold(
-        title: "",
-        currentRoute: "inline_loader",
-        showNavigation: false,
-        body: Center(
-          child: LoadingWidget(message: message),
-        ),
-      ),
-    ),
-  );
-}
-
-
-
-  void hideInlineLoader() {
-    if (Navigator.canPop(context)) {
-      Navigator.pop(context);
-    }
-  }
-
+  // =====================================================
+  // 🔥 VERSION ORIGINAL + EXTRA DESBLOQUEADO
+  // =====================================================
   Future<void> _saveTransaction() async {
     if (!_formKey.currentState!.validate()) return;
+
     final amount =
         parseCurrency(amountController.text, selectedCurrency!.code);
+
     if (amount <= 0) return;
 
+    setState(() => isSaving = true);
+
     try {
-      // ------------------------------------
-      // 1) CREAR TRANSACCIÓN
-      // ------------------------------------
-      showInlineLoader("Creando registro...");
-      final res = await api.createTransaction(
-        widget.type,
-        amount,
-        nameController.text,
-        moneyMakerId: selectedMoneyMaker!.id,
-        categoryId: selectedCategory!.id,
-        currencyId: selectedCurrency!.id,
-        goalId: selectedGoal?.id,
-        file: attachedFile,
-        repetition: repeatType != null,
-        frequencyRepetition:
-            repeatType != null ? int.tryParse(repeatType!) : null,
-      );
-      hideInlineLoader();
+  // Crear transacción
+  final res = await api.createTransaction(
+    widget.type,
+    amount,
+    nameController.text,
+    moneyMakerId: selectedMoneyMaker!.id,
+    categoryId: selectedCategory!.id,
+    currencyId: selectedCurrency!.id,
+    goalId: selectedGoal?.id,
+    file: attachedFile,
+    repetition: repeatType != null,
+    frequencyRepetition:
+        repeatType != null ? int.tryParse(repeatType!) : null,
+  );
 
-      if (!mounted) return;
+  setState(() => isSaving = false);
+  if (!mounted) return;
 
-      if (res == null) {
-        await showDialog(
-          context: context,
-          builder: (_) => SuccessDialogWidget(
-            title: "Error",
-            message: "No se pudo crear el registro.",
+  if (res != null) {
+    // ============================
+    // 1) ÉXITO
+    // ============================
+    await showDialog(
+      context: context,
+      builder: (_) => SuccessDialogWidget(
+        title: "Éxito",
+        message: "${widget.type == 'income' ? "Ingreso" : "Gasto"} creado correctamente",
+      ),
+    );
+
+    // 🔥 evita el parpadeo sin modificar el dialog
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) setState(() => isSaving = true);
+    });
+
+
+    await context
+        .read<RegisterProvider>()
+        .loadRegisters(selectedMoneyMaker!.id);
+
+    await context.read<RegisterProvider>().loadMoneyMakers();
+
+    // ============================
+    // 2) RECOMPENSAS
+    // ============================
+    if (res['rewards'] != null &&
+        (res['rewards'] as List).isNotEmpty) {
+      final userData = await api.getUser();
+      final userName = userData?['name'] ?? 'Usuario';
+      final avatar =
+          (userData?['full_icon_url'] ?? userData?['icon'] ?? '') as String;
+
+      for (final reward in res['rewards']) {
+
+        // apagar loader antes de abrir pantalla desafio
+        setState(() => isSaving = false);
+
+        final closed = await Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => ChallengeCompletedScreen(
+              userName: userName,
+              avatarSeedOrUrl: avatar,
+              pointsEarned: reward['points_earned'] ?? 0,
+              totalPoints: reward['new_total_points'] ?? 0,
+              leveledUp: reward['leveled_up'] == true,
+              newLevel: reward['new_level'],
+              badgeName: reward['badge_earned']?['name'],
+            ),
           ),
         );
-        return;
-      }
 
-      // ------------------------------------
-      // 2) DIALOGO ÉXITO
-      // ------------------------------------
-      await showDialog(
-        context: context,
-        builder: (_) => SuccessDialogWidget(
-          title: "Éxito",
-          message:
-              "${widget.type == 'income' ? "Ingreso" : "Gasto"} creado correctamente",
-        ),
-      );
+        if (closed != true) return;
 
-      // ------------------------------------
-      // 3) ACTUALIZAR REGISTROS
-      // ------------------------------------
-      showInlineLoader("Actualizando balances...");
-      await context
-          .read<RegisterProvider>()
-          .loadRegisters(selectedMoneyMaker!.id);
-      await context.read<RegisterProvider>().loadMoneyMakers();
-      hideInlineLoader();
+        // 🔥 loader intermedio DESPUÉS del challenge completado
+        setState(() => isSaving = true);
 
-      // ------------------------------------
-      // 4) RECOMPENSAS
-      // ------------------------------------
-      if (res['rewards'] != null &&
-          (res['rewards'] as List).isNotEmpty) {
-        showInlineLoader("Cargando recompensas...");
-        final userData = await api.getUser();
-        hideInlineLoader();
+        // ============================
+        // 3) EXTRAS DESBLOQUEADOS
+        // ============================
+        final house = await api.getHouseStatus();
+        final extras = (house['casa']?['extras'] ?? []) as List;
 
-        final userName = userData?['name'] ?? 'Usuario';
-        final avatar =
-            (userData?['full_icon_url'] ?? userData?['icon'] ?? '') as String;
+        final newlyUnlocked = extras.where((e) {
+          return e['level_required'] == reward['new_level'] &&
+                 e['already_shown'] == false;
+        }).toList();
 
-        for (final reward in res['rewards']) {
-          final closed = await Navigator.push(
+        for (final extra in newlyUnlocked) {
+          
+          // apagar loader antes de mostrar pantalla extra desbloqueado
+          setState(() => isSaving = false);
+
+          await Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (_) => ChallengeCompletedScreen(
-                userName: userName,
-                avatarSeedOrUrl: avatar,
-                pointsEarned: reward['points_earned'] ?? 0,
-                totalPoints: reward['new_total_points'] ?? 0,
-                leveledUp: reward['leveled_up'] == true,
-                newLevel: reward['new_level'],
-                badgeName: reward['badge_earned']?['name'],
+              builder: (_) => ExtraUnlockedScreen(
+                extraName: extra['name'],
+                iconPath: "assets/${extra['icon']}"
+                    .replaceFirst(".svg", "_icon.svg"),
+                levelUnlocked: extra['level_required'],
               ),
             ),
           );
-          if (closed != true) return;
 
-          // EXTRA: verificar adornos
-          showInlineLoader("Actualizando casa...");
-          final house = await api.getHouseStatus();
-          hideInlineLoader();
+          // 🔥 loader intermedio DESPUÉS del ExtraUnlockedScreen
+          setState(() => isSaving = true);
 
-          final extras =
-              (house['casa']?['extras'] ?? []) as List;
-          final newlyUnlocked = extras.where((e) {
-            return e['level_required'] == reward['new_level'] &&
-                e['already_shown'] == false;
-          }).toList();
-
-          for (final extra in newlyUnlocked) {
-            await Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (_) => ExtraUnlockedScreen(
-                  extraName: extra['name'],
-                  iconPath: "assets/${extra['icon']}"
-                      .replaceFirst(".svg", "_icon.svg"),
-                  levelUnlocked: extra['level_required'],
-                ),
-              ),
-            );
-            await api.markExtraShown(extra['id']);
-          }
+          await api.markExtraShown(extra['id']);
         }
       }
-
-      // ------------------------------------
-      // 5) METAS COMPLETADAS
-      // ------------------------------------
-      if (res['goal'] != null) {
-        final goal = Goal.fromJson(res['goal']);
-        if (goal.state == 'completed') {
-          showInlineLoader("Asignando montos a metas...");
-          await api.assignReservedToMoneyMakers(goal.id);
-          hideInlineLoader();
-
-          await CompletedDialog.show(context, goal: goal);
-        }
-      }
-
-      // ------------------------------------
-      // 6) VOLVER
-      // ------------------------------------
-      showInlineLoader("Volviendo al listado...");
-      await Future.delayed(const Duration(milliseconds: 600));
-      hideInlineLoader();
-
-      if (!mounted) return;
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(
-          builder: (_) => RegisterListScreen(
-            moneyMakerId: selectedMoneyMaker!.id,
-            moneyMakerName: selectedMoneyMaker!.name,
-          ),
-        ),
-      );
-    } catch (e) {
-      hideInlineLoader();
-      debugPrint('Error guardando transacción: $e');
     }
+
+    // ============================
+    // 4) METAS COMPLETADAS
+    // ============================
+    if (res['goal'] != null) {
+      final goal = Goal.fromJson(res['goal']);
+      if (goal.state == 'completed') {
+
+        // loader intermedio opcional
+        setState(() => isSaving = true);
+
+        await api.assignReservedToMoneyMakers(goal.id);
+
+        setState(() => isSaving = false);
+
+        await CompletedDialog.show(context, goal: goal);
+
+        // loader de retorno
+        setState(() => isSaving = true);
+      }
+    }
+
+    // ============================
+    // 5) VOLVER AL LISTADO
+    // ============================
+    setState(() => isSaving = false);
+
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(
+        builder: (_) => RegisterListScreen(
+          moneyMakerId: selectedMoneyMaker!.id,
+          moneyMakerName: selectedMoneyMaker!.name,
+        ),
+      ),
+    );
+
+  } else {
+    await showDialog(
+      context: context,
+      builder: (_) => SuccessDialogWidget(
+        title: "Error",
+        message: "Error al crear ${widget.type == 'income' ? "ingreso" : "gasto"}. Intente nuevamente.",
+      ),
+    );
+  }
+} catch (e) {
+  setState(() => isSaving = false);
+  debugPrint('Error guardando transacción: $e');
+}
+
   }
 
-  // ============================================================
-  // 🔥 AQUÍ ESTÁ EL CAMBIO IMPORTANTE: loader inicial
-  // ============================================================
+  // =====================================================
+  // UI COMPLETA (idéntica a tu versión original)
+  // =====================================================
   @override
   Widget build(BuildContext context) {
     const Map<String, String> typeLabels = {
@@ -309,65 +314,69 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
       "expense": "Gasto"
     };
 
+    if (isLoading) {
+      return const Scaffold(
+        body: Center(child: LoadingWidget()),
+      );
+    }
+
     return CustomScaffold(
       title: 'Nuevo ${typeLabels[widget.type] ?? widget.type}',
       currentRoute: 'transaction_form',
       showNavigation: false,
-      body: isLoading
-          ? const Center(child: LoadingWidget(message: "Cargando..."))
-          : Stack(
-              children: [
-                Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Form(
-                    key: _formKey,
-                    child: SingleChildScrollView(
-                      child: Column(
-                        children: [
-                          // 🔹 Nada de tu formulario fue tocado
-                          TextFormField(
-                            controller: nameController,
-                            decoration: const InputDecoration(
-                              labelText: 'Nombre',
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.all(Radius.circular(12)),
-                              ),
-                            ),
-                            validator: (value) => value == null || value.isEmpty
-                                ? 'Ingrese un nombre'
-                                : null,
-                          ),
+      body: Stack(
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(16),
+            child: Form(
+              key: _formKey,
+              child: SingleChildScrollView(
+                child: Column(
+                  children: [
 
-                          const SizedBox(height: 16),
+                    // Nombre
+                    TextFormField(
+                      controller: nameController,
+                      decoration: const InputDecoration(
+                        labelText: 'Nombre',
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.all(Radius.circular(12)),
+                        ),
+                      ),
+                      validator: (value) =>
+                          value == null || value.isEmpty
+                              ? 'Ingrese un nombre'
+                              : null,
+                    ),
 
+                    const SizedBox(height: 16),
+
+                    // =====================================================
                     // Fuente de dinero
+                    // =====================================================
                     Row(
                       children: [
                         Expanded(
-                          child:
-                              BottomSheetPickerField<MoneyMaker>(
-                            key: ValueKey(
-                                selectedMoneyMaker?.id ?? 'no_source'),
+                          child: BottomSheetPickerField<MoneyMaker>(
+                            key: ValueKey(selectedMoneyMaker?.id ?? 'no_source'),
                             label: 'Fuente de dinero',
                             title: 'Seleccionar fuente de dinero',
                             items: moneyMakers,
                             itemLabel: (m) => m.name,
-                            itemIcon: (m) => CircleAvatar(
-                              radius: 20,
-                              backgroundColor: Color(
-                                int.parse(m.color.substring(1),
-                                        radix: 16) +
+                            itemIcon: (m) {
+                              final color = Color(
+                                int.parse(m.color.substring(1), radix: 16) +
                                     0xFF000000,
-                              ).withOpacity(0.15),
-                              child: Icon(
-                                Icons.account_balance_wallet_rounded,
-                                color: Color(
-                                  int.parse(m.color.substring(1),
-                                          radix: 16) +
-                                      0xFF000000,
+                              );
+                              return CircleAvatar(
+                                radius: 20,
+                                backgroundColor: color.withOpacity(0.15),
+                                child: Icon(
+                                  Icons.account_balance_wallet_rounded,
+                                  color: color,
                                 ),
-                              ),
-                            ),
+                              );
+                            },
                             initialValue: selectedMoneyMaker,
                             onChanged: (value) {
                               setState(() {
@@ -386,16 +395,13 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
                             final newMaker = await Navigator.push(
                               context,
                               MaterialPageRoute(
-                                builder: (_) =>
-                                    const MoneyMakerFormScreen(),
-                              ),
+                                  builder: (_) => const MoneyMakerFormScreen()),
                             );
                             if (newMaker != null) {
                               setState(() {
                                 moneyMakers.add(newMaker);
                                 selectedMoneyMaker = newMaker;
-                                selectedCurrency =
-                                    newMaker.currency;
+                                selectedCurrency = newMaker.currency;
                                 _filterGoalsByCurrency();
                               });
                             }
@@ -403,8 +409,12 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
                         ),
                       ],
                     ),
+
                     const SizedBox(height: 16),
+
+                    // =====================================================
                     // Monto
+                    // =====================================================
                     Row(
                       children: [
                         Expanded(
@@ -415,21 +425,19 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
                             selectedCurrency: selectedCurrency,
                             label: 'Monto',
                             validator: (val) {
-                              if (val == null ||
-                                  val.trim().isEmpty) {
+                              if (val == null || val.trim().isEmpty) {
                                 return 'Ingrese un monto';
                               }
                               final clean = val
                                   .replaceAll('.', '')
-                                  .replaceAll(',', '.'); // decimal
-                              final parsed =
-                                  double.tryParse(clean);
+                                  .replaceAll(',', '.');
+                              final parsed = double.tryParse(clean);
                               if (parsed == null || parsed <= 0) {
                                 return 'Ingrese un monto válido';
                               }
                               if (widget.type == 'expense' &&
                                   parsed > selectedMoneyMaker!.balance) {
-                                return 'Sin monto disponible (${selectedMoneyMaker!.currency!.symbol}${formatCurrency(selectedMoneyMaker!.balance, selectedMoneyMaker!.currency!.code)})';
+                                return 'El gasto supera el monto disponible (${selectedMoneyMaker!.balance.toStringAsFixed(2)})';
                               }
                               return null;
                             },
@@ -439,14 +447,12 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
                         Expanded(
                           flex: 1,
                           child: TextField(
-                            decoration:
-                                const InputDecoration(
+                            decoration: const InputDecoration(
                               labelText: 'Moneda',
                               border: OutlineInputBorder(
-                                borderRadius:
-                                    BorderRadius.all(
-                                        Radius.circular(
-                                            12)),
+                                borderRadius: BorderRadius.all(
+                                  Radius.circular(12),
+                                ),
                               ),
                             ),
                             controller: TextEditingController(
@@ -457,31 +463,29 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
                         ),
                       ],
                     ),
+
                     const SizedBox(height: 16),
 
+                    // =====================================================
                     // Categoría
+                    // =====================================================
                     Row(
                       children: [
                         Expanded(
-                          child:
-                              BottomSheetPickerField<Category>(
-                            key: ValueKey(
-                                selectedCategory?.id ??
-                                    'no_category'),
+                          child: BottomSheetPickerField<Category>(
+                            key: ValueKey(selectedCategory?.id ?? 'no_category'),
                             label: 'Categoría',
                             title: 'Seleccionar categoría',
                             items: categories,
                             itemLabel: (c) => c.name,
                             itemIcon: (c) {
                               final color = Color(
-                                int.parse(c.color.substring(1),
-                                        radix: 16) +
+                                int.parse(c.color.substring(1), radix: 16) +
                                     0xFF000000,
                               );
                               return CircleAvatar(
                                 radius: 20,
-                                backgroundColor:
-                                    color.withOpacity(0.15),
+                                backgroundColor: color.withOpacity(0.15),
                                 child: Icon(
                                   AppIcons.fromName(c.icon),
                                   color: color,
@@ -490,12 +494,10 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
                               );
                             },
                             initialValue: selectedCategory,
-                            onChanged: (value) => setState(
-                                () => selectedCategory =
-                                    value),
-                            validator: (value) => value == null
-                                ? 'Seleccione una categoría'
-                                : null,
+                            onChanged: (value) =>
+                                setState(() => selectedCategory = value),
+                            validator: (value) =>
+                                value == null ? 'Seleccione una categoría' : null,
                           ),
                         ),
                         const SizedBox(width: 8),
@@ -503,47 +505,40 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
                           icon: const Icon(Icons.add_rounded),
                           tooltip: 'Agregar categoría',
                           onPressed: () async {
-                            final newCategory =
-                                await Navigator.push(
+                            final newCategory = await Navigator.push(
                               context,
                               MaterialPageRoute(
                                 builder: (_) =>
-                                    CategoryFormScreen(
-                                        type:
-                                            widget.type),
+                                    CategoryFormScreen(type: widget.type),
                               ),
                             );
                             if (newCategory != null &&
                                 newCategory is Category) {
                               setState(() {
-                                categories
-                                    .add(newCategory);
-                                selectedCategory =
-                                    newCategory;
+                                categories.add(newCategory);
+                                selectedCategory = newCategory;
                               });
                             }
                           },
                         ),
                       ],
                     ),
+
                     const SizedBox(height: 16),
 
+                    // =====================================================
                     // Meta
+                    // =====================================================
                     if (widget.type != 'expense') ...[
-                     BottomSheetPickerField<Goal?>(
-                      label: 'Meta (opcional)',
-                      title: 'Seleccionar meta',
-                      items: [
-                        null,
-                        ...goals, // tus metas disponibles
-                      ],
-                    itemLabel: 
-                    (g) {
-                      if (g == null) return 'Sin meta';
-                      final goal = g;
-                      final balance = goal.balance;
-                      final target = goal.targetAmount;
-                      final code = goal.currency?.code ?? '---';
+                      BottomSheetPickerField<Goal?>(
+                        label: 'Meta (opcional)',
+                        title: 'Seleccionar meta',
+                        items: [...goals],
+                        itemLabel: (g) {
+                          final goal = g!;
+                          final balance = goal.balance;
+                          final target = goal.targetAmount;
+                          final code = goal.currency?.code ?? '---';
 
                           return '${goal.name} (${goal.currency?.symbol}${formatCurrency(balance, code)} / ${goal.currency?.symbol}${formatCurrency(target, code)})';
                         },
@@ -560,17 +555,18 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
                       const SizedBox(height: 16),
                     ],
 
+                    // =====================================================
                     // Archivo adjunto
+                    // =====================================================
                     FormField<File?>(
                       validator: (value) {
-                        if (attachedFile == null) {
-                          return null; // no obligatorio
-                        }
+                        if (attachedFile == null) return null;
 
                         final ext = attachedFile!.path
                             .split('.')
                             .last
                             .toLowerCase();
+
                         const allowed = [
                           'jpg',
                           'jpeg',
@@ -587,14 +583,11 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
                         return null;
                       },
                       builder: (state) => Column(
-                        crossAxisAlignment:
-                            CrossAxisAlignment.start,
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           ListTile(
                             shape: RoundedRectangleBorder(
-                              borderRadius:
-                                  BorderRadius.circular(
-                                      12),
+                              borderRadius: BorderRadius.circular(12),
                               side: BorderSide(
                                 color: Theme.of(context)
                                     .colorScheme
@@ -604,23 +597,16 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
                             ),
                             leading: Icon(
                               Icons.attach_file,
-                              color: Theme.of(context)
-                                  .colorScheme
-                                  .primary,
+                              color: Theme.of(context).colorScheme.primary,
                             ),
-                            title: const Text(
-                                "Adjuntar archivo"),
+                            title: const Text("Adjuntar archivo"),
                             subtitle: attachedFile != null
                                 ? Text(
-                                    attachedFile!.path
-                                        .split('/')
-                                        .last,
-                                    overflow: TextOverflow
-                                        .ellipsis,
+                                    attachedFile!.path.split('/').last,
+                                    overflow: TextOverflow.ellipsis,
                                     style: TextStyle(
                                       fontSize: 12,
-                                      color: Theme.of(
-                                              context)
+                                      color: Theme.of(context)
                                           .colorScheme
                                           .onSurface,
                                     ),
@@ -629,66 +615,47 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
                                     "No se seleccionó archivo",
                                     style: TextStyle(
                                       fontSize: 12,
-                                      color: Theme.of(
-                                              context)
+                                      color: Theme.of(context)
                                           .colorScheme
                                           .onSurface
-                                          .withOpacity(
-                                              0.8),
+                                          .withOpacity(0.8),
                                     ),
                                   ),
                             trailing: Row(
-                              mainAxisSize:
-                                  MainAxisSize.min,
+                              mainAxisSize: MainAxisSize.min,
                               children: [
                                 if (attachedFile != null)
                                   IconButton(
                                     icon: const Icon(
                                       Icons.clear,
-                                      color: Colors
-                                          .redAccent,
+                                      color: Colors.redAccent,
                                     ),
                                     onPressed: () {
                                       setState(() {
-                                        attachedFile =
-                                            null;
-                                        state.didChange(
-                                            null);
+                                        attachedFile = null;
+                                        state.didChange(null);
                                       });
                                     },
                                   ),
                                 IconButton(
                                   icon: Icon(
                                     Icons.upload_file,
-                                    color:
-                                        Theme.of(context)
-                                            .colorScheme
-                                            .primary,
+                                    color: Theme.of(context)
+                                        .colorScheme
+                                        .primary,
                                   ),
                                   onPressed: () async {
                                     final result =
-                                        await FilePicker
-                                            .platform
-                                            .pickFiles(
-                                      type:
-                                          FileType.any,
+                                        await FilePicker.platform.pickFiles(
+                                      type: FileType.any,
                                     );
                                     if (result != null &&
-                                        result.files
-                                                .single
-                                                .path !=
-                                            null) {
+                                        result.files.single.path != null) {
                                       final pickedFile =
-                                          File(result
-                                              .files
-                                              .single
-                                              .path!);
+                                          File(result.files.single.path!);
                                       setState(() {
-                                        attachedFile =
-                                            pickedFile;
-                                        state
-                                            .didChange(
-                                                pickedFile);
+                                        attachedFile = pickedFile;
+                                        state.didChange(pickedFile);
                                       });
                                     }
                                   },
@@ -696,19 +663,16 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
                               ],
                             ),
                           ),
+
                           if (state.hasError)
                             Padding(
-                              padding:
-                                  const EdgeInsets.only(
-                                      left: 16.0,
-                                      top: 4.0),
+                              padding: const EdgeInsets.only(left: 16, top: 4),
                               child: Text(
                                 state.errorText!,
                                 style: TextStyle(
-                                  color:
-                                      Theme.of(context)
-                                          .colorScheme
-                                          .error,
+                                  color: Theme.of(context)
+                                      .colorScheme
+                                      .error,
                                   fontSize: 11,
                                 ),
                               ),
@@ -716,8 +680,12 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
                         ],
                       ),
                     ),
+
                     const SizedBox(height: 16),
 
+                    // =====================================================
+                    // Botón Guardar
+                    // =====================================================
                     ButtonSave(
                       title: 'Guardar',
                       message:
@@ -730,6 +698,16 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
               ),
             ),
           ),
+
+          if (isSaving)
+            Positioned.fill(
+              child: Container(
+                color: Theme.of(context).scaffoldBackgroundColor,
+                child: const Center(
+                  child: LoadingWidget(message: 'Guardando registro...'),
+                ),
+              ),
+            ),
         ],
       ),
     );

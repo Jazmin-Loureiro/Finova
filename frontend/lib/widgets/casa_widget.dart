@@ -13,13 +13,15 @@ class CasaWidget extends StatefulWidget {
 
 class _CasaWidgetState extends State<CasaWidget>
     with SingleTickerProviderStateMixin {
-  final double houseScale = 1.35;
-  final double groundScale = 0.12;
+    late double houseOffsetY;
+    late double groundOffsetY;
 
-  final double houseOffsetX = 0;
-  final double houseOffsetY = -14.5;
-  final double groundOffsetX = 0;
-  final double groundOffsetY = 135;
+    final double houseOffsetX = 0;
+    final double groundOffsetX = 0;
+
+    final double houseScale = 1.35;
+    final double groundScale = 0.12;
+
 
   late AnimationController _fadeController;
   late Animation<double> _fade;
@@ -81,8 +83,13 @@ class _CasaWidgetState extends State<CasaWidget>
   Widget build(BuildContext context) {
     _checkCambioCielo();
 
+    
     final screenHeight = MediaQuery.of(context).size.height;
     final screenWidth = MediaQuery.of(context).size.width;
+
+    /// 🎯 Valores RESPONSIVE
+    houseOffsetY = -screenHeight * 0.01;   // Sube la casa 2%
+    groundOffsetY = screenHeight * 0.165;   // Posición del suelo 17%
 
     final houseData = context.watch<HouseProvider>().houseData;
 

@@ -72,9 +72,10 @@ class _HomeScreenState extends State<HomeScreen> {
   child: Stack(
     children: [
       Transform.translate(
-  offset: const Offset(0, -45), //Agrega padding superior al navbar para acomodar la casa hacia arriba
-  child: const CasaWidget(),
-),
+        offset: Offset(0, -MediaQuery.of(context).size.height * 0.05),
+        child: const CasaWidget(),
+      ),
+
 
 
       Positioned(

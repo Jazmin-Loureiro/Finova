@@ -80,7 +80,7 @@ class AuthController extends Controller
             $user->registers()->create([
                 'type' => 'income',
                 'balance' => $request->balance,
-                'moneyMaker_id' => $moneyMaker->id,
+                'money_maker_id' => $moneyMaker->id,
                 'currency_id' => $request->currency_id,
                 'name' => 'Saldo inicial',
                 'category_id' => $defaultCategory->id,

@@ -79,7 +79,7 @@ class _RegisterListScreenState extends State<RegisterListScreen> {
   void _applyGrouping() {
     final Map<String, List<Register>> map = {};
     for (var r in allRegisters) {
-      final key = DateFormat('dd/MM/yyyy').format(r.created_at);
+      final key = DateFormat('dd/MM/yyyy').format(r.created_at.toLocal());
       map[key] = (map[key] ?? [])..add(r);
     }
     final sortedKeys = map.keys.toList()

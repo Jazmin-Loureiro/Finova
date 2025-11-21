@@ -184,16 +184,15 @@ Future<bool> _cancelReserve() async {
                               ),
                               const SizedBox(height: 3),
                               Text(
-                                '${register.name}',
+                                'Creado: ${dateFormat.format(localDate)}',
                                 style: TextStyle(
-                                  fontSize: 16,
+                                  fontSize: 12,
                                   color: Theme.of(context).colorScheme.onSurface,
                                 ),
                               ),
-                              //  Fecha
-                              const SizedBox(height: 4),
+                              const SizedBox(height: 10),
                               Text(
-                                'Creado: ${dateFormat.format(localDate)}',
+                                '${register.name}',
                                 style: TextStyle(
                                   fontSize: 14,
                                   color: Theme.of(context).colorScheme.onSurface,
@@ -206,7 +205,7 @@ Future<bool> _cancelReserve() async {
                     ),
                   ),
 
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 10),
   
                     //  Categoría +  Fuente de dinero
                     Container(

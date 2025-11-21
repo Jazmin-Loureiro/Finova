@@ -18,7 +18,7 @@ class RegisterController extends Controller {
      */
     public function index(Request $request) {
         $user = auth()->user();
-        $query = Register::with(['currency', 'category', 'goal'])
+        $query = Register::with(['currency', 'category', 'goal','moneyMaker'])
             ->where('user_id', $user->id);
         // Tipo
         if ($request->has('type') && $request->type !== 'all') {
@@ -68,7 +68,7 @@ class RegisterController extends Controller {
             'type' => 'required|in:income,expense',
             'balance' => 'required|numeric|min:0.01',
             'currency_id' => 'required|integer|exists:currencies,id',
-            'moneyMaker_id' => 'required|exists:money_makers,id',
+            'money_maker_id' => 'required|exists:money_makers,id',
             'category_id' => 'nullable|exists:categories,id',
             'goal_id' => 'nullable|exists:goals,id',
             'repetition' => 'nullable|integer|min:0',
@@ -126,9 +126,9 @@ class RegisterController extends Controller {
     public function getByMoneyMaker(Request $request, $moneyMakerId) {
     $user = auth()->user();
 
-    $query = Register::with(['currency', 'category', 'goal'])
+    $query = Register::with(['currency', 'category', 'goal', 'moneyMaker'])
         ->where('user_id', $user->id)
-        ->where('moneyMaker_id', $moneyMakerId);
+        ->where('money_maker_id', $moneyMakerId);
     // Tipo
     if ($request->has('type') && $request->type !== 'all') {
         $query->where('type', $request->type);
@@ -166,28 +166,6 @@ class RegisterController extends Controller {
     ]);
 }
 
-    /**
-     * Update the specified resource in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  \App\Models\Register  $register
-     * @return \Illuminate\Http\Response
-     */
-    public function update(Request $request, Register $register)
-    {
-        //
-    }
-
-    /**
-     * Remove the specified resource from storage.
-     *
-     * @param  \App\Models\Register  $register
-     * @return \Illuminate\Http\Response
-     */
-    public function destroy(Register $register)
-    {
-        //
-    }
 
    // Nueva función para cancelar una reserva
     public function cancelReservation($id) {

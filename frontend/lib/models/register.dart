@@ -49,9 +49,9 @@ class Register {
       category: 
            Category.fromJson(data['category']),
       currency: Currency.fromJson(data['currency']),
-      moneyMakerId: data['moneyMaker_id'] is int
-          ? data['moneyMaker_id']
-          : int.tryParse(data['moneyMaker_id']?.toString() ?? '0') ?? 0,
+      moneyMakerId: data['money_maker_id'] is int
+          ? data['money_maker_id']
+          : int.tryParse(data['money_maker_id']?.toString() ?? '0') ?? 0,
       moneyMaker: data['money_maker'] != null
           ? MoneyMaker.fromJson(data['money_maker'])
           : null,

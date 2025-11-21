@@ -71,7 +71,7 @@ class RegisterItemWidget extends StatelessWidget {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                r.name,
+                                r.category.name,
                                 style: const TextStyle(
                                   fontWeight: FontWeight.bold,
                                   fontSize: 16,
@@ -80,7 +80,7 @@ class RegisterItemWidget extends StatelessWidget {
                               ),
                               const SizedBox(height: 2),
                               Text(
-                                '$tipo • ${r.category.name}',
+                                '$tipo • ${r.moneyMaker?.name}',
                                 style: TextStyle(
                                   fontSize: 12,
                                   color: Theme.of(context).colorScheme.onSurface,
@@ -91,10 +91,10 @@ class RegisterItemWidget extends StatelessWidget {
                         ),
                         // Fecha
                         Text(
-                          dateFormat.format(r.created_at),
+                          dateFormat.format(r.created_at.toLocal()),
                           style: TextStyle(
                             fontSize: 12,
-                            color: Colors.grey[500],
+                            color: Colors.grey[700],
                           ),
                         ),
                       ],

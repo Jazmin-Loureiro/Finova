@@ -27,7 +27,7 @@ class RegisterService {
         }
 
         $currency = Currency::findOrFail($request->currency_id);
-        $moneyMaker = MoneyMaker::findOrFail($request->moneyMaker_id);
+        $moneyMaker = MoneyMaker::findOrFail($request->money_maker_id);
 
         $rate = $currency->code === $user->currency->code
             ? 1.0
@@ -39,9 +39,9 @@ class RegisterService {
             'type' => $request->type,
             'balance' => $request->balance,
             'file' => $filePath,
-            'name' => $request->name,
+            'name' => $request->name ?? null,
             'category_id' => $request->category_id,
-            'moneyMaker_id' => $moneyMaker->id,
+            'money_maker_id' => $moneyMaker->id,
             'currency_id' => $currency->id,
             'repetition' => $request->repetition ?? 0,
             'frequency_repetition' => $request->frequency_repetition ?? 0,

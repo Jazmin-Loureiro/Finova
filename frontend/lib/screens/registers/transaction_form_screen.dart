@@ -330,25 +330,68 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
             padding: const EdgeInsets.all(16),
             child: Form(
               key: _formKey,
-              child: SingleChildScrollView(
-                child: Column(
+                child: ListView(
                   children: [
-
-                    // Nombre
-                    TextFormField(
-                      controller: nameController,
-                      decoration: const InputDecoration(
-                        labelText: 'Nombre',
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.all(Radius.circular(12)),
+                    // =====================================================
+                    // Categoría
+                    // =====================================================
+                    Row(
+                      children: [
+                        Expanded(
+                          child: BottomSheetPickerField<Category>(
+                            key: ValueKey(selectedCategory?.id ?? 'no_category'),
+                            label: 'Categoría',
+                            title: 'Seleccionar categoría',
+                            items: categories,
+                            itemLabel: (c) => c.name,
+                            itemIcon: (c) {
+                              final color = Color(
+                                int.parse(c.color.substring(1), radix: 16) +
+                                    0xFF000000,
+                              );
+                              return CircleAvatar(
+                                radius: 20,
+                                backgroundColor: color.withOpacity(0.15),
+                                child: Icon(
+                                  AppIcons.fromName(c.icon),
+                                  color: color,
+                                  size: 22,
+                                ),
+                              );
+                            },
+                            initialValue: selectedCategory,
+                            onChanged: (value) =>
+                                setState(() => selectedCategory = value),
+                            validator: (value) =>
+                                value == null ? 'Seleccione una categoría' : null,
+                          ),
                         ),
-                      ),
-                      validator: (value) =>
-                          value == null || value.isEmpty
-                              ? 'Ingrese un nombre'
-                              : null,
-                    ),
 
+                        const SizedBox(width: 8),
+                        
+                        IconButton(
+                          icon: const Icon(Icons.add_rounded),
+                          tooltip: 'Agregar categoría',
+                          onPressed: () async {
+                            final newCategory = await Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) =>
+                                    CategoryFormScreen(type: widget.type),
+                              ),
+                            );
+                            if (newCategory != null &&
+                                newCategory is Category) {
+                              setState(() {
+                                categories.add(newCategory);
+                                selectedCategory = newCategory;
+                              });
+                            }
+                          },
+                        ),
+                      ],
+                    ),
+                    
                     const SizedBox(height: 16),
 
                     // =====================================================
@@ -465,65 +508,20 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
                     ),
 
                     const SizedBox(height: 16),
-
                     // =====================================================
-                    // Categoría
+                    // Descripción
                     // =====================================================
-                    Row(
-                      children: [
-                        Expanded(
-                          child: BottomSheetPickerField<Category>(
-                            key: ValueKey(selectedCategory?.id ?? 'no_category'),
-                            label: 'Categoría',
-                            title: 'Seleccionar categoría',
-                            items: categories,
-                            itemLabel: (c) => c.name,
-                            itemIcon: (c) {
-                              final color = Color(
-                                int.parse(c.color.substring(1), radix: 16) +
-                                    0xFF000000,
-                              );
-                              return CircleAvatar(
-                                radius: 20,
-                                backgroundColor: color.withOpacity(0.15),
-                                child: Icon(
-                                  AppIcons.fromName(c.icon),
-                                  color: color,
-                                  size: 22,
-                                ),
-                              );
-                            },
-                            initialValue: selectedCategory,
-                            onChanged: (value) =>
-                                setState(() => selectedCategory = value),
-                            validator: (value) =>
-                                value == null ? 'Seleccione una categoría' : null,
-                          ),
+                    TextFormField(
+                      controller: nameController,
+                      maxLength: 120,
+                      decoration: const InputDecoration(
+                        labelText: 'Descripción',
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.all(Radius.circular(12)),
                         ),
-                        const SizedBox(width: 8),
-                        IconButton(
-                          icon: const Icon(Icons.add_rounded),
-                          tooltip: 'Agregar categoría',
-                          onPressed: () async {
-                            final newCategory = await Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (_) =>
-                                    CategoryFormScreen(type: widget.type),
-                              ),
-                            );
-                            if (newCategory != null &&
-                                newCategory is Category) {
-                              setState(() {
-                                categories.add(newCategory);
-                                selectedCategory = newCategory;
-                              });
-                            }
-                          },
-                        ),
-                      ],
+                          counterText: '',
+                      ),
                     ),
-
                     const SizedBox(height: 16),
 
                     // =====================================================
@@ -562,123 +560,69 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
                       validator: (value) {
                         if (attachedFile == null) return null;
 
-                        final ext = attachedFile!.path
-                            .split('.')
-                            .last
-                            .toLowerCase();
-
-                        const allowed = [
-                          'jpg',
-                          'jpeg',
-                          'png',
-                          'pdf',
-                          'doc',
-                          'docx'
-                        ];
+                        final ext = attachedFile!.path.split('.').last.toLowerCase();
+                        const allowed = ['jpg', 'jpeg', 'png', 'pdf', 'doc', 'docx'];
 
                         if (!allowed.contains(ext)) {
                           return 'Tipo de archivo no permitido (${ext.toUpperCase()})';
                         }
-
                         return null;
                       },
-                      builder: (state) => Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          ListTile(
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                              side: BorderSide(
-                                color: Theme.of(context)
-                                    .colorScheme
-                                    .onSurface
-                                    .withOpacity(0.2),
-                              ),
-                            ),
-                            leading: Icon(
-                              Icons.attach_file,
-                              color: Theme.of(context).colorScheme.primary,
-                            ),
-                            title: const Text("Adjuntar archivo"),
-                            subtitle: attachedFile != null
-                                ? Text(
-                                    attachedFile!.path.split('/').last,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: TextStyle(
-                                      fontSize: 12,
-                                      color: Theme.of(context)
-                                          .colorScheme
-                                          .onSurface,
-                                    ),
-                                  )
-                                : Text(
-                                    "No se seleccionó archivo",
-                                    style: TextStyle(
-                                      fontSize: 12,
-                                      color: Theme.of(context)
-                                          .colorScheme
-                                          .onSurface
-                                          .withOpacity(0.8),
-                                    ),
-                                  ),
-                            trailing: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                if (attachedFile != null)
-                                  IconButton(
-                                    icon: const Icon(
-                                      Icons.clear,
-                                      color: Colors.redAccent,
-                                    ),
-                                    onPressed: () {
-                                      setState(() {
-                                        attachedFile = null;
-                                        state.didChange(null);
-                                      });
-                                    },
-                                  ),
-                                IconButton(
-                                  icon: Icon(
-                                    Icons.upload_file,
-                                    color: Theme.of(context)
-                                        .colorScheme
-                                        .primary,
-                                  ),
-                                  onPressed: () async {
-                                    final result =
-                                        await FilePicker.platform.pickFiles(
-                                      type: FileType.any,
-                                    );
-                                    if (result != null &&
-                                        result.files.single.path != null) {
-                                      final pickedFile =
-                                          File(result.files.single.path!);
-                                      setState(() {
-                                        attachedFile = pickedFile;
-                                        state.didChange(pickedFile);
-                                      });
-                                    }
-                                  },
+                      builder: (state) {
+                        return Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            InputDecorator(
+                              isEmpty: attachedFile == null,
+                              decoration: InputDecoration(
+                              
+                                errorText: state.hasError ? state.errorText : null,
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
                                 ),
-                              ],
-                            ),
-                          ),
+                              ),
+                              child: InkWell(
+                                onTap: () async {
+                                  final result = await FilePicker.platform.pickFiles(
+                                    type: FileType.any,
+                                  );
+                                  if (result != null && result.files.single.path != null) {
+                                    final pickedFile = File(result.files.single.path!);
+                                    attachedFile = pickedFile;
+                                    state.didChange(pickedFile);
+                                  }
+                                },
+                                child: Row(
+                                  children: [
+                                    Icon(Icons.attach_file,
+                                        color: Theme.of(context).colorScheme.primary),
+                                    const SizedBox(width: 8),
 
-                          if (state.hasError)
-                            Padding(
-                              padding: const EdgeInsets.only(left: 16, top: 4),
-                              child: Text(
-                                state.errorText!,
-                                style: TextStyle(
-                                  color: Theme.of(context)
-                                      .colorScheme
-                                      .error,
-                                  fontSize: 11,
+                                    // nombre del archivo
+                                    Expanded(
+                                      child: Text(
+                                        attachedFile != null
+                                            ? attachedFile!.path.split('/').last
+                                            : "No se seleccionó archivo",
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ),
+
+                                    if (attachedFile != null)
+                                      IconButton(
+                                        icon: const Icon(Icons.clear, color: Colors.redAccent),
+                                        onPressed: () {
+                                          attachedFile = null;
+                                          state.didChange(null);
+                                        },
+                                      ),
+                                  ],
                                 ),
                               ),
                             ),
-                        ],
-                      ),
+                          ],
+                        );
+                      },
                     ),
 
                     const SizedBox(height: 16),
@@ -695,19 +639,20 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
                     ),
                   ],
                 ),
-              ),
+              
             ),
           ),
 
-          if (isSaving)
-            Positioned.fill(
-              child: Container(
-                color: Theme.of(context).scaffoldBackgroundColor,
-                child: const Center(
-                  child: LoadingWidget(message: 'Guardando registro...'),
-                ),
+          //Overlay de guardado
+        if (isSaving)
+          Positioned.fill(
+            child: Container(
+              color: Theme.of(context).scaffoldBackgroundColor,
+              child: const Center(
+                child: LoadingWidget(message: 'Guardando fuente de dinero...'),
               ),
             ),
+          ),
         ],
       ),
     );

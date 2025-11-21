@@ -43,6 +43,6 @@ class MoneyMaker extends Model
 
    public function registers()
 {
-    return $this->hasMany(Register::class, 'moneyMaker_id'); // aquí la columna correcta
+    return $this->hasMany(Register::class, 'money_maker_id'); // aquí la columna correcta
 }
 }

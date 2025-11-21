@@ -79,7 +79,7 @@ if ($data['balance'] > 0) {
             $user->registers()->create([
                 'type'          => 'income',
                 'balance'       => $data['balance'],
-                'moneyMaker_id' => $moneyMaker->id,
+                'money_maker_id' => $moneyMaker->id,
                 'currency_id'   => $fromCurrency->id,
                 'name'          => 'Saldo inicial',
                 'category_id'   => $category?->id,

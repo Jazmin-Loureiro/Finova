@@ -15,7 +15,7 @@ class Register extends Model
     protected $fillable = [
         'user_id',
         'category_id',
-        'moneyMaker_id',
+        'money_maker_id',
         'name',
         'balance',
         'reserved_for_goal',
@@ -48,7 +48,7 @@ class Register extends Model
 
     public function moneyMaker()
     {
-        return $this->belongsTo(MoneyMaker::class, 'moneyMaker_id');
+        return $this->belongsTo(MoneyMaker::class, 'money_maker_id');
     }
 
     public function goal()

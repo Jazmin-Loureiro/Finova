@@ -68,29 +68,40 @@ class _HomeScreenState extends State<HomeScreen> {
         currentRoute: '/home',
         extendBody: true,
         extendBodyBehindAppBar: true,
-        body: Stack(
-          children: [
-            const CasaWidget(),
+        body: SizedBox.expand(
+  child: Stack(
+    children: [
+      Transform.translate(
+  offset: const Offset(0, -45), //Agrega padding superior al navbar para acomodar la casa hacia arriba
+  child: const CasaWidget(),
+),
 
-            SafeArea(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.all(16),
-                child: const Column(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    HomeInfoWidget(),
-                  ],
-                ),
-              ),
+
+      Positioned(
+        top: 0,
+        left: 0,
+        right: 0,
+        child: SafeArea(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(16),
+            child: const Column(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                HomeInfoWidget(),
+              ],
             ),
-
-            // 👇 LOADING GENERAL SOBRE TODA LA SCREEN
-            if (isLoading)
-              const Positioned.fill(
-                child: LoadingWidget(message: "Cargando inicio..."),
-              ),
-          ],
+          ),
         ),
+      ),
+
+      if (isLoading)
+        const Positioned.fill(
+          child: LoadingWidget(message: "Cargando inicio..."),
+        ),
+    ],
+  ),
+),
+
       ),
     );
   }

@@ -66,7 +66,7 @@ class CustomScaffold extends StatelessWidget {
         body: GestureDetector(
           onTap: () => FocusScope.of(context).unfocus(),
           child: SafeArea(
-            bottom: true,
+            bottom: showNavigation ? false : true,
             top: true,
             child: body,
           ),

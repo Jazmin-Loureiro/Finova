@@ -3,7 +3,6 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:provider/provider.dart';
 import '../providers/house_provider.dart';
 import '../widgets/loading_widget.dart'; 
-import '../screens/extra_unlocked_screen.dart';
 
 class CasaWidget extends StatefulWidget {
   const CasaWidget({super.key});

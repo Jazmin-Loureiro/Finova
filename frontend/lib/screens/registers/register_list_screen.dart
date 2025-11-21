@@ -53,17 +53,9 @@ class _RegisterListScreenState extends State<RegisterListScreen> {
     setState(() => isLoading = false);
   }
 
- Future<void> _fetchRegisters() async {
-  try {
-    //  Traer TODOS los registros si NO hay moneyMakerId
-    if (widget.moneyMakerId == null) {
-      allRegisters = await api.getAllRegister(type: selectedType, category: selectedCategory, from: selectedFromDate, to: selectedToDate, search: searchQuery);
-      _applyGrouping();
-      return;
-    }
-    //  Caso contrario → traer registros por moneyMakerId
-    final result = await api.getRegistersByMoneyMaker(widget.moneyMakerId!,type: selectedType, category: selectedCategory,  from: selectedFromDate, to: selectedToDate,  search: searchQuery,);
-    allRegisters = result;
+  Future<void> _fetchRegisters() async {
+    try {
+      allRegisters = await api.getAllRegister( moneyMakerId: widget.moneyMakerId, type: selectedType, category: selectedCategory,  from: selectedFromDate, to: selectedToDate, search: searchQuery,);
     _applyGrouping();
   } catch (e) {
     allRegisters = [];
@@ -158,8 +150,8 @@ class _RegisterListScreenState extends State<RegisterListScreen> {
       lastDate: DateTime(2100),
     );
     if (range != null) {
-      selectedFromDate = DateTime(range.start.year, range.start.month, range.start.day, 0, 0, 0,);
-      selectedToDate = DateTime(range.end.year, range.end.month, range.end.day, 23, 59, 59,);
+      selectedFromDate = DateTime(range.start.year, range.start.month, range.start.day);
+      selectedToDate = DateTime(range.end.year, range.end.month, range.end.day);
       _fetchRegisters();
     }
   }

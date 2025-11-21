@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:frontend/models/category.dart';
 import 'package:frontend/models/investment_rate.dart';
 import 'package:frontend/models/money_maker_type.dart';
+import 'package:intl/intl.dart';
 import 'package:path/path.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
@@ -14,10 +15,10 @@ import '../models/register.dart';
 import '../models/goal.dart';
 
 // URLs base
-const String baseUrl = "http://192.168.1.113:8000"; //Jaz
+//const String baseUrl = "http://192.168.1.113:8000"; //Jaz
 ////const String baseUrl = "http://192.168.0.106:8000"; // Jaz 2
 //const String baseUrl = "http://192.168.1.45:8000"; //Jaz 3
-//const String baseUrl = "http://192.168.0.162:8000";// guardo el mio je
+const String baseUrl = "http://192.168.0.162:8000";// guardo el mio je
 //const String baseUrl = "http://127.0.0.1:8000"; //compu local
 //const String baseUrl = "http://172.16.195.79:8000"; // IP de la facu
 const String apiUrl = "$baseUrl/api";
@@ -517,6 +518,7 @@ Future<List<dynamic>> getExpiredGoals() async {
 }
 
 Future<List<Register>> getAllRegister({
+  int? moneyMakerId,
   String type = "all",
   String? category,
   DateTime? from,
@@ -528,47 +530,17 @@ Future<List<Register>> getAllRegister({
 
   // Parámetros opcionales
   final params = {
+    if (moneyMakerId != null) 'moneyMakerId': moneyMakerId.toString(),
     'type': type,
     'search': search,
   };
 
   if (category != null) params['category'] = category;
-  if (from != null) params['from'] = from.toIso8601String();
-  if (to != null) params['to'] = to.toIso8601String();
+  final df = DateFormat('yyyy-MM-dd');
+  if (from != null) params['from'] = df.format(from);
+  if (to != null) params['to'] = df.format(to);
 
-  // Construir URL con query
-  final uri = Uri.parse('$apiUrl/transactions')
-      .replace(queryParameters: params);
-
-  final res = await http.get(uri, headers: jsonHeaders(token));
-
-  if (res.statusCode == 200) {
-    final data = jsonDecode(res.body);
-    return (data['registers'] as List)
-        .map((j) => Register.fromJson(j))
-        .toList();
-  }
-
-  return [];
-}
-
-Future<List<Register>> getRegistersByMoneyMaker(
-  int moneyMakerId, {
-  String type = "all",
-  String? category,
-  DateTime? from,
-  DateTime? to,
-  String search = "",
-}) async {
-  final token = await storage.read(key: 'token');
-  if (token == null) return [];
-  final params = {'type': type,'search': search,};
-  if (category != null) params['category'] = category;
-  if (from != null) params['from'] = from.toIso8601String();
-  if (to != null) params['to'] = to.toIso8601String();
-
-  final uri = Uri.parse('$apiUrl/transactions/moneyMaker/$moneyMakerId')
-      .replace(queryParameters: params);
+  final uri = Uri.parse('$apiUrl/transactions').replace(queryParameters: params);
 
   final res = await http.get(uri, headers: jsonHeaders(token));
 
@@ -578,6 +550,7 @@ Future<List<Register>> getRegistersByMoneyMaker(
         .map((j) => Register.fromJson(j))
         .toList();
   }
+
   return [];
 }
 

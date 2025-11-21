@@ -34,7 +34,7 @@ class RegisterProvider extends ChangeNotifier {
   Future<void> loadRegisters(int moneyMakerId) async {
     _moneyMakerId = moneyMakerId;
     try {
-      _registers = await api.getRegistersByMoneyMaker(moneyMakerId);
+      _registers = await api.getAllRegister(moneyMakerId: moneyMakerId);
       _balance = _registers.fold(0.0, (sum, r) => r.type == 'income' ? sum + r.balance : sum - r.balance);
       if (_registers.isNotEmpty) _currencySymbol = _registers.first.currency.symbol;
     } catch (e) {

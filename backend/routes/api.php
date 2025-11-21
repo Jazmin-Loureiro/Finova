@@ -63,8 +63,6 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/transactions', [RegisterController::class, 'store']);
     // Obtener todos los ingresos y gastos
     Route::get('/transactions', [RegisterController::class, 'index']);
-    // Obtener todos los ingresos y gastos de una fuente de dinero
-    Route::get('/transactions/moneyMaker/{moneyMakerId}', [RegisterController::class, 'getByMoneyMaker']);
     // Obtener un ingreso o gasto específico
     Route::get('/transactions/{register}', [RegisterController::class, 'show']);
     //cancelar reserva

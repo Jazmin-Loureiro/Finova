@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 use Illuminate\Support\Facades\Log;
+use Carbon\Carbon;
 
 use App\Models\Register;
 use App\Services\CurrencyService;
@@ -20,26 +21,33 @@ class RegisterController extends Controller {
         $user = auth()->user();
         $query = Register::with(['currency', 'category', 'goal','moneyMaker'])
             ->where('user_id', $user->id);
+        // FILTRO opcional: MoneyMaker
+        if ($request->filled('moneyMakerId')) {
+            $query->where('money_maker_id', $request->moneyMakerId);
+        }
         // Tipo
-        if ($request->has('type') && $request->type !== 'all') {
+        if ($request->filled('type') && $request->type !== 'all') {
             $query->where('type', $request->type);
         }
         // Categoría
-        if ($request->has('category') && $request->category !== null) {
+        if ($request->filled('category')) {
             $query->whereHas('category', function ($q) use ($request) {
                 $q->where('name', $request->category);
             });
         }
-        // Desde
-        if ($request->has('from') && $request->from !== null) {
-            $query->whereDate('created_at', '>=', $request->from);
-        }
-        // Hasta
-        if ($request->has('to') && $request->to !== null) {
-            $query->whereDate('created_at', '<=', $request->to);
+
+        // Fechas
+        $tz = 'America/Argentina/Buenos_Aires';
+        if ($request->filled('from') && $request->filled('to')) {
+            $from = Carbon::parse($request->from, $tz)->startOfDay();
+            $to   = Carbon::parse($request->to, $tz)->endOfDay();
+            $query->whereBetween('created_at', [
+                $from->toDateTimeString(),
+                $to->toDateTimeString()
+            ]);
         }
         // Search
-        if ($request->has('search') && $request->search !== '') {
+        if ($request->filled('search')) {
             $query->where(function ($q) use ($request) {
                 $q->where('name', 'LIKE', '%' . $request->search . '%')
                 ->orWhereHas('category', function ($c) use ($request) {
@@ -120,50 +128,6 @@ class RegisterController extends Controller {
             return response()->json(['message' => 'Registro no encontrado'], 404);
         }
     return response()->json(['register' => $register]);
-    }
-
-
-    public function getByMoneyMaker(Request $request, $moneyMakerId) {
-    $user = auth()->user();
-
-    $query = Register::with(['currency', 'category', 'goal', 'moneyMaker'])
-        ->where('user_id', $user->id)
-        ->where('money_maker_id', $moneyMakerId);
-    // Tipo
-    if ($request->has('type') && $request->type !== 'all') {
-        $query->where('type', $request->type);
-    }
-    // Categoría
-    if ($request->has('category') && $request->category !== null) {
-        $query->whereHas('category', function ($q) use ($request) {
-            $q->where('name', $request->category);
-        });
-    }
-    // Desde
-    if ($request->has('from') && $request->from !== null) {
-        $query->whereDate('created_at', '>=', $request->from);
-    }
-    // Hasta
-    if ($request->has('to') && $request->to !== null) {
-        $query->whereDate('created_at', '<=', $request->to);
-    }
-    // Search
-    if ($request->has('search') && $request->search !== '') {
-        $query->where(function ($q) use ($request) {
-            $q->where('name', 'LIKE', '%' . $request->search . '%')
-              ->orWhereHas('category', function ($c) use ($request) {
-                  $c->where('name', 'LIKE', '%' . $request->search . '%');
-              });
-        });
-    }
-    // Orden final
-    $registers = $query
-        ->orderBy('created_at', 'desc')
-        ->get();
-
-    return response()->json([
-        'registers' => $registers
-    ]);
 }
 
 

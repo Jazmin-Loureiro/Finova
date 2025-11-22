@@ -471,11 +471,8 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
                               if (val == null || val.trim().isEmpty) {
                                 return 'Ingrese un monto';
                               }
-                              final clean = val
-                                  .replaceAll('.', '')
-                                  .replaceAll(',', '.');
-                              final parsed = double.tryParse(clean);
-                              if (parsed == null || parsed <= 0) {
+                              final parsed = parseCurrency(val, selectedCurrency!.code);
+                                  if (parsed <= 0) {
                                 return 'Ingrese un monto válido';
                               }
                               if (widget.type == 'expense' &&

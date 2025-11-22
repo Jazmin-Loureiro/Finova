@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:frontend/models/category.dart';
 import 'package:frontend/models/investment_rate.dart';
 import 'package:frontend/models/money_maker_type.dart';
+import 'package:intl/intl.dart';
 import 'package:path/path.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
@@ -517,6 +518,7 @@ Future<List<dynamic>> getExpiredGoals() async {
 }
 
 Future<List<Register>> getAllRegister({
+  int? moneyMakerId,
   String type = "all",
   String? category,
   DateTime? from,
@@ -528,47 +530,17 @@ Future<List<Register>> getAllRegister({
 
   // Parámetros opcionales
   final params = {
+    if (moneyMakerId != null) 'moneyMakerId': moneyMakerId.toString(),
     'type': type,
     'search': search,
   };
 
   if (category != null) params['category'] = category;
-  if (from != null) params['from'] = from.toIso8601String();
-  if (to != null) params['to'] = to.toIso8601String();
+  final df = DateFormat('yyyy-MM-dd');
+  if (from != null) params['from'] = df.format(from);
+  if (to != null) params['to'] = df.format(to);
 
-  // Construir URL con query
-  final uri = Uri.parse('$apiUrl/transactions')
-      .replace(queryParameters: params);
-
-  final res = await http.get(uri, headers: jsonHeaders(token));
-
-  if (res.statusCode == 200) {
-    final data = jsonDecode(res.body);
-    return (data['registers'] as List)
-        .map((j) => Register.fromJson(j))
-        .toList();
-  }
-
-  return [];
-}
-
-Future<List<Register>> getRegistersByMoneyMaker(
-  int moneyMakerId, {
-  String type = "all",
-  String? category,
-  DateTime? from,
-  DateTime? to,
-  String search = "",
-}) async {
-  final token = await storage.read(key: 'token');
-  if (token == null) return [];
-  final params = {'type': type,'search': search,};
-  if (category != null) params['category'] = category;
-  if (from != null) params['from'] = from.toIso8601String();
-  if (to != null) params['to'] = to.toIso8601String();
-
-  final uri = Uri.parse('$apiUrl/transactions/moneyMaker/$moneyMakerId')
-      .replace(queryParameters: params);
+  final uri = Uri.parse('$apiUrl/transactions').replace(queryParameters: params);
 
   final res = await http.get(uri, headers: jsonHeaders(token));
 
@@ -578,6 +550,7 @@ Future<List<Register>> getRegistersByMoneyMaker(
         .map((j) => Register.fromJson(j))
         .toList();
   }
+
   return [];
 }
 

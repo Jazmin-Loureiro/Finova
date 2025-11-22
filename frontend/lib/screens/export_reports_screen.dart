@@ -52,7 +52,7 @@ class _ExportReportsScreenState extends State<ExportReportsScreen> {
         DateTime(end.year, end.month, end.day, 23, 59, 59); // Fin del día
 
     for (var m in allMoneyMakers) {
-      final allRegisters = await apiService.getRegistersByMoneyMaker(m.id);
+      final allRegisters = await apiService.getAllRegister(moneyMakerId: m.id);
       m.registers.addAll(
         allRegisters.where((r) {
           final localDate = r.created_at.toLocal();

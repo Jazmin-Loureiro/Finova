@@ -52,7 +52,7 @@ Widget build(BuildContext context) {
                   message:
                       'Este desafío se completa ahorrando dentro de la meta creada automáticamente. '
                       'Cada vez que sumes dinero a esa meta, tu progreso se actualizará en esta sección.',
-                  iconSize: 20,
+                  iconSize: 25,
                 ),
             ],
           ),

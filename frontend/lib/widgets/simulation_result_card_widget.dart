@@ -233,12 +233,13 @@ class _SimulationResultCardState extends State<SimulationResultCard>
           Row(
             children: [
               Text('Criptomoneda',
-                  style: TextStyle(fontWeight: FontWeight.bold, color: primary, fontSize: 15)),
-              const SizedBox(width: 6),
+                  style: TextStyle(fontWeight: FontWeight.bold, color: primary, fontSize: 16)),
+
               const InfoIcon(
                 title: '¿Qué es una criptomoneda?',
                 message:
                     'Son activos digitales descentralizados cuyo precio varía según la oferta y la demanda.',
+                iconSize: 23,
               ),
             ],
           ),
@@ -265,6 +266,7 @@ class _SimulationResultCardState extends State<SimulationResultCard>
                       'El valor entre paréntesis muestra el equivalente en tu moneda local según la cotización actual.'
                     : 'Las criptomonedas cotizan globalmente en dólares (USD). '
                       'En tu caso, la moneda base también es USD, por lo que no se muestra conversión adicional.',
+                      iconSize: 24,
               ),
             ],
           ),
@@ -285,6 +287,7 @@ class _SimulationResultCardState extends State<SimulationResultCard>
                 message:
                     'Representa el cambio porcentual real de la criptomoneda en el período base (24h, 7d o 30d) '
                     'según CoinGecko. Este valor es la referencia para calcular el rendimiento estimado.',
+                iconSize: 24,
               ),
             ],
           ),
@@ -305,6 +308,7 @@ class _SimulationResultCardState extends State<SimulationResultCard>
                 message:
                     'El rendimiento se estima usando la variación porcentual del activo (24h, 7d o 30d) '
                     'ajustada proporcionalmente a los días simulados. Si es positivo, ganás; si es negativo, perdés valor.',
+                iconSize: 24,
               ),
             ],
           ),
@@ -331,6 +335,7 @@ class _SimulationResultCardState extends State<SimulationResultCard>
                       'Se muestra tanto en USD como en tu moneda local.'
                     : 'Este valor refleja cuánto ganarías o perderías si el precio del activo variara según el período elegido. '
                       'Tu moneda base es USD, por lo que se muestra solo en dólares.',
+                      iconSize: 24,
               ),
             ],
           ),
@@ -384,6 +389,7 @@ class _SimulationResultCardState extends State<SimulationResultCard>
                   'En el sistema francés las cuotas son fijas durante todo el plazo. '
                   'Cada cuota incluye una parte de interés (que disminuye con el tiempo) '
                   'y una parte de capital (que aumenta mes a mes).',
+                  iconSize: 24,
             ),
           ],
         ),
@@ -413,6 +419,7 @@ class _SimulationResultCardState extends State<SimulationResultCard>
                   '• n = cantidad de cuotas\n\n'
                   'Esta fórmula permite mantener cuotas iguales, '
                   'aunque la proporción entre interés y capital varía cada mes.',
+                  iconSize: 24,
             ),
           ],
         ),
@@ -438,6 +445,7 @@ class _SimulationResultCardState extends State<SimulationResultCard>
                   '• Una porción de capital, que reduce la deuda.\n\n'
                   'Con el tiempo, los intereses bajan y el capital amortizado sube, '
                   'manteniendo el valor total de la cuota fijo.',
+                  iconSize: 24,
             ),
           ],
         ),
@@ -522,6 +530,7 @@ class _SimulationResultCardState extends State<SimulationResultCard>
                   InfoIcon(
                     title: _infoTitle(widget.resultado['tipo']),
                     message: _infoMessage(widget.resultado['tipo']),
+                    iconSize: 24,
                   ),
                 ],
               ),

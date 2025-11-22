@@ -52,7 +52,7 @@ class _NavigationBarWidgetState extends State<NavigationBarWidget>
       child: Container(
         height: 85,
         decoration: BoxDecoration(
-          color: scheme.surface.withOpacity(0.95),
+          color: scheme.surface,
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceAround,
@@ -78,7 +78,7 @@ class _NavigationBarWidgetState extends State<NavigationBarWidget>
       onTapCancel: () => _controller.reverse(),
       onTap: () {
         if (!isActive) {
-          Navigator.push(
+          Navigator.pushReplacement(
             context,
             MaterialPageRoute(builder: (_) => _screens[index]),
           );

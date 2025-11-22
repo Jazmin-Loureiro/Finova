@@ -88,8 +88,8 @@ class _CasaWidgetState extends State<CasaWidget>
     final screenWidth = MediaQuery.of(context).size.width;
 
     /// 🎯 Valores RESPONSIVE
-    houseOffsetY = -screenHeight * 0.01;   // Sube la casa 2%
-    groundOffsetY = screenHeight * 0.165;   // Posición del suelo 17%
+    houseOffsetY = -screenHeight * 0.016;   // Sube la casa 2%
+    groundOffsetY = screenHeight * 0.159;   // Posición del suelo 17%
 
     final houseData = context.watch<HouseProvider>().houseData;
 
@@ -145,7 +145,7 @@ class _CasaWidgetState extends State<CasaWidget>
 
         // 🚗 Calle
         Positioned(
-          bottom: 20,
+          bottom: 16,
           left: 0,
           right: 0,
           child: buildLayer('calle/calle.svg'),

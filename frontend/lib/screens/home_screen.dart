@@ -69,39 +69,38 @@ class _HomeScreenState extends State<HomeScreen> {
         extendBody: true,
         extendBodyBehindAppBar: true,
         body: SizedBox.expand(
-  child: Stack(
-    children: [
-      Transform.translate(
-        offset: Offset(0, -MediaQuery.of(context).size.height * 0.05),
-        child: const CasaWidget(),
-      ),
+          child: Stack(
+            children: [
+              Transform.translate(
+                offset: Offset(0, -MediaQuery.of(context).size.height * 0.06),
+                child: const CasaWidget(),
+              ),
 
 
 
-      Positioned(
-        top: 0,
-        left: 0,
-        right: 0,
-        child: SafeArea(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.all(16),
-            child: const Column(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                HomeInfoWidget(),
-              ],
-            ),
+              Positioned(
+                top: 0,
+                left: 0,
+                right: 0,
+                child: SafeArea(
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.all(16),
+                    child: const Column(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        HomeInfoWidget(),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+              if (isLoading)
+                const Positioned.fill(
+                  child: LoadingWidget(message: "Cargando inicio..."),
+                ),
+            ],
           ),
         ),
-      ),
-
-      if (isLoading)
-        const Positioned.fill(
-          child: LoadingWidget(message: "Cargando inicio..."),
-        ),
-    ],
-  ),
-),
 
       ),
     );

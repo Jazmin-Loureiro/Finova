@@ -17,8 +17,8 @@ import '../models/goal.dart';
 // URLs base
 //const String baseUrl = "http://192.168.1.113:8000"; //Jaz
 ////const String baseUrl = "http://192.168.0.106:8000"; // Jaz 2
-//const String baseUrl = "http://192.168.1.45:8000"; //Jaz 3
-const String baseUrl = "http://192.168.0.162:8000";// guardo el mio je
+const String baseUrl = "http://192.168.1.45:8000"; //Jaz 3
+//const String baseUrl = "http://192.168.0.162:8000";// guardo el mio je
 //const String baseUrl = "http://127.0.0.1:8000"; //compu local
 //const String baseUrl = "http://172.16.195.79:8000"; // IP de la facu
 const String apiUrl = "$baseUrl/api";
@@ -1061,7 +1061,7 @@ Future<Goal> fetchGoal(int id) async {
       );
       return res.statusCode == 200
           ? jsonDecode(res.body)
-          : {'error': 'No se pudo realizar la simulación'};
+          : {'error': 'No se pudo conseguir el valor de la tasa de prestamos personales'};
     } catch (e) {
       return {'error': 'Error de conexión con el servidor'};
     }
@@ -1085,7 +1085,7 @@ Future<Goal> fetchGoal(int id) async {
       );
       return res.statusCode == 200
           ? jsonDecode(res.body)
-          : {'error': 'No se pudo realizar la simulación'};
+          : {'error': 'No se pudo conseguir el valor del TNA'};
     } catch (e) {
       return {'error': 'Error de conexión con el servidor'};
     }
@@ -1113,7 +1113,7 @@ Future<Goal> fetchGoal(int id) async {
 
       return res.statusCode == 200
           ? jsonDecode(res.body)
-          : {'error': 'No se pudo realizar la simulación'};
+          : {'error': 'No se pudo conseguir el valor de la criptomoneda'};
     } catch (e) {
       return {'error': 'Error de conexión con el servidor'};
     }

@@ -316,16 +316,17 @@ Future<void> _checkCurrency() async {
           const LoadingWidget(message: "Simulando inversión..."),
         if (!isLoadingPf && resultadoPf != null) ...[
           if (resultadoPf!['error'] != null)
-            Text(resultadoPf!['error'],
-                style: const TextStyle(color: Colors.red, fontSize: 16),
-                textAlign: TextAlign.center)
+            EmptyStateWidget(
+              icon: Icons.error_outline,
+              title: "No se pudo realizar la simulación",
+              message: resultadoPf!['error'],
+            )
           else
             SimulationResultCard(
               resultado: resultadoPf!,
-              ultimaActualizacion:
-                  resultadoPf!['ultima_actualizacion']?.toString(),
+              ultimaActualizacion: resultadoPf!['ultima_actualizacion']?.toString(),
             ),
-        ],
+        ]
       ],
     );
   }
@@ -488,15 +489,17 @@ Future<void> _checkCurrency() async {
           const LoadingWidget(message: "Simulando inversión..."),
         if (!isLoadingCrypto && resultadoCrypto != null) ...[
           if (resultadoCrypto!['error'] != null)
-            Text(resultadoCrypto!['error'],
-                style: const TextStyle(color: Colors.red))
+            EmptyStateWidget(
+              icon: Icons.error_outline,
+              title: "No se pudo realizar la simulación",
+              message: resultadoCrypto!['error'],
+            )
           else
             SimulationResultCard(
               resultado: resultadoCrypto!,
-              ultimaActualizacion:
-                  resultadoCrypto!['ultima_actualizacion']?.toString(),
+              ultimaActualizacion: resultadoCrypto!['ultima_actualizacion']?.toString(),
             ),
-        ],
+        ]
       ],
     );
   }

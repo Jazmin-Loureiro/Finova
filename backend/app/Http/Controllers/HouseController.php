@@ -79,9 +79,10 @@ class HouseController extends Controller
     // 💵 Balance de referencia SIEMPRE en USD
     $balanceRef = $balanceUSD;
 
+
     // Ajuste suave solo para Argentina (sin tocar la conversión)
     if ($code === 'ARS') {
-        $balanceRef = $balanceRef * 2.35; 
+        $balanceRef = $balanceRef * 3.5; 
     }
 
     // 📌 Texto de referencia que mostrás al usuario

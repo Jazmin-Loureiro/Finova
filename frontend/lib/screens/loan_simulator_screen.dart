@@ -84,7 +84,6 @@ class _LoanSimulatorScreenState extends State<LoanSimulatorScreen> {
             title: "Simulador de préstamos fuente: BCRA",
             message: "El simulador de préstamos te permite calcular el costo total de un préstamo personal en función del monto y la cantidad de cuotas seleccionadas. "
                     "Esto es posible a través de las tasas de interés y otros costos asociados del BCRA.",
-            iconSize: 25,
           ),
         ),
       ],

@@ -168,15 +168,13 @@ class HouseExtrasWidget extends StatelessWidget {
                 ),
               ),
 
-              const SizedBox(width: 6),
-
               InfoIcon(
                 title: "¿Qué son los extras?",
                 message:
                     "Los extras son decoraciones especiales para tu casa que se desbloquean "
                     "cuando subís de nivel. Cada objeto se agrega automáticamente a tu casa "
                     "en cuanto alcanzás el nivel requerido.",
-                iconSize: 20,
+                iconSize: 22,
               ),
             ],
           ),

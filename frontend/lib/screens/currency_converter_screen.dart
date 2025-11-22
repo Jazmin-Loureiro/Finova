@@ -140,14 +140,14 @@ class _CurrencyConverterScreenState extends State<CurrencyConverterScreen> {
                                       fontWeight: FontWeight.bold,
                                     ),
                                   ),
-                                  const SizedBox(width: 6),
+                             
                                   InfoIcon(
                                     title: 'Conversión de moneda',
                                     message:
                                         'Fuente: Open Exchange Rates\n'
                                         'Última actualización: ${DateFormat('dd/MM/yyyy').format(toCurrency!.updatedAt!)}\n\n'
                                         'Este valor es estimativo y puede variar según el mercado.',
-                                    iconSize: 20,
+                                    iconSize: 24,
                                   ),
                                 ],
                               ),

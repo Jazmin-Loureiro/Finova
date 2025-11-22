@@ -142,7 +142,6 @@ Future<void> _checkExpiredGoals() async {
           message:
               'Las metas financieras te ayudan a planificar y administrar tu dinero para alcanzar objetivos concretos.\n\n'
               'Establecé un monto y un plazo estimado, y al generar una transacción, Finova reservará automáticamente el dinero que asignes a esa meta para ayudarte a cumplirla.',
-          iconSize: 25,
         ),
         /*
         IconButton(

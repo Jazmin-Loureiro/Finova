@@ -237,7 +237,6 @@ Future<void> _checkCurrency() async {
                       letterSpacing: 0.8,
                     ),
                   ),
-                  const SizedBox(width: 8),
                   // Ícono de información
                   const InfoIcon(
                     title: "¿Qué es un plazo fijo?",
@@ -245,7 +244,7 @@ Future<void> _checkCurrency() async {
                         "Es una inversión donde depositás dinero durante un tiempo determinado "
                         "y obtenés intereses al finalizar. No podés retirarlo antes del vencimiento.\n\n"
                         "Ejemplo: \$100.000 a 30 días genera una ganancia aprox. de \$9.410 con una TNA del 114,4%.",
-                    iconSize: 22, // opcional
+                    iconSize: 24, // opcional
                   ),
                 ],
               ),
@@ -370,14 +369,14 @@ Future<void> _checkCurrency() async {
                       ),
                     ),
 
-                    const SizedBox(height: 6),
+          
 
                     const InfoIcon(
                       title: "¿Qué es una inversión cripto?",
                       message:
                           "Invertir en criptomonedas significa comprar activos digitales como Bitcoin o Ethereum, "
                           "esperando que su valor aumente con el tiempo. Son volátiles, por lo que el riesgo es mayor.",
-                      iconSize: 20,
+                      iconSize: 24,
                     ),
                   ],
                 ),

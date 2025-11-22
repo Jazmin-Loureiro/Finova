@@ -162,12 +162,11 @@ class _ChallengeProfileScreenState extends State<ChallengeProfileScreen>
                       color: cs.onSurface,
                     ),
                   ),
-                  const SizedBox(width: 6),
                   InfoIcon(
                     title: "Racha activa",
                     message:
                         "Es la cantidad de días seguidos en los que completaste al menos un desafío. Si un día no completás ninguno, la racha vuelve a 0. También se muestra tu récord histórico de días consecutivos.",
-                    iconSize: 18,
+                    iconSize: 22,
                   ),
                   const Spacer(),
                   Text(
@@ -338,8 +337,6 @@ class _ChallengeProfileScreenState extends State<ChallengeProfileScreen>
   }
 
   Widget _buildProfileContent(Map<String, dynamic> data) {
-    print("DATA ===> $data");
-
     final cs = Theme.of(context).colorScheme;
 
     final user = data['user'] ?? {};
@@ -474,12 +471,12 @@ class _ChallengeProfileScreenState extends State<ChallengeProfileScreen>
                           color: Colors.white, // BLANCO SIEMPRE
                         ),
                       ),
-                      const SizedBox(width: 6),
+             
                       InfoIcon(
                         title: "Nivel y puntos",
                         message:
                             "Tus puntos se suman cada vez que completás desafíos. Cada nivel requiere una cantidad determinada de puntos. La barra y el texto de abajo muestran qué tan cerca estás del próximo nivel y cuántos puntos te faltan.",
-                        iconSize: 18,
+                        iconSize: 22,
                       ),
                     ],
                   ),
@@ -566,13 +563,13 @@ class _ChallengeProfileScreenState extends State<ChallengeProfileScreen>
                   title: "Resumen de desafíos",
                   message:
                       "Completados son los desafíos que terminaste con éxito. En progreso son los que aceptaste y todavía están activos. Fallidos son los desafíos que no pudiste completar a tiempo o no cumplieron la condición definida.",
-                  iconSize: 18,
+                  iconSize: 22,
                 ),
-                const SizedBox(width: 6),
+                
                 Text(
                   '¿Qué significa cada uno?',
                   style: TextStyle(
-                    fontSize: 12,
+                    fontSize: 14,
                     color: cs.onSurfaceVariant,
                   ),
                 ),
@@ -601,15 +598,14 @@ class _ChallengeProfileScreenState extends State<ChallengeProfileScreen>
                         'Tasa de éxito',
                         style: TextStyle(
                           color: cs.onSurfaceVariant,
-                          fontSize: 13,
+                          fontSize: 14,
                         ),
                       ),
-                      const SizedBox(width: 6),
                       InfoIcon(
                         title: "Tasa de éxito",
                         message:
                             "Representa el porcentaje de desafíos que lograste completar en relación al total de desafíos que iniciaste. Se calcula usando los desafíos completados, en progreso y fallidos. Cuanto más alta sea la tasa, mayor es tu consistencia realizando desafíos.",
-                        iconSize: 18,
+                        iconSize: 22,
                       ),
                     ],
                   ),
@@ -683,12 +679,12 @@ class _ChallengeProfileScreenState extends State<ChallengeProfileScreen>
                           color: cs.onSurface,
                         ),
                       ),
-                      const SizedBox(width: 6),
+                 
                       InfoIcon(
                         title: "Insignias",
                         message:
                             "Son logros especiales que desbloqueás al cumplir metas. Representan hitos clave de tu progreso.",
-                        iconSize: 18,
+                        iconSize: 22,
                       ),
                     ],
                   ),

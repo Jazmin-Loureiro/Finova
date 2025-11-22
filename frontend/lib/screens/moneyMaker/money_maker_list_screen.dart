@@ -78,7 +78,6 @@ class _MoneyMakerListScreenState extends State<MoneyMakerListScreen> {
               'Las fuentes de dinero representan tus cuentas, billeteras o medios de pago.\n\n'
               'Finova te permite gestionar múltiples fuentes para tener un control total de tus finanzas.\n\n'
               'Además, podés asignar una moneda específica a cada fuente y administrar distintos tipos de divisas con el tipo de cambio actualizado en tiempo real.',
-          iconSize: 25,
         ),
         Container(
           margin: const EdgeInsets.all(8),
@@ -281,7 +280,7 @@ class _MoneyMakerListScreenState extends State<MoneyMakerListScreen> {
                                                     '• Nuevas metas\n\n'
                                                     '🔓 Cuando una meta finaliza o se vence, ese dinero vuelve automáticamente a estar disponible.\n\n'
                                                     '💡 Consejo: Reservar fondos te ayuda a cumplir objetivos sin gastar por error el dinero destinado a tus metas.',
-                                                iconSize: 20,
+                                               iconSize: 25,
                                               ),
                                             ],
                                           ),
@@ -296,14 +295,13 @@ class _MoneyMakerListScreenState extends State<MoneyMakerListScreen> {
                                                   fontSize: 17,
                                                 ),
                                               ),
-                                              const SizedBox(width: 6),
                                               InfoIcon(
                                                 title: 'Conversión de moneda',
                                                 message:
                                                     'Fuente: Open Exchange Rates\n'
                                                     'Última actualización: ${DateFormat('dd/MM/yyyy HH:mm').format(fechaLocal)}\n\n'                                                    
                                                     'Este valor es estimativo y puede variar según el mercado.',
-                                                iconSize: 20,
+                                                iconSize: 25,
                                               ),
                                             ],
                                           ),

@@ -392,7 +392,6 @@ class _MoneyMakerListScreenState extends State<MoneyMakerListScreen> {
                           }),
                         ),
 
-                        const SizedBox(height: 15),
                       //Sección de transacciones recientes
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -434,7 +433,6 @@ class _MoneyMakerListScreenState extends State<MoneyMakerListScreen> {
                           ],
                         ),
                       ),
-                      const SizedBox(height: 10),
 
                       if (isPageLoading)
                         const Center(child: CircularProgressIndicator())

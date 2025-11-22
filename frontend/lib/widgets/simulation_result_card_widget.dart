@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'info_icon_widget.dart';
+import '../helpers/format_utils.dart';
 
 class SimulationResultCard extends StatefulWidget {
   final Map<String, dynamic> resultado;
@@ -30,7 +31,7 @@ String _formatDate(dynamic dateInput) {
 }
 
 const Map<String, String> _symbolByCode = {
-  'USD': r'$',
+  'USD': r'$',   // símbolo DÓLAR
   'ARS': r'$',
   'EUR': '€',
   'BRL': r'R$',
@@ -38,6 +39,11 @@ const Map<String, String> _symbolByCode = {
   'COP': r'$',
   'MXN': r'$',
 };
+
+String cur(double value, String currencyCode) {
+  final symbol = _symbolByCode[currencyCode.toUpperCase()] ?? r'$';
+  return formatCurrency(value, currencyCode, symbolOverride: symbol);
+}
 
 String _fmt(double value, String code) {
   final symbol = _symbolByCode[code.toUpperCase()] ?? r'$';
@@ -127,7 +133,7 @@ class _SimulationResultCardState extends State<SimulationResultCard>
       final double rendimiento = _asDouble(r['rendimiento_estimado_%']);
 
       // Usamos ARS para PF (fuente BCRA); si querés hacerlo base-usuario también, pasame esos campos desde el backend.
-      final formatterARS = (double v) => _fmt(v, 'ARS');
+      final formatterARS = (double v) => cur(v, 'ARS');
 
       final comp = r['comparativa'] ?? {};
       final estado = comp['estado'] ?? 'neutral';
@@ -238,7 +244,7 @@ class _SimulationResultCardState extends State<SimulationResultCard>
           ),
           const SizedBox(height: 10),
           _infoLine('Activo', '${r['activo'] ?? 'N/D'}', textColor),
-          _infoLine('Cotización actual', _fmt(precioUsd, 'USD'), textColor),
+          _infoLine('Cotización actual', cur(precioUsd, 'USD'), textColor),
 
           Row(
             children: [
@@ -246,8 +252,9 @@ class _SimulationResultCardState extends State<SimulationResultCard>
                 child: _infoLine(
                   'Monto invertido',
                   showBase
-                      ? '${_fmt(montoInicialUsd, "USD")} (${_fmt(montoInicialBase, baseCode)})'
-                      : _fmt(montoInicialUsd, "USD"),
+  ? '${cur(montoInicialUsd, "USD")} (${cur(montoInicialBase, baseCode)})'
+  : cur(montoInicialUsd, "USD"),
+
                   textColor,
                 ),
               ),
@@ -310,8 +317,8 @@ class _SimulationResultCardState extends State<SimulationResultCard>
                 child: _infoLine(
                   'Ganancia estimada',
                   showBase
-                      ? '${_fmt(gananciaUsd, "USD")} (${_fmt(gananciaBase, baseCode)})'
-                      : _fmt(gananciaUsd, "USD"),
+  ? '${cur(gananciaUsd, "USD")} (${cur(gananciaBase, baseCode)})'
+  : cur(gananciaUsd, "USD"),
                   gananciaPositiva
                       ? Colors.greenAccent.shade400
                       : Colors.redAccent.shade200,
@@ -331,8 +338,8 @@ class _SimulationResultCardState extends State<SimulationResultCard>
           _infoLine(
             'Monto estimado final',
             showBase
-                ? '${_fmt(montoFinalUsd, "USD")} (${_fmt(montoFinalBase, baseCode)})'
-                : _fmt(montoFinalUsd, "USD"),
+  ? '${cur(montoFinalUsd, "USD")} (${cur(montoFinalBase, baseCode)})'
+  : cur(montoFinalUsd, "USD"),
             textColor,
           ),
 
@@ -346,17 +353,17 @@ class _SimulationResultCardState extends State<SimulationResultCard>
 
 
     // -------------------- PRÉSTAMO --------------------
-    final formatterARS = (double v) => _fmt(v, 'ARS');
+    final fmtARS = (double v) => cur(v, 'ARS');
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _infoLine('Monto solicitado', formatterARS(_asDouble(r['capital'])), textColor),
+        _infoLine('Monto solicitado', fmtARS(_asDouble(r['capital'])), textColor),
         _infoLine('Cantidad de cuotas', '${r['cuotas']} cuotas', textColor),
         _infoLine('Tasa mensual', '${r['tasa_mensual']}%', textColor),
-        _infoLine('Cuota mensual', formatterARS(_asDouble(r['cuota_mensual'])), textColor),
-        _infoLine('Total a pagar', formatterARS(_asDouble(r['total_a_pagar'])), textColor),
-        _infoLine('Intereses totales', formatterARS(_asDouble(r['intereses_totales'])), textColor),
+        _infoLine('Cuota mensual', fmtARS(_asDouble(r['cuota_mensual'])), textColor),
+        _infoLine('Total a pagar', fmtARS(_asDouble(r['total_a_pagar'])), textColor),
+        _infoLine('Intereses totales', fmtARS(_asDouble(r['intereses_totales'])), textColor),
         _infoLine('CFT estimado', '${r['cft_estimado']}%', textColor),
         const Divider(height: 25),
         // 🧭 Tipo francés
@@ -454,10 +461,10 @@ class _SimulationResultCardState extends State<SimulationResultCard>
                   rows: (r['detalle_cuotas'] as List)
                       .map<DataRow>((c) => DataRow(cells: [
                             DataCell(Text('${c['n']}')),
-                            DataCell(Text(formatterARS(_asDouble(c['capital'])))),
-                            DataCell(Text(formatterARS(_asDouble(c['interes'])))),
-                            DataCell(Text(formatterARS(_asDouble(c['cuota'])))),
-                            DataCell(Text(formatterARS(_asDouble(c['saldo'])))),
+                            DataCell(Text(fmtARS(_asDouble(c['capital'])))),
+                            DataCell(Text(fmtARS(_asDouble(c['interes'])))),
+                            DataCell(Text(fmtARS(_asDouble(c['cuota'])))),
+                            DataCell(Text(fmtARS(_asDouble(c['saldo'])))),
                           ]))
                       .toList(),
                 ),

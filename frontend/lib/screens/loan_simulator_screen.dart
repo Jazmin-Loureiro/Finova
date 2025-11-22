@@ -216,19 +216,19 @@ class _LoanSimulatorScreenState extends State<LoanSimulatorScreen> {
                 const LoadingWidget(message: "Calculando préstamo..."),
               if (!isLoading && resultado != null) ...[
                 const SizedBox(height: 20),
+
                 if (resultado!['error'] != null)
-                  Text(
-                    resultado!['error'],
-                    style: const TextStyle(color: Colors.red, fontSize: 16),
-                    textAlign: TextAlign.center,
+                  EmptyStateWidget(
+                    icon: Icons.error_outline,
+                    title: "No se pudo realizar la simulación",
+                    message: resultado!['error'],
                   )
                 else
                   SimulationResultCard(
                     resultado: resultado!,
-                    ultimaActualizacion:
-                        resultado!['ultima_actualizacion']?.toString(),
+                    ultimaActualizacion: resultado!['ultima_actualizacion']?.toString(),
                   ),
-              ],
+              ]
             ],
           ),
         ),

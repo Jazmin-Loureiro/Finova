@@ -144,7 +144,7 @@ void saveCategory() async {
 
     return CustomScaffold(
       title: widget.category != null
-          ? 'Editar ${typeLabels[widget.type]}: ${widget.category!.name}'
+          ? 'Editar ${widget.category!.name}'
           : 'Nueva Categoría ${typeLabels[widget.type]}',
       currentRoute: '/category_form',
       showNavigation: false,

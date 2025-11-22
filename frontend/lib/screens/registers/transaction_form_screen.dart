@@ -332,6 +332,7 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
               key: _formKey,
                 child: ListView(
                   children: [
+                    const SizedBox(height: 8),
                     // =====================================================
                     // Categoría
                     // =====================================================
@@ -368,9 +369,15 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
                         ),
 
                         const SizedBox(width: 8),
-                        
+                          Container(
+                          decoration: BoxDecoration(
+                            color: Theme.of(context).colorScheme.primary,
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child:
                         IconButton(
                           icon: const Icon(Icons.add_rounded),
+                          color: Theme.of(context).colorScheme.onPrimary,
                           tooltip: 'Agregar categoría',
                           onPressed: () async {
                             final newCategory = await Navigator.push(
@@ -388,6 +395,7 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
                               });
                             }
                           },
+                        ),
                         ),
                       ],
                     ),
@@ -431,8 +439,16 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
                             },
                           ),
                         ),
+                        const SizedBox(width: 8),
+                        Container(
+                          decoration: BoxDecoration(
+                            color: Theme.of(context).colorScheme.primary,
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child:
                         IconButton(
                           icon: const Icon(Icons.add),
+                          color: Theme.of(context).colorScheme.onPrimary,
                           tooltip: 'Agregar fuente de dinero',
                           onPressed: () async {
                             final newMaker = await Navigator.push(
@@ -449,6 +465,7 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
                               });
                             }
                           },
+                        ),
                         ),
                       ],
                     ),

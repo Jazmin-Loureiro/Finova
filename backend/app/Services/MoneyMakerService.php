@@ -14,7 +14,7 @@ class MoneyMakerService
     public function listForUser($user)
     {
         $toCurrency = $user->currency->code;
-        $moneyMakers = $user->moneyMakers()->with('currency', 'type')->get();
+        $moneyMakers = $user->moneyMakers()->with('currency', 'type')->orderByDesc('active')->get();
 
         $totalInBase = 0;
 

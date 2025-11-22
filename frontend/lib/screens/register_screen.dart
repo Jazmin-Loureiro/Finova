@@ -454,12 +454,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                     ),
                                     onChanged: (val) => password = val,
                                     validator: (val) { 
-                                      if (val == null || val.isEmpty) {
-                                        return 'Obligatorio';
-                                      }
-                                      if (val.length < 6) {
-                                        return 'Mínimo 6 caracteres';
-                                      }
+                                      if (val == null || val.isEmpty)  return 'Obligatorio';
+                                      if (val.length < 6 ) return 'Mínimo 6 caracteres';
+                                      if (!RegExp(r'[A-Z]').hasMatch(val) ) return 'Debe contener al menos una letra mayúscula';
                                       return null;
                                     },
                                   ),

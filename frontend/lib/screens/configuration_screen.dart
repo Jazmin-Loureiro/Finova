@@ -280,13 +280,27 @@ class _ConfigurationScreenState extends State<ConfigurationScreen>
                   icon: Icons.logout,
                   text: "Cerrar sesión",
                   color: Colors.orange,
-                  onTap: () {
-                    api.logout();
-                    Navigator.pushAndRemoveUntil(
-                      context,
-                      MaterialPageRoute(builder: (_) => const LoginScreen()),
-                      (route) => false,
+                  onTap: () async {
+                     final confirm = await showDialog<bool>(
+                      context: context,
+                      builder: (_) => const ConfirmDialogWidget(
+                        title: "Cerrar sesión",
+                        message:
+                            "¿Seguro que querés cerrar tu sesión?",
+                        confirmText: "Cerrar sesión",
+                        cancelText: "Cancelar",
+                        confirmColor: Colors.red,
+                      ),
                     );
+
+                    if (confirm == true) {
+                      await api.logout();
+                      Navigator.pushAndRemoveUntil(
+                        context,
+                        MaterialPageRoute(builder: (_) => const LoginScreen()),
+                        (route) => false,
+                      );
+                    }
                   },
                 ),
 

@@ -99,7 +99,7 @@ class ExportPdfServices {
                         children: [
                           for (var h in [
                             'Fecha',
-                            'Nombre de registro',
+                            'Descripción',
                             'Categoría',
                             'Tipo',
                             'Monto'

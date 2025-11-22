@@ -24,7 +24,7 @@ class ExportCsvServices {
       // Título de la sección
       buffer.writeln('Fuente de dinero: ${m.name}');
       // Encabezado de columnas
-      buffer.writeln('Fecha,Nombre,Categoría,Tipo,Monto,Moneda');
+      buffer.writeln('Fecha,Descripción,Categoría,Tipo,Monto,Moneda');
 
       double total = 0;
 

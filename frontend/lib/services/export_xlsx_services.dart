@@ -36,7 +36,7 @@ class ExportXlsxServices {
       rowIndex++;
 
       // Encabezados 
-      final headers = ['Fecha', 'Nombre', 'Categoría', 'Tipo', 'Símbolo', 'Monto', 'Moneda'];
+      final headers = ['Fecha', 'Descripción', 'Categoría', 'Tipo', 'Símbolo', 'Monto', 'Moneda'];
       for (var col = 0; col < headers.length; col++) {
         final cell = sheet.cell(CellIndex.indexByColumnRow(columnIndex: col, rowIndex: rowIndex));
         cell.value = TextCellValue(headers[col]);

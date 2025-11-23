@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
 import '../services/api_service.dart';
 import 'login_screen.dart';
-import '../widgets/casa_widget.dart';
-import '../widgets/home_info_widget.dart';
-import '../widgets/success_dialog_widget.dart';
+import '../widgets/house/house_widget.dart';
+import '../widgets/house/house_info_widget.dart';
+import '../widgets/dialogs/success_dialog_widget.dart';
 import '../widgets/custom_scaffold.dart';
-import '../widgets/loading_widget.dart';   // 👈 AGREGAR IMPORT
+import '../widgets/loading_widget.dart'; 
+import '../main.dart';
+import 'package:provider/provider.dart';
+import '../providers/house_provider.dart';
 
 class HomeScreen extends StatefulWidget {
   final bool showSuccessDialog;
@@ -16,16 +19,21 @@ class HomeScreen extends StatefulWidget {
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen> {
+class _HomeScreenState extends State<HomeScreen> with RouteAware {
   final ApiService api = ApiService();
-
-  bool isLoading = true; // 👈 LOADING GENERAL
+  bool isLoading = true;
 
   @override
   void initState() {
     super.initState();
 
-    // Dialog de inicio correcto
+     // 🔥 Cargar la casa inmediatamente cuando se entra al Home
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        context.read<HouseProvider>().load();
+      }
+    });
+
     if (widget.showSuccessDialog) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         showDialog(
@@ -39,25 +47,31 @@ class _HomeScreenState extends State<HomeScreen> {
       });
     }
 
-    // Simular carga general de la screen mientras cargan los widgets
-    Future.wait([
-      Future.delayed(const Duration(milliseconds: 300)), 
-    ]).then((_) {
+    Future.delayed(const Duration(milliseconds: 300), () {
       if (mounted) setState(() => isLoading = false);
     });
   }
 
-  void logout() async {
-    await api.logout();
-    if (!mounted) return;
-
-    await storage.delete(key: 'token');
-    Navigator.pushAndRemoveUntil(
-      context,
-      MaterialPageRoute(builder: (_) => const LoginScreen()),
-      (route) => false,
-    );
+  // 🔥 SUSCRIPCIÓN AL OBSERVADOR
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    routeObserver.subscribe(this, ModalRoute.of(context)! as PageRoute);
   }
+
+  // 🔥 CUANDO EL USUARIO VUELVE A ESTA SCREEN → REFRESCAR CASA
+  @override
+  void didPopNext() {
+    super.didPopNext();
+    context.read<HouseProvider>().load();
+  }
+
+  @override
+  void dispose() {
+    routeObserver.unsubscribe(this);
+    super.dispose();
+  }
+
 
   @override
   Widget build(BuildContext context) {

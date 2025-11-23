@@ -5,7 +5,7 @@ import 'package:frontend/widgets/buttons/button_save.dart';
 import 'package:frontend/widgets/custom_scaffold.dart';
 import 'package:frontend/widgets/icon_picker_field.dart';
 import 'package:frontend/widgets/loading_widget.dart';
-import 'package:frontend/widgets/success_dialog_widget.dart';
+import 'package:frontend/widgets/dialogs/success_dialog_widget.dart';
 import '../../widgets/color_pickerfield.widget.dart';
 import '../../services/api_service.dart';
 import 'package:frontend/models/category.dart';

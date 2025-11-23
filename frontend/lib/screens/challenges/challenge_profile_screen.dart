@@ -1,15 +1,15 @@
 import 'dart:ui';
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
-import '../widgets/custom_scaffold.dart';
-import '../services/api_service.dart';
-import '../widgets/loading_widget.dart';
-import '../widgets/badge_grid_widget.dart';
-import '../widgets/custom_refresh_wrapper.dart';
-import '../../main.dart';
-import '../widgets/info_icon_widget.dart';
-import '../screens/configuration_screen.dart';
-import '../widgets/house_extras_widget.dart';
+import '../../widgets/custom_scaffold.dart';
+import '../../services/api_service.dart';
+import '../../widgets/loading_widget.dart';
+import '../../widgets/badge_grid_widget.dart';
+import '../../widgets/custom_refresh_wrapper.dart';
+import '../../../main.dart';
+import '../../widgets/info_icon_widget.dart';
+import '../configuration_screen.dart';
+import '../../widgets/house/house_extras_widget.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:multiavatar/multiavatar.dart';
 

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:frontend/widgets/custom_refresh_wrapper.dart';
 import 'package:frontend/widgets/info_icon_widget.dart';
-import 'package:frontend/widgets/success_dialog_widget.dart';
+import 'package:frontend/widgets/dialogs/success_dialog_widget.dart';
 import 'package:intl/intl.dart';
 import 'package:frontend/helpers/format_utils.dart';
 import 'package:frontend/models/goal.dart';

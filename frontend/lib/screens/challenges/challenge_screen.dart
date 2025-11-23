@@ -1,19 +1,19 @@
 import 'package:flutter/material.dart';
-import '../services/api_service.dart';
-import '../widgets/custom_scaffold.dart';
-import '../widgets/loading_widget.dart';
-import '../widgets/success_dialog_widget.dart';
-import '../widgets/confirm_dialog_widget.dart';
-import '../../main.dart'; // 👈 para usar routeObserver
-import '../widgets/custom_refresh_wrapper.dart';
+import '../../services/api_service.dart';
+import '../../widgets/custom_scaffold.dart';
+import '../../widgets/loading_widget.dart';
+import '../../widgets/dialogs/success_dialog_widget.dart';
+import '../../widgets/dialogs/confirm_dialog_widget.dart';
+import '../../../main.dart'; // 👈 para usar routeObserver
+import '../../widgets/custom_refresh_wrapper.dart';
 
 
 
 // 🔹 Nuevos imports modularizados
-import '../widgets/empty_state_widget.dart';
-import '../widgets/challenge_card_widget.dart';
-import '../widgets/meta_chips_widget.dart';
-import '../helpers/challenge_utils.dart';
+import '../../widgets/empty_state_widget.dart';
+import '../../widgets/challenge_card_widget.dart';
+import '../../widgets/meta_chips_widget.dart';
+import '../../helpers/challenge_utils.dart';
 
 class ChallengeScreen extends StatefulWidget {
   const ChallengeScreen({super.key});

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:frontend/widgets/confirm_dialog_widget.dart';
+import 'package:frontend/widgets/dialogs/confirm_dialog_widget.dart';
 import 'package:intl/intl.dart';
 import 'package:frontend/helpers/icon_utils.dart';
 import 'package:frontend/helpers/format_utils.dart';

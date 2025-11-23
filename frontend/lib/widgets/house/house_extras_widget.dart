@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import '../../widgets/info_icon_widget.dart';
+import '../../../widgets/info_icon_widget.dart';
 
 
 void showExtraInfo(BuildContext context, Map<String, dynamic> extra, bool unlocked) {

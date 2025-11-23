@@ -6,7 +6,7 @@ import '../services/api_service.dart';
 import 'register_screen.dart';
 import 'home_screen.dart';
 import '../widgets/loading_widget.dart';
-import '../widgets/success_dialog_widget.dart';
+import '../widgets/dialogs/success_dialog_widget.dart';
 import 'request_reactivation_screen.dart';
 
 class LoginScreen extends StatefulWidget {

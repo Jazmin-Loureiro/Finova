@@ -5,7 +5,7 @@ import 'package:frontend/widgets/buttons/button_delete.dart';
 import 'package:frontend/widgets/buttons/button_save.dart';
 import 'package:frontend/widgets/custom_scaffold.dart';
 import 'package:frontend/widgets/loading_widget.dart';
-import 'package:frontend/widgets/success_dialog_widget.dart';
+import 'package:frontend/widgets/dialogs/success_dialog_widget.dart';
 import '../../services/api_service.dart';
 import '../../models/currency.dart';
 import '../../models/goal.dart';

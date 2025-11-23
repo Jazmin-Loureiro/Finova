@@ -2,13 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:frontend/screens/registers/register_list_screen.dart';
 
 // 🔹 Importá tus pantallas reales
-import '../screens/challenge_screen.dart';
+import '../screens/challenges/challenge_screen.dart';
 import '../screens/currency_converter_screen.dart';
 import '../screens/export_reports_screen.dart';
-import '../screens/loan_simulator_screen.dart';
-import '../screens/investment_simulator_screen.dart';
+import '../screens/simulations/loan_simulator_screen.dart';
+import '../screens/simulations/investment_simulator_screen.dart';
 import '../screens/category/category_list.dart';
-import '../screens/challenge_profile_screen.dart';
+import '../screens/challenges/challenge_profile_screen.dart';
 import '../screens/home_screen.dart';
 
 class CustomDrawer extends StatelessWidget {

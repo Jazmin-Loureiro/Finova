@@ -13,7 +13,7 @@ import '../services/api_service.dart';
 import '../models/currency.dart';
 import '../widgets/currency_text_field.dart';
 import '../widgets/loading_widget.dart';
-import '../widgets/success_dialog_widget.dart';
+import '../widgets/dialogs/success_dialog_widget.dart';
 import '../widgets/user_avatar_widget.dart';
 
 

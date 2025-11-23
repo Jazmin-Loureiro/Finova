@@ -3,11 +3,11 @@ import 'package:frontend/helpers/format_utils.dart';
 import 'package:frontend/models/currency.dart';
 import 'package:frontend/widgets/currency_text_field.dart';
 import 'package:frontend/widgets/info_icon_widget.dart';
-import '../services/api_service.dart';
-import '../widgets/custom_scaffold.dart';
-import '../widgets/simulation_result_card_widget.dart';
-import '../widgets/loading_widget.dart';
-import '../widgets/empty_state_widget.dart';
+import '../../services/api_service.dart';
+import '../../widgets/custom_scaffold.dart';
+import '../../widgets/simulation_result_card_widget.dart';
+import '../../widgets/loading_widget.dart';
+import '../../widgets/empty_state_widget.dart';
 
 class LoanSimulatorScreen extends StatefulWidget {
   const LoanSimulatorScreen({super.key});

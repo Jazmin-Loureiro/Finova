@@ -5,14 +5,12 @@ import '../services/api_service.dart';
 class HouseProvider extends ChangeNotifier {
   final ApiService api = ApiService();
   Map<String, dynamic>? houseData;
-  Timer? _timer;
 
   HouseProvider() {
-    _loadHouse(); // primera carga inmediata
-    _timer = Timer.periodic(const Duration(seconds: 4), (_) => _loadHouse());
+    load();
   }
 
-  Future<void> _loadHouse() async {
+  Future<void> load() async {
     try {
       final data = await api.getHouseStatus();
       houseData = data;
@@ -22,9 +20,11 @@ class HouseProvider extends ChangeNotifier {
     }
   }
 
-  @override
-  void dispose() {
-    _timer?.cancel();
-    super.dispose();
+  // 🔥 Resetea la casa al cambiar usuario
+  void reset() {
+    houseData = null;
+    notifyListeners();
   }
 }
+
+

@@ -5,10 +5,10 @@ import 'package:frontend/helpers/format_utils.dart';
 import 'package:frontend/helpers/icon_utils.dart';
 import 'package:frontend/widgets/bottom_sheet_pickerField.dart';
 import 'package:frontend/widgets/buttons/button_save.dart';
-import 'package:frontend/widgets/completed_dialog_widget.dart';
+import 'package:frontend/widgets/dialogs/completed_dialog_widget.dart';
 import 'package:frontend/widgets/custom_scaffold.dart';
 
-import '../extra_unlocked_screen.dart';
+import '../challenges/extra_unlocked_screen.dart';
 
 import '../../services/api_service.dart';
 import '../../models/money_maker.dart';
@@ -19,13 +19,13 @@ import '../../models/category.dart';
 import '../moneyMaker/money_maker_form_screen.dart';
 import '../category/category_form_screen.dart';
 import '../../widgets/currency_text_field.dart';
-import '../../widgets/success_dialog_widget.dart';
+import '../../widgets/dialogs/success_dialog_widget.dart';
 import '../../widgets/loading_widget.dart';
 
 import 'package:provider/provider.dart';
 import '../../providers/register_provider.dart';
 import 'register_list_screen.dart';
-import '../challenge_completed_screen.dart';
+import '../challenges/challenge_completed_screen.dart';
 
 class TransactionFormScreen extends StatefulWidget {
   final String type;

@@ -9,7 +9,7 @@ import '../../models/currency.dart';
 import '../../models/money_maker.dart';
 import '../../widgets/currency_text_field.dart';
 import '../../widgets/loading_widget.dart';
-import '../../widgets/success_dialog_widget.dart';
+import '../../widgets/dialogs/success_dialog_widget.dart';
 import '../../widgets/color_pickerfield.widget.dart';
 import '../../widgets/custom_scaffold.dart';
 

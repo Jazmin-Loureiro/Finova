@@ -2,13 +2,15 @@ import 'package:flutter/material.dart';
 import '../widgets/custom_scaffold.dart';
 import '../services/api_service.dart';
 import '../widgets/loading_widget.dart';
-import '../widgets/confirm_dialog_widget.dart';
-import '../widgets/success_dialog_widget.dart';
+import '../widgets/dialogs/confirm_dialog_widget.dart';
+import '../widgets/dialogs/success_dialog_widget.dart';
 import '../screens/user_form_screen.dart';
 import 'login_screen.dart';
 import '../models/currency.dart';
 import '../widgets/custom_refresh_wrapper.dart';
-import '../main.dart'; // 👈 para usar routeObserver
+import '../main.dart'; 
+import 'package:provider/provider.dart';
+import '../providers/house_provider.dart';
 
 class ConfigurationScreen extends StatefulWidget {
   const ConfigurationScreen({super.key});
@@ -295,6 +297,10 @@ class _ConfigurationScreenState extends State<ConfigurationScreen>
 
                     if (confirm == true) {
                       await api.logout();
+
+                      // 🔥 Limpia la casa vieja ANTES de cambiar de pantalla
+                      context.read<HouseProvider>().reset();
+
                       Navigator.pushAndRemoveUntil(
                         context,
                         MaterialPageRoute(builder: (_) => const LoginScreen()),

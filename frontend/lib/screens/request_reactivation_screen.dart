@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../services/api_service.dart';
-import '../widgets/success_dialog_widget.dart';
+import '../widgets/dialogs/success_dialog_widget.dart';
 import '../widgets/loading_widget.dart';
 
 class RequestReactivationScreen extends StatefulWidget {

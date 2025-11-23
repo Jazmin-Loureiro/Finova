@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:frontend/widgets/confirm_dialog_widget.dart';
+import 'package:frontend/widgets/dialogs/confirm_dialog_widget.dart';
 
 class ButtonSave extends StatelessWidget {
   final String title;          

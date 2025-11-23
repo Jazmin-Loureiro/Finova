@@ -5,6 +5,7 @@ import 'screens/home_screen.dart';
 import 'services/api_service.dart';
 import 'providers/house_provider.dart';
 import 'providers/register_provider.dart';
+import 'providers/theme_provider.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'screens/home/onboarding_screen.dart';
@@ -33,6 +34,7 @@ void main() async {
       providers: [
         ChangeNotifierProvider(create: (_) => RegisterProvider()),
         ChangeNotifierProvider(create: (_) => HouseProvider()),
+        ChangeNotifierProvider(create: (_) => ThemeProvider()),
       ],
       child: const MyApp(),
     ),
@@ -134,7 +136,7 @@ class _MyAppState extends State<MyApp> {
         useMaterial3: true,
       ),
 
-      themeMode: ThemeMode.system,
+      themeMode: context.watch<ThemeProvider>().themeMode,
       locale: const Locale('es', 'ES'),
       supportedLocales: const [
         Locale('es', 'ES'),

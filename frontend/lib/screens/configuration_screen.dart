@@ -11,6 +11,7 @@ import '../widgets/custom_refresh_wrapper.dart';
 import '../main.dart'; 
 import 'package:provider/provider.dart';
 import '../providers/house_provider.dart';
+import '../providers/theme_provider.dart';
 
 class ConfigurationScreen extends StatefulWidget {
   const ConfigurationScreen({super.key});
@@ -232,6 +233,22 @@ class _ConfigurationScreenState extends State<ConfigurationScreen>
                   ),
                 ),
                 const SizedBox(height: 20),
+
+                // BOTÓN CAMBIAR TEMA
+                _actionTile(
+                  icon: context.watch<ThemeProvider>().themeMode == ThemeMode.dark
+                      ? Icons.dark_mode
+                      : Icons.light_mode,
+                  text: context.watch<ThemeProvider>().themeMode == ThemeMode.dark
+                      ? "Usar tema claro"
+                      : "Usar tema oscuro",
+                  color: cs.primary,
+                  onTap: () {
+                    context.read<ThemeProvider>().toggleTheme();
+                  },
+                ),
+
+                                const SizedBox(height: 14),
 
                 // BOTÓN EDITAR PERFIL
                 _actionTile(

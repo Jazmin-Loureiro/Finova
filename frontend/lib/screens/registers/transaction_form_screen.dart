@@ -663,7 +663,7 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
             child: Container(
               color: Theme.of(context).scaffoldBackgroundColor,
               child: const Center(
-                child: LoadingWidget(message: 'Guardando fuente de dinero...'),
+                child: LoadingWidget(message: 'Creando registro...'),
               ),
             ),
           ),

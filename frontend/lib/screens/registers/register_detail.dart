@@ -388,7 +388,7 @@ Future<bool> _cancelReserve() async {
                         ),
                       ),
 
-                      if (register.reserved_for_goal != null && register.reserved_for_goal! > 0)
+                      if (register.reserved_for_goal != null && register.reserved_for_goal! > 0 && register.goal!.state != 'completed')
                         Padding(
                           padding: const EdgeInsets.only(top: 24),
                           child: SizedBox(

@@ -162,7 +162,7 @@ class HouseExtrasWidget extends StatelessWidget {
               Text(
                 "Objetos extras de la casa",
                 style: TextStyle(
-                  fontSize: 18,
+                  fontSize: 17.5,
                   fontWeight: FontWeight.bold,
                   color: cs.onSurface,
                 ),

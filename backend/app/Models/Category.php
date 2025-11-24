@@ -20,6 +20,7 @@ class Category extends Model
         'icon',
         'active',
         'is_default',
+        'is_system',
     ];
 
     /**

@@ -19,6 +19,7 @@ import '../models/goal.dart';
 ////const String baseUrl = "http://192.168.0.106:8000"; // Jaz 2
 const String baseUrl = "http://192.168.1.45:8000"; //Jaz 3
 //const String baseUrl = "http://192.168.0.162:8000";// guardo el mio je
+//const String baseUrl = 'https://finovabackend-production.up.railway.app';// guardo el mio je
 //const String baseUrl = "http://127.0.0.1:8000"; //compu local
 //const String baseUrl = "http://172.16.195.79:8000"; // IP de la facu
 const String apiUrl = "$baseUrl/api";
@@ -474,6 +475,37 @@ Future<Map<String, dynamic>?> createTransaction(
         return jsonDecode(res.body);
       } catch (_) {
         return {'error': 'Error al crear la transacción'};
+      }
+    }
+  } catch (e) {
+    return {'error': 'No se pudo conectar con el servidor'};
+  }
+}
+
+/////////////////////////////////////////////////////////////////// Crear transferencia entre fuentes de dinero
+Future<Map<String, dynamic>?> createTransfer(
+  double amount,
+  int fromMoneyMaker,
+  int toMoneyMaker) async {
+  final token = await storage.read(key: 'token');
+  if (token == null) return null;
+  try {
+    final res = await http.post(
+      Uri.parse('$apiUrl/transactions/transfers'),
+      headers: jsonHeaders(token),
+      body: jsonEncode({
+        'amount': amount,
+        'from_money_maker_id': fromMoneyMaker,
+        'to_money_maker_id': toMoneyMaker,
+      }),
+    );
+    if (res.statusCode == 200 || res.statusCode == 201) {
+      return jsonDecode(res.body);
+    } else {
+      try {
+        return jsonDecode(res.body);
+      } catch (_) {
+        return {'error': 'Error al crear la transferencia'};
       }
     }
   } catch (e) {

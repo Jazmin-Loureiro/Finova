@@ -23,6 +23,8 @@ class AppIcons {
     'shopping_bag': Icons.shopping_bag_outlined,
     'shopping_cart': Icons.shopping_cart_outlined,
     'receipt_long': Icons.receipt_long_outlined,
+    'swap_horiz': Icons.swap_horiz_outlined,
+    'storefront': Icons.storefront_outlined,
 
     //  Transporte
     'directions_car': Icons.directions_car_outlined,
@@ -89,6 +91,8 @@ class AppIcons {
     'checkroom': Icons.checkroom_outlined,
     'more_horiz': Icons.more_horiz_outlined,
     'category': Icons.category_outlined,
+    'pet_supplies': Icons.pets_outlined,
+    'local_florist': Icons.local_florist_outlined,
   };
 
   /// Convierte el nombre guardado en BD (String) a IconData real

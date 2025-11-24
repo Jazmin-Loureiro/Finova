@@ -13,7 +13,7 @@ class CategoryController extends Controller
      * @return \Illuminate\Http\Response
      */
     public function index(Request $request) {
-        $query = Category::where('user_id', $request->user()->id )->where('active', true);
+    $query = Category::where('user_id', $request->user()->id)->where('active', true)->where('is_system', false);
         if ($request->has('type')) { 
             $query->where('type', $request->query('type')); 
         }

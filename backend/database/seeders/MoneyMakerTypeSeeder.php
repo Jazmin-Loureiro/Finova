@@ -75,13 +75,6 @@ class MoneyMakerTypeSeeder extends Seeder
                 'updated_at' => now(),
             ],
             [
-                'name' => 'Transferencia',
-                'description' => 'Fuentes basadas en transferencias recibidas.',
-                'active' => true,
-                'created_at' => now(),
-                'updated_at' => now(),
-            ],
-            [
                 'name' => 'Préstamo',
                 'description' => 'Fondos provenientes de créditos o préstamos.',
                 'active' => true,

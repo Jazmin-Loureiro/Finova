@@ -67,6 +67,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/transactions/{register}', [RegisterController::class, 'show']);
     //cancelar reserva
     Route::post('/reservations/{register}', [RegisterController::class, 'cancelReservation']);
+    //TRASFERENCIAS
+    Route::post('/transactions/transfers', [RegisterController::class, 'createTransfer']);
 ////////////////////////////////////////////////////////////////////////////////
     //Registrar Fuente de Dinero
     Route::post('/moneyMakers', [MoneyMakerController::class, 'store']);

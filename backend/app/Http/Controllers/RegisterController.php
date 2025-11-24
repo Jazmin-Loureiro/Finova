@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 use Illuminate\Support\Facades\Log;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\DB;
 
 use App\Models\Register;
 use App\Services\CurrencyService;
@@ -181,4 +182,79 @@ class RegisterController extends Controller {
             ], 500);
         }
     }
+
+        public function createTransfer(Request $request) {
+        $request->validate([
+            'from_money_maker_id' => 'required|integer',
+            'to_money_maker_id'   => 'required|integer|different:from_money_maker_id',
+            'amount'              => 'required|numeric|min:0.01',
+        ]);
+
+        $user = auth()->user();
+
+        $from = MoneyMaker::where('id', $request->from_money_maker_id)->where('user_id', $user->id)->firstOrFail();
+
+        $to = MoneyMaker::where('id', $request->to_money_maker_id)->where('user_id', $user->id)->firstOrFail();
+
+            $categoryExpense = $user->categories()->firstOrCreate([
+            'name' => 'Transferencia',
+            'type' => 'expense',
+            'is_system' => true,
+        ]);
+
+        $categoryIncome = $user->categories()->firstOrCreate([
+            'name' => 'Transferencia',
+            'type' => 'income',
+            'is_system' => true,
+        ]);
+
+        // Verificar fondos
+        if ($from->balance < $request->amount) {
+            return response()->json([
+                'message' => 'Fondos insuficientes en el money maker origen.',
+            ], 422);
+        }
+
+        return DB::transaction(function () use ($request, $user, $from, $to, $categoryExpense, $categoryIncome) {
+
+            $amount = $request->amount;
+
+            // Registrar gasto en origen
+            $expense = $user->registers()->create([
+                'type' => 'expense',
+                'balance' => $amount,
+                'name' => 'Transferencia de ' . $from->name . ' a ' . $to->name,
+                'category_id' => $categoryExpense->id,
+                'money_maker_id' => $from->id,
+                'currency_id' => $from->currency_id,
+                'repetition' => 0,
+                'frequency_repetition' => 0,
+                'goal_id' => null,
+            ]);
+
+            // Registrar ingreso en destino
+            $income = $user->registers()->create([
+                'type' => 'income',
+                'balance' => $amount,
+                'name' => 'Transferencia de ' . $from->name . ' a ' . $to->name,
+                'category_id' => $categoryIncome->id,
+                'money_maker_id' => $to->id,
+                'currency_id' => $to->currency_id,
+                'repetition' => 0,
+                'frequency_repetition' => 0,
+                'goal_id' => null,
+            ]);
+
+            // Actualizar balances
+            $from->decrement('balance', $amount);
+            $to->increment('balance', $amount);
+
+            return response()->json([
+                'message' => 'Transferencia realizada con éxito',
+                'expense_register' => $expense,
+                'income_register' => $income,
+            ]);
+        });
+    }
+
 }

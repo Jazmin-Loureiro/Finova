@@ -17,10 +17,10 @@ class StatisticsController extends Controller
         $range = (int) $request->query('range', 30); // 7, 30, 365
         $fromDate = now()->startOfDay()->subDays($range);
 
-        $registers = Register::with(['category', 'currency'])
-            ->whereHas('moneyMaker', fn($q) => $q->where('user_id', $user->id))
-            ->where('created_at', '>=', $fromDate)
-            ->get();
+     $registers = Register::with(['category', 'currency'])
+        ->whereHas('moneyMaker', fn($q) => $q->where('user_id', $user->id))
+        ->whereHas('category', fn($q) => $q->where('is_system', false))
+        ->get();
 
         // Totales
         $incomeTotals = [];

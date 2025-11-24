@@ -23,10 +23,12 @@ class CategoryService
                 ['name'=>'Restaurante','color'=>'#6D4C41','icon'=>'restaurant'],         // marrón cálido
                 ['name'=>'Salud','color'=>'#009688','icon'=>'health_and_safety'],        // verde agua
                 ['name'=>'Comunicaciones','color'=>'#3949AB','icon'=>'phone'],           // azul intenso
+                ['name'=>'Transferencia','color'=>'#1E88E5','icon'=>'swap_horiz','is_default'=>true, 'is_system'=>true], // azul brillante 
                 ['name'=>'Otros','color'=>'#757575','icon'=>'more_horiz'],               // gris neutro
             ],
             'income' => [
                 ['name'=>'General','color'=>'#43A047','icon'=>'category_outlined','is_default'=>true],        // verde medio
+                ['name'=>'Transferencia','color'=>'#1E88E5','icon'=>'swap_horizs','is_default'=>true, 'is_system'=>true], // azul brillante 
                 ['name'=>'Salario','color'=>'#2E7D32','icon'=>'attach_money'],           // verde oscuro
                 ['name'=>'Inversión','color'=>'#1E88E5','icon'=>'trending_up'],          // azul brillante
                 ['name'=>'Recompensa','color'=>'#7B1FA2','icon'=>'redeem'],              // púrpura intenso
@@ -45,6 +47,7 @@ class CategoryService
                     'icon' => $cat['icon'],
                     'active' => true,
                     'is_default' => $cat['is_default'] ?? false,
+                    'is_system' => $cat['is_system'] ?? false,
                 ]);
             }
         }

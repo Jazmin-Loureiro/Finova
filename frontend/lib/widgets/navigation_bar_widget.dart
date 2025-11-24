@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:frontend/screens/registers/transfer_screen.dart';
 import 'package:frontend/screens/statistics/statistics._screen.dart';
 import '../screens/moneyMaker/money_maker_list_screen.dart';
 import '../screens/registers/transaction_form_screen.dart';
@@ -150,6 +151,20 @@ class _NavigationBarWidgetState extends State<NavigationBarWidget>
                         MaterialPageRoute(
                           builder: (_) =>
                               const TransactionFormScreen(type: 'expense'),
+                        ),
+                      );
+                    },
+                  ),
+                    ListTile(
+                    leading: Icon(Icons.sync_alt, color: scheme.tertiary),
+                    title: const Text('Transfererir'),
+                    onTap: () {
+                      Navigator.pop(context);
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) =>
+                              const TransferScreen(),
                         ),
                       );
                     },

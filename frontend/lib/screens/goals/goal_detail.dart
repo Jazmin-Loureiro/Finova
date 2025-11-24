@@ -121,25 +121,27 @@ Future<void> _fetchRegistersGoal() async {
                                   ),
                                 ),
                               ),
-                              if (currentGoal.active && currentGoal.state == 'in_progress')
-                                IconButton(
-                                  icon: const Icon(Icons.edit, size: 20),
-                                  tooltip: 'Editar meta',
-                                  onPressed: () {
-                                    Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder: (_) => GoalFormScreen( goal: currentGoal,
-                                        ),
-                                      ),
-                                    ).then((value) {
-                                       if (value == true) {
-                                        setState(() {
-                                          isLoading = true;
-                                        });
-                                        _refreshGoal(); 
-                                      }
-                                    });
+                             // 🔹 Botón Editar (solo si NO es una meta de desafío)
+                            if (currentGoal.active &&
+                                currentGoal.state == 'in_progress' &&
+                                !currentGoal.isChallengeGoal)
+                              IconButton(
+                                icon: const Icon(Icons.edit, size: 20),
+                                tooltip: 'Editar meta',
+                                onPressed: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (_) => GoalFormScreen(goal: currentGoal),
+                                    ),
+                                  ).then((value) {
+                                    if (value == true) {
+                                      setState(() {
+                                        isLoading = true;
+                                      });
+                                      _refreshGoal();
+                                    }
+                                  });
                                 },
                               ),
                             ],

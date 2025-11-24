@@ -228,90 +228,57 @@ class ChallengeCardWidget extends StatelessWidget {
   }
 
   Widget _statusRow(
-      BuildContext context, Map<String, dynamic> ch, double progress, String state) {
-    // (NO TOCADO)
-    final cs = Theme.of(context).colorScheme;
+  BuildContext context,
+  Map<String, dynamic> ch,
+  double progress,
+  String state,
+) {
+  final cs = Theme.of(context).colorScheme;
 
-    String text;
-    Color color;
-    IconData icon;
-    final points = ch['reward_points'] ?? 0;
+  String text;
+  Color color;
+  IconData icon;
+  final points = ch['reward_points'] ?? 0;
 
-    switch (state) {
-      case 'completed':
-        text = points > 0
-            ? 'Objetivo alcanzado (+$points pts)'
-            : 'Objetivo alcanzado';
-        color = Colors.green;
-        icon = Icons.check_circle_outline;
-        break;
-      case 'failed':
-        text = 'Desafío fallido';
-        color = Colors.redAccent;
-        icon = Icons.cancel_outlined;
-        break;
-      default:
-        text = 'En progreso (${progress.toStringAsFixed(0)}%)';
-        color = cs.onSurface.withOpacity(0.8);
-        icon = Icons.timelapse_outlined;
-    }
+  switch (state) {
+    case 'completed':
+      text = points > 0
+          ? 'Objetivo alcanzado (+$points pts)'
+          : 'Objetivo alcanzado';
+      color = Colors.green;
+      icon = Icons.check_circle_outline;
+      break;
+    case 'failed':
+      text = 'Desafío fallido';
+      color = Colors.redAccent;
+      icon = Icons.cancel_outlined;
+      break;
+    default:
+      text = 'En progreso (${progress.toStringAsFixed(0)}%)';
+      color = cs.onSurface.withOpacity(0.8);
+      icon = Icons.timelapse_outlined;
+  }
 
-    // Fechas (NO TOCADO)
-    String? startStr = ch['pivot']?['start_date'];
-    String? failedAtStr = ch['pivot']?['failed_at'] ?? ch['pivot']?['updated_at'];
-    String? completedAtStr = ch['pivot']?['completed_at'] ?? ch['pivot']?['updated_at'];
-    int? durationDays = ch['duration_days'] is int
-        ? ch['duration_days']
-        : int.tryParse('${ch['duration_days']}');
+  // ===============================
+  //   FECHAS SEGURAS + NULL CHECK
+  // ===============================
+  String? startStr = ch['pivot']?['start_date'];
+  String? failedAtStr = ch['pivot']?['failed_at'] ?? ch['pivot']?['updated_at'];
+  String? completedAtStr =
+      ch['pivot']?['completed_at'] ?? ch['pivot']?['updated_at'];
+  int? durationDays = ch['duration_days'] is int
+      ? ch['duration_days']
+      : int.tryParse('${ch['duration_days']}');
 
-    String? remainingInfo;
-    if (startStr != null && durationDays != null) {
-      final startDate = DateTime.tryParse(startStr)?.toLocal();
-      if (startDate != null) {
-        final endDate = startDate.add(Duration(days: durationDays));
-        final now = DateTime.now();
+  // 🔹 NUEVO: end_date real desde backend (si existe)
+  final endStr = ch['pivot']?['end_date'];
+  final endDate =
+      endStr != null ? DateTime.tryParse(endStr)?.toLocal() : null;
 
-        if (state == 'failed') {
-          if (failedAtStr != null) {
-            final failedAt = DateTime.tryParse(failedAtStr)?.toLocal();
-            if (failedAt != null) {
-              remainingInfo =
-                  '❌ Falló el ${failedAt.day}/${failedAt.month}${failedAt.year != now.year ? "/${failedAt.year}" : ""}';
-            } else {
-              remainingInfo = '❌ Falló antes del fin';
-            }
-          } else {
-            remainingInfo = '❌ Falló antes del fin';
-          }
-        } else if (state == 'completed') {
-          if (completedAtStr != null) {
-            final completedAt = DateTime.tryParse(completedAtStr)?.toLocal();
-            if (completedAt != null) {
-              remainingInfo =
-                  '✅ Completado el ${completedAt.day}/${completedAt.month}${completedAt.year != now.year ? "/${completedAt.year}" : ""}';
-            }
-          } else {
-            remainingInfo =
-                '✅ Completado el ${endDate.day}/${endDate.month}';
-          }
-        } else {
-          final remaining = endDate.difference(now);
-          if (remaining.isNegative) {
-            remainingInfo = '📅 Finalizado el ${endDate.day}/${endDate.month}';
-          } else if (remaining.inDays >= 1) {
-            remainingInfo =
-                '⏳ Faltan ${remaining.inDays} día${remaining.inDays == 1 ? '' : 's'} '
-                '(termina el ${endDate.day}/${endDate.month})';
-          } else {
-            final hours = remaining.inHours;
-            remainingInfo =
-                '⏰ Faltan $hours hora${hours == 1 ? '' : 's'} '
-                '(termina el ${endDate.day}/${endDate.month})';
-          }
-        }
-      }
-    }
+  String? remainingInfo;
 
+  // Si NO hay start_date → no podemos calcular nada
+  if (startStr == null) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -329,20 +296,134 @@ class ChallengeCardWidget extends StatelessWidget {
             ),
           ],
         ),
-        if (remainingInfo != null) ...[
-          const SizedBox(height: 6),
-          Text(
-            remainingInfo,
-            style: TextStyle(
-              fontSize: 12,
-              color: cs.onSurfaceVariant,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-        ],
       ],
     );
   }
+
+  // Convertir fecha de inicio
+  final startDate = DateTime.tryParse(startStr)?.toLocal();
+
+  if (startDate == null) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Icon(icon, size: 16, color: color),
+            const SizedBox(width: 6),
+            Text(
+              text,
+              style: TextStyle(
+                fontSize: 12,
+                color: color,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  // 🔹 Si el backend mandó end_date → LO USAMOS
+  // 🔹 Si no, usamos start + durationDays (fallback)
+  final safeEndDate = endDate ??
+      (durationDays != null
+          ? startDate.add(Duration(days: durationDays))
+          : null);
+
+  final now = DateTime.now();
+
+  // ===============================
+  //       ESTADOS / MENSAJES
+  // ===============================
+
+  if (state == 'failed') {
+    if (failedAtStr != null) {
+      final failedAt = DateTime.tryParse(failedAtStr)?.toLocal();
+      if (failedAt != null) {
+        remainingInfo =
+            '❌ Falló el ${failedAt.day}/${failedAt.month}';
+      } else {
+        remainingInfo = '❌ Falló antes del fin';
+      }
+    } else {
+      remainingInfo = '❌ Falló antes del fin';
+    }
+  }
+
+  else if (state == 'completed') {
+    if (completedAtStr != null) {
+      final completedAt = DateTime.tryParse(completedAtStr)?.toLocal();
+      if (completedAt != null) {
+        remainingInfo =
+            '✅ Completado el ${completedAt.day}/${completedAt.month}';
+      }
+    } else if (safeEndDate != null) {
+      remainingInfo =
+          '✅ Completado el ${safeEndDate.day}/${safeEndDate.month}';
+    }
+  }
+
+  else {
+    // En progreso
+    if (safeEndDate == null) {
+      remainingInfo = null;
+    } else {
+      final remaining = safeEndDate.difference(now);
+
+      if (remaining.isNegative) {
+        remainingInfo =
+            '📅 Finalizado el ${safeEndDate.day}/${safeEndDate.month}';
+      } else if (remaining.inDays >= 1) {
+        remainingInfo =
+            '⏳ Faltan ${remaining.inDays} día${remaining.inDays == 1 ? '' : 's'} '
+            '(termina el ${safeEndDate.day}/${safeEndDate.month})';
+      } else {
+        final hours = remaining.inHours;
+        remainingInfo =
+            '⏰ Faltan $hours hora${hours == 1 ? '' : 's'} '
+            '(termina el ${safeEndDate.day}/${safeEndDate.month})';
+      }
+    }
+  }
+
+  // ===============================
+  //         RETURN FINAL
+  // ===============================
+
+  return Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      Row(
+        children: [
+          Icon(icon, size: 16, color: color),
+          const SizedBox(width: 6),
+          Text(
+            text,
+            style: TextStyle(
+              fontSize: 12,
+              color: color,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ],
+      ),
+      if (remainingInfo != null) ...[
+        const SizedBox(height: 6),
+        Text(
+          remainingInfo,
+          style: TextStyle(
+            fontSize: 12,
+            color: cs.onSurfaceVariant,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+      ],
+    ],
+  );
+}
+
 
   String _buildChallengeHint(Map<String, dynamic> ch) {
     final type = (ch['type'] ?? '') as String;

@@ -28,7 +28,7 @@ class CategoryService
             ],
             'income' => [
                 ['name'=>'General','color'=>'#43A047','icon'=>'category_outlined','is_default'=>true],        // verde medio
-                ['name'=>'Transferencia','color'=>'#1E88E5','icon'=>'swap_horizs','is_default'=>true, 'is_system'=>true], // azul brillante 
+                ['name'=>'Transferencia','color'=>'#1E88E5','icon'=>'swap_horiz','is_default'=>true, 'is_system'=>true], // azul brillante 
                 ['name'=>'Salario','color'=>'#2E7D32','icon'=>'attach_money'],           // verde oscuro
                 ['name'=>'Inversión','color'=>'#1E88E5','icon'=>'trending_up'],          // azul brillante
                 ['name'=>'Recompensa','color'=>'#7B1FA2','icon'=>'redeem'],              // púrpura intenso

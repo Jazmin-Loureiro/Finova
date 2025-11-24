@@ -6,6 +6,7 @@ import '../../widgets/dialogs/success_dialog_widget.dart';
 import '../../widgets/dialogs/confirm_dialog_widget.dart';
 import '../../../main.dart'; // 👈 para usar routeObserver
 import '../../widgets/custom_refresh_wrapper.dart';
+import '../../helpers/format_utils.dart';
 
 
 
@@ -302,43 +303,70 @@ class _ChallengeScreenState extends State<ChallengeScreen>
 
   // 🔎 Texto explicativo numérico (como tenías antes)
   String _buildChallengeHint(Map<String, dynamic> ch) {
-    final type = (ch['type'] ?? '') as String;
-    final payload = ChallengeUtils.decodePayload(ch['payload']);
-    final target = ch['target_amount'];
-    final symbol = ChallengeUtils.symbolOf(ch);
+  final type = (ch['type'] ?? '') as String;
+  final payload = ChallengeUtils.decodePayload(ch['payload']);
+  final target = ch['target_amount'];
 
-    String fmtNum(num n) =>
-        n % 1 == 0 ? n.toInt().toString() : n.toStringAsFixed(0);
+  // Moneda
+  final code = payload['currency_code'] ?? ch['currency_code'] ?? 'ARS';
+  final symbol = payload['currency_symbol'] ?? ch['currency_symbol'] ?? '\$';
 
-    switch (type) {
-      case 'SAVE_AMOUNT': {
-        final num? amount = (target is num) ? target : (payload['amount'] as num?);
-        return amount != null
-            ? 'Ahorrá $symbol${fmtNum(amount)}'
-            : 'Ahorrá un monto personalizado';
-      }
-      case 'REDUCE_SPENDING_PERCENT': {
-        final int windowDays = (payload['window_days'] as num?)?.toInt() ?? 30;
-        final num? maxAllowed = payload['max_allowed'] is num
-            ? payload['max_allowed']
-            : (payload['max_allowed'] is String ? num.tryParse(payload['max_allowed']) : null);
-        if (maxAllowed != null) {
-          return 'No superes ${symbol}${maxAllowed.toStringAsFixed(0)} en gastos.\n'
-                 'Se evaluará durante $windowDays días.';
-        }
-        return 'Se evaluará durante $windowDays días.';
-      }
-      case 'ADD_TRANSACTIONS': {
-        final int? count = (payload['count'] as num?)?.toInt() ??
-            (target is num ? target.toInt() : null);
-        return count != null
-            ? 'Registrá $count movimientos'
-            : 'Registrá tus movimientos esta semana';
-      }
-      default:
-        return (ch['description'] as String?) ?? '';
-    }
+  // -------- CASE 1: SAVE_AMOUNT ----------
+  if (type == 'SAVE_AMOUNT') {
+    final num? amount =
+        (target is num) ? target : (payload['amount'] as num?);
+
+    if (amount == null) return 'Ahorrá un monto personalizado';
+
+    final formatted = formatCurrency(
+      amount.toDouble(),
+      code,
+      symbolOverride: symbol,
+    );
+
+    return 'Ahorrá $formatted';
   }
+
+  // -------- CASE 2: REDUCE_SPENDING_PERCENT ----------
+  if (type == 'REDUCE_SPENDING_PERCENT') {
+    final int windowDays =
+        (payload['window_days'] as num?)?.toInt() ?? 30;
+
+    num? maxAllowed;
+    if (payload['max_allowed'] is num) {
+      maxAllowed = payload['max_allowed'];
+    } else if (payload['max_allowed'] is String) {
+      maxAllowed = num.tryParse(payload['max_allowed']);
+    }
+
+    if (maxAllowed != null) {
+      final formatted = formatCurrency(
+        maxAllowed.toDouble(),
+        code,
+        symbolOverride: symbol,
+      );
+
+      return 'No superes $formatted en gastos.\nSe evaluará durante $windowDays días.';
+    }
+
+    return 'Se evaluará durante $windowDays días.';
+  }
+
+  // -------- CASE 3: ADD_TRANSACTIONS ----------
+  if (type == 'ADD_TRANSACTIONS') {
+    final int? count = (payload['count'] as num?)?.toInt() ??
+        (target is num ? target.toInt() : null);
+
+    if (count != null) {
+      return 'Registrá $count movimientos';
+    }
+
+    return 'Registrá tus movimientos esta semana';
+  }
+
+  // -------- DEFAULT ----------
+  return (ch['description'] as String?) ?? '';
+}
 
   // 🔹 TAB 1: Disponibles — Card táctil + hint numérico + cartel + switch (todo restaurado)
   Widget _buildAvailableTab() {

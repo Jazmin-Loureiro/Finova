@@ -116,7 +116,7 @@ Servicio utilizado para:
 ### 🏦 2. Banco Central (BCRA) — DataAPI
 Utilizado para:
 - Obtener tasas oficiales para cálculos y simulaciones.
-- Alimentar el módulo de préstamos con datos reales.
+- Alimentar el módulo de préstamos y plazos fijos con datos reales.
 - Actualizaciones periódicas mediante comandos automáticos.
 
 ### 📈 3. CoinGecko API
@@ -127,9 +127,8 @@ Utilizado para:
 
 ### 📉 4. TwelveData API
 Utilizado para:
-- Obtener series temporales de instrumentos financieros.
-- Graficar tendencias y comportamientos.
-- Complementar modelos de inversión.
+- Obtener datos actualizadosde acciones y bonos.
+- Complementar modelo de simulación de inversiones.
 
 ### 🌍 5. World Bank PPP API
 Utilizado para:
@@ -188,6 +187,6 @@ Finova es un proyecto desarrollado en equipo por:
 **Rol:** Desarrollo Mobile & Backend — Flutter • Laravel • Diseño UI/UX • Integraciones • Documentación  
 **Especialidades:** Desarrollo Full Stack • Arquitectura de Aplicaciones • APIs REST • Base de Datos • Validaciones • Testing  
 **Contacto y Redes:**  
-- 🐙 GitHub: https://github.com/Jazmin-Loureiro
-- 💼 LinkedIn: https://www.linkedin.com
-- 📧 Email:
+- 🐙 GitHub: https://[github.com/Jazmin-Loureiro](https://github.com/Jazmin-Loureiro)
+- 💼 LinkedIn: https://[www.linkedin.com](https://www.linkedin.com/in/jazmin-loureiro/)
+- 📧 Email: jazmin.loureiro25@gmail.com

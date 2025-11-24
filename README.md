@@ -8,20 +8,20 @@ También incorpora simuladores de inversión —tanto tradicionales (plazo fijo)
 
 La experiencia se complementa con un sistema de desafíos financieros que fomenta el hábito del ahorro y una interfaz gamificada protagonizada por la Casa Finova, una representación visual que evoluciona según tu progreso económico y tus logros dentro de la app.
 
-## Tabla de Contenidos
+## 📘 Tabla de Contenidos
 - [Características Principales](#características-principales)
-- [Tecnologías Utilizadas](#tecnologías-utilizadas)
-- [APIS Externas Utilizadas](#apis-externas-utlizadas)
-- [Sistema de actualizacion automatica](#sistema-de-actualizacion-automatica)
-- [Sistema de Envío de Correos](#sistema-de-envío-de-correos)
-- [Autor](#autor)
+- [Tecnologias Utilizadas](#tecnologias-utilizadas)
+- [APIs Externas Utilizadas](#apis-externas-utilizadas)
+- [Sistema de Actualización Automática](#sistema-de-actualización-automática)
+- [Sistema de Envío de Correos](#sistema-de-envío-de-correos-mailing)
+- [Autoras](#autoras)
+
 
 ## Características Principales
 ### Fuentes de Dinero
 - Múltiples tipos: billeteras, cuentas bancarias, efectivo, tarjetas, etc.
 - Balance independiente con su propia moneda.
-- Personalización con colores e íconos.
-- Orden por fuentes activas primero.
+- Balance convertido a moneda base en tiempo real.
 
 ### Registros
 - Carga rápida de ingresos y gastos.
@@ -33,8 +33,17 @@ La experiencia se complementa con un sistema de desafíos financieros que foment
 - Creación de metas con monto objetivo.
 - Reserva automática al vincular una meta.
 - Avance visual en tiempo real.
-- Recompensas al completar objetivos.
+  
+### Objetivos gamificados
 
+Finova incluye un sistema de objetivos automáticos que funcionan como misiones o desafíos que incentivan el uso de la app y la mejora de los hábitos financieros.
+
+- El sistema genera objetivos periódicos para ayudar a mejorar tus finanzas.
+- Cada objetivo otorga **puntos de experiencia (XP)** al ser completado.  
+- Al acumular XP, el usuario **sube de nivel**, lo que desbloquea recompensas dentro de la app.  
+- Según el nivel, las recompensas incluyen elementos visuales y mejoras dentro de la **Casa Finova**.  
+- Los objetivos se renuevan con el tiempo, manteniendo la experiencia dinámica y motivadora.  
+- Los usuarios pueden ver su progreso, objetivos activos y recompensas obtenidas.  
 
 ### Estadísticas Inteligentes
 - Totales mensuales.
@@ -43,19 +52,16 @@ La experiencia se complementa con un sistema de desafíos financieros que foment
 - Balance global convertido a la moneda base.
 - Gráficos dinámicos con fl_chart.
 
-
 ### Casa Gamificada
 - Representación visual del progreso financiero.
 - Cielos dinámicos: día, atardecer, noche.
 - Evolución de la casa según tu progreso.
 - Desbloqueos y animaciones Lottie.
 
-
 ### Conversor de Divisas
 - Actualización automática por OpenExchangeRates.
 - Conversiones precisas con formateo por locale.
 - Más de 160 monedas compatibles.
-
 
 ### Autenticación y Seguridad
 - Registro con avatar generado o ícono personalizado.
@@ -63,25 +69,38 @@ La experiencia se complementa con un sistema de desafíos financieros que foment
 - Restablecimiento de contraseña por deep-link nativo.
 - Tokens protegidos y manejo de UTC/local.
 
-## Tecnologías Utilizadas
+## Tecnologias Utilizadas
+
+<p align="center">
+  <a><img src="https://img.shields.io/badge/Flutter-3.35.3-blue?logo=flutter" alt="Flutter"></a>
+  <a><img src="https://img.shields.io/badge/Dart-3.9.2-blue?logo=dart" alt="Dart"></a>
+  <a><img src="https://img.shields.io/badge/Laravel-9.52-red?logo=laravel" alt="Laravel"></a>
+  <a><img src="https://img.shields.io/badge/MySQL-Database-blue?logo=mysql" alt="MySQL"></a>
+</p>
+
 
 ### **Frontend — Flutter**
-- Flutter 3.35.3
-- Dart 3.9.2
-- Provider
-- fl_chart
-- flutter_svg
-- Lottie
-- Animaciones personalizadas
+
+- **Flutter 3.35.3**
+- **Dart 3.9.2**
+- Provider (estado)
+- fl_chart (gráficos)
+- flutter_svg (vectores)
+- Lottie (animaciones)
+- Animaciones personalizadas y transiciones fluidas
+
+---
 
 ### **Backend — Laravel**
-- Laravel Framework 9.52.20
-- Sanctum (Auth)
-- MySQL
-- Jobs & Commands para DataAPI
-- Validaciones robustas
-- Conversión de monedas
-- Manejo de timestamps UTC → Local
+
+- **Laravel Framework 9.52.20**
+- Laravel Sanctum (autenticación segura)
+- Base de datos **MySQL**
+- Jobs & Commands para actualización de DataAPI
+- Validaciones robustas (Requests)
+- Conversión automática de monedas
+- Manejo consistente de timestamps **UTC → Local**
+
 
 
 ## APIs Externas Utilizadas
@@ -123,7 +142,7 @@ Utilizado para:
 - Enviar correos de recuperación de contraseña.
 - Comunicaciones del sistema.
 
- ## Sistema de Actualización Automática (Scheduler & Cron Jobs)
+ ## Sistema de Actualización Automática
 
 Finova cuenta con un sistema de tareas automáticas que mantiene los datos siempre actualizados.
 Estas tareas se ejecutan mediante el Scheduler de Laravel y se organizan en tres grupos:
@@ -151,11 +170,9 @@ Finova utiliza Brevo SMTP como proveedor de correo para enviar notificaciones in
 * Soporte al usuario.
 
 
-## 👥 Autoras
+## Autoras
 
 Finova es un proyecto desarrollado en equipo por:
-
-
 
 ### 🌟 Agustina Flores  
 **Rol:** Desarrollo Mobile & Backend — Flutter • Laravel • Diseño UI/UX • Integraciones • Documentación  

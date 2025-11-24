@@ -124,157 +124,169 @@ Widget build(BuildContext context) {
     title: widget.goal != null ? 'Editar Meta' : 'Crear Meta',
     currentRoute: 'goal_form',
     showNavigation: false,
-    body: Stack(
+    body: SizedBox.expand(
+    child: Stack(
       children: [
-        Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Form(
-            key: _formKey,
-            child: ListView(
-              children: [
-                // Nombre
-                TextFormField(
-                  initialValue: _name,
-                  decoration: const InputDecoration(
-                    labelText: 'Nombre',
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.all(Radius.circular(12)),
-                    ),
-                    counterText: '',
+          SingleChildScrollView(
+              padding: const EdgeInsets.all(10),
+              child: Container(
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  color: Theme.of(context).colorScheme.surface.withOpacity(0.12),
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(
+                    color: Theme.of(context).colorScheme.primary.withOpacity(0.40),
+                    width: 1.5,
                   ),
-                  maxLength: 30,
-                  validator: (value) =>
-                      value == null || value.isEmpty ? 'Ingrese un nombre' : null,
-                  onSaved: (val) => _name = val,
                 ),
-
-                const SizedBox(height: 16),
-
-                // Moneda
-                widget.goal != null && selectedCurrency != null
-                    ? TextFormField(
-                        readOnly: true,
-                        initialValue:
-                            '${selectedCurrency!.name} (${selectedCurrency!.code})',
+                child: Form(
+                  key: _formKey,
+                  child: Column(
+                    children: [
+                      // Nombre
+                      TextFormField(
+                        initialValue: _name,
                         decoration: const InputDecoration(
-                          labelText: 'Moneda',
+                          labelText: 'Nombre',
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.all(Radius.circular(12)),
                           ),
+                          counterText: '',
                         ),
-                      )
-                    : BottomSheetPickerField<Currency>(
-                        label: 'Moneda',
-                        items: currencies,
-                        itemLabel: (c) => '${c.name} (${c.code})',
-                        itemIcon: (c) => CircleAvatar(
-                          backgroundColor: Theme.of(context).colorScheme.primary.withOpacity(0.1),
-                          child: Text(
-                            c.symbol,
-                            style: TextStyle(color: Theme.of(context).colorScheme.primary),
-                          ),
-                        ),
-                        initialValue: selectedCurrency,
-                        onChanged: (value) { 
-                          setState(() { selectedCurrency = value; _amountController.clear(); }); 
-                        },
-                        validator: (value) => value == null ? 'Seleccione una moneda' : null,
+                        maxLength: 30,
+                        validator: (value) =>
+                            value == null || value.isEmpty ? 'Ingrese un nombre' : null,
+                        onSaved: (val) => _name = val,
                       ),
 
-                const SizedBox(height: 16),
+                      const SizedBox(height: 16),
 
-                // Monto objetivo
-                CurrencyTextField(
-                  controller: _amountController,
-                  currencies: selectedCurrency != null
-                      ? [selectedCurrency!]
-                      : currencies,
-                  selectedCurrency: selectedCurrency,
-                  label: 'Monto Objetivo',
-                  validator: (val) {
-                    if (val == null || val.trim().isEmpty) {
-                      return 'Ingrese un monto';
-                    }
-                   //  Elimina separadores de miles y arregla decimales
-                    String clean = val;
-                    clean = clean.replaceAll(RegExp(r'(?<=\d)[.,](?=\d{3}\b)'), '');
-                    if (clean.contains(',')) { clean = clean.replaceAll(',', '.'); }    // convierte decimales
-                    final parsed = double.tryParse(clean);
-                    if (parsed == null || parsed <= 0) { return 'Monto inválido';}
-                    return null;
-                  },
-                ),
+                      // Moneda
+                      widget.goal != null && selectedCurrency != null
+                          ? TextFormField(
+                              readOnly: true,
+                              initialValue:
+                                  '${selectedCurrency!.name} (${selectedCurrency!.code})',
+                              decoration: const InputDecoration(
+                                labelText: 'Moneda',
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.all(Radius.circular(12)),
+                                ),
+                              ),
+                            )
+                          : BottomSheetPickerField<Currency>(
+                              label: 'Moneda',
+                              items: currencies,
+                              itemLabel: (c) => '${c.name} (${c.code})',
+                              itemIcon: (c) => CircleAvatar(
+                                backgroundColor: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+                                child: Text(
+                                  c.symbol,
+                                  style: TextStyle(color: Theme.of(context).colorScheme.primary),
+                                ),
+                              ),
+                              initialValue: selectedCurrency,
+                              onChanged: (value) {
+                                setState(() { selectedCurrency = value; _amountController.clear(); });
+                              },
+                              validator: (value) => value == null ? 'Seleccione una moneda' : null,
+                            ),
 
-                const SizedBox(height: 16),
+                      const SizedBox(height: 16),
 
-                // Fecha límite
-                TextFormField(
-                  readOnly: true,
-                  controller: TextEditingController(
-                    text: _dateLimit != null
-                        ? '${_dateLimit!.day.toString().padLeft(2, '0')}/${_dateLimit!.month.toString().padLeft(2, '0')}/${_dateLimit!.year}'
-                        : '',
+                      // Monto objetivo
+                      CurrencyTextField(
+                        controller: _amountController,
+                        currencies: selectedCurrency != null
+                            ? [selectedCurrency!]
+                            : currencies,
+                        selectedCurrency: selectedCurrency,
+                        label: 'Monto Objetivo',
+                        validator: (val) {
+                          if (val == null || val.trim().isEmpty) {
+                            return 'Ingrese un monto';
+                          }
+                          //  Elimina separadores de miles y arregla decimales
+                          String clean = val;
+                          clean = clean.replaceAll(RegExp(r'(?<=\d)[.,](?=\d{3}\b)'), '');
+                          if (clean.contains(',')) { clean = clean.replaceAll(',', '.'); }    // convierte decimales
+                          final parsed = double.tryParse(clean);
+                          if (parsed == null || parsed <= 0) { return 'Monto inválido';}
+                          return null;
+                        },
+                      ),
+
+                      const SizedBox(height: 16),
+
+                      // Fecha límite
+                      TextFormField(
+                        readOnly: true,
+                        controller: TextEditingController(
+                          text: _dateLimit != null
+                              ? '${_dateLimit!.day.toString().padLeft(2, '0')}/${_dateLimit!.month.toString().padLeft(2, '0')}/${_dateLimit!.year}'
+                              : '',
+                        ),
+                        decoration: const InputDecoration(
+                          labelText: 'Fecha Límite',
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.all(Radius.circular(12)),
+                          ),
+                          suffixIcon: Icon(Icons.calendar_today),
+                        ),
+                        validator: (_) =>
+                            _dateLimit == null ? 'Seleccione una fecha' : null,
+                        onTap: () async {
+                        final now = DateTime.now();
+                        final picked = await showDatePicker(
+                          context: context,
+                          initialDate: _dateLimit ?? now,
+                          firstDate: now,
+                          lastDate: DateTime(now.year + 20),
+                        );
+                        if (picked != null) {
+                          setState(() {
+                            _dateLimit = picked;
+                          });
+                        }
+                      },
+                      ),
+                      const SizedBox(height: 15),
+
+                      ButtonSave(
+                        title: "Guardar Meta",
+                        message: "¿Seguro que quieres guardar esta meta?",
+                        onConfirm: _submitForm,
+                        formKey: _formKey,
+                      ),
+                        const SizedBox(height: 12),
+                        if (widget.goal != null)
+                        ButtonDelete(
+                          title: "Eliminar Meta",
+                          message: widget.goal!.isChallengeGoal
+                              ? "⚠️ Esta meta pertenece a un desafío activo.\n\n"
+                                "Si la eliminás, el desafío será marcado como fallido y perderás su progreso.\n\n"
+                                "¿Querés continuar?"
+                              : "¿Seguro que querés deshabilitar esta meta?",
+                          onConfirm: _deleteGoal,
+                        ),
+                    ],
                   ),
-                  decoration: const InputDecoration(
-                    labelText: 'Fecha Límite',
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.all(Radius.circular(12)),
-                    ),
-                    suffixIcon: Icon(Icons.calendar_today),
-                  ),
-                  validator: (_) =>
-                      _dateLimit == null ? 'Seleccione una fecha' : null,
-                  onTap: () async {
-                    final now = DateTime.now();
-                    final picked = await showDatePicker(
-                      context: context,
-                      initialDate: _dateLimit ?? now,
-                      firstDate: now,
-                      lastDate: DateTime(now.year + 20),
-                    );
-                    if (picked != null) {
-                      setState(() {
-                        _dateLimit = picked;
-                      });
-                    }
-                  },
                 ),
-                const SizedBox(height: 15),
-
-                ButtonSave(
-                  title: "Guardar Meta",
-                  message: "¿Seguro que quieres guardar esta meta?",
-                  onConfirm: _submitForm,
-                  formKey: _formKey,
-                ),
-                const SizedBox(height: 12),
-                if (widget.goal != null)
-                  ButtonDelete(
-                    title: "Eliminar Meta",
-                    message: widget.goal!.isChallengeGoal
-                        ? "⚠️ Esta meta pertenece a un desafío activo.\n\n"
-                          "Si la eliminás, el desafío será marcado como fallido y perderás su progreso.\n\n"
-                          "¿Querés continuar?"
-                        : "¿Seguro que querés deshabilitar esta meta?",
-                    onConfirm: _deleteGoal,
-                  ),
-              ],
-            ),
-          ),
-        ),
-
-        // Overlay de guardado
-        if (isSaving)
-          Positioned.fill(
-            child: Container(
-              color: Theme.of(context).scaffoldBackgroundColor,
-              child: const Center(
-                child: LoadingWidget(message: 'Guardando meta...'),
               ),
             ),
-          ),
-      ],
-    ),
-  );
-}
+
+            if (isSaving)
+              Positioned.fill(
+                child: Container(
+                  color: Theme.of(context).scaffoldBackgroundColor,
+                  child: const Center(
+                    child: LoadingWidget(message: 'Guardando meta...'),
+                  ),
+                ),
+              ),
+          ],
+        ),
+      )
+    );
+  }
 }

@@ -324,13 +324,24 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
       title: 'Nuevo ${typeLabels[widget.type] ?? widget.type}',
       currentRoute: 'transaction_form',
       showNavigation: false,
-      body: Stack(
-        children: [
-          Padding(
-            padding: const EdgeInsets.all(16),
-            child: Form(
-              key: _formKey,
-                child: ListView(
+      body: SizedBox.expand(
+        child: Stack(
+          children: [
+            SingleChildScrollView(
+              padding: const EdgeInsets.all(10),
+                child: Container(
+             padding: const EdgeInsets.all(20),
+             decoration: BoxDecoration(
+                  color: Theme.of(context).colorScheme.surface.withOpacity(0.12),
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(
+                    color: Theme.of(context).colorScheme.primary.withOpacity(0.40),
+                    width: 1.5,
+                  ),
+                ),
+              child: Form(
+                key: _formKey,
+                child: Column(
                   children: [
                     const SizedBox(height: 8),
                     // =====================================================
@@ -494,7 +505,7 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
                               }
                               if (widget.type == 'expense' &&
                                   parsed > selectedMoneyMaker!.balance) {
-                                return 'El gasto supera el monto disponible (${selectedMoneyMaker!.balance.toStringAsFixed(2)})';
+                                return 'Monto disponible (${selectedMoneyMaker!.currency!.symbol}${selectedMoneyMaker!.balance.toStringAsFixed(2)})';
                               }
                               return null;
                             },
@@ -653,9 +664,9 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
                     ),
                   ],
                 ),
-              
             ),
           ),
+        ),
 
           //Overlay de guardado
         if (isSaving)
@@ -668,6 +679,7 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
             ),
           ),
         ],
+      ),
       ),
     );
   }

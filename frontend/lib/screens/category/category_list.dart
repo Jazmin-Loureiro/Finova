@@ -138,7 +138,7 @@ class _CategoryListScreenState extends State<CategoryListScreen>
             color: Theme.of(context).colorScheme.surface,
             borderRadius: BorderRadius.circular(14),
             border: Border.all(
-              color: Theme.of(context).colorScheme.primary.withOpacity(0.15),
+              color: Theme.of(context).colorScheme.primary.withOpacity(0.20),
               width: 1,
             ),
             boxShadow: [

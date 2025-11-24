@@ -148,13 +148,24 @@ void saveCategory() async {
           : 'Nueva Categoría ${typeLabels[widget.type]}',
       currentRoute: '/category_form',
       showNavigation: false,
-      body: Stack(
+      body:SizedBox.expand(
+        child: Stack(
         children: [
-          Padding(
-            padding: const EdgeInsets.all(16.0),
+         SingleChildScrollView (
+            padding: const EdgeInsets.all(10),
+            child: Container(
+             padding: const EdgeInsets.all(20),
+             decoration: BoxDecoration(
+                  color: Theme.of(context).colorScheme.surface.withOpacity(0.12),
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(
+                    color: Theme.of(context).colorScheme.primary.withOpacity(0.40),
+                    width: 1.5,
+                  ),
+                ),
             child: Form(
               key: _formKey,
-              child: ListView(
+              child: Column(
                 children: [
                   // Nombre + ícono
                   Row(
@@ -226,6 +237,7 @@ void saveCategory() async {
               ),
             ),
           ),
+          ),
 
           // Overlay de guardado
           if (isSaving)
@@ -238,6 +250,7 @@ void saveCategory() async {
               ),
             ),
         ],
+      ),
       ),
     );
   }

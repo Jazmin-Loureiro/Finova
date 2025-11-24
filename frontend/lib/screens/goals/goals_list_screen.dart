@@ -236,7 +236,11 @@ Future<void> _checkExpiredGoals() async {
         return Card(
           margin: const EdgeInsets.only(bottom: 14),
           shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16), 
+                side: BorderSide(
+                  color: Theme.of(context).colorScheme.primary.withOpacity(0.10),
+                  width: 1,)),
           elevation: 3,
           child: InkWell(
             borderRadius: BorderRadius.circular(16),

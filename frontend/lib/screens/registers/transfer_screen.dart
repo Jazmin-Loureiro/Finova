@@ -130,11 +130,11 @@ class _TransferScreenState extends State<TransferScreen> {
                        Column(
                           children: [
                            Container(
-                              padding: const EdgeInsets.all(14),
+                              padding: const EdgeInsets.all(20),
                               decoration: BoxDecoration(
-                                color: theme.colorScheme.surface.withOpacity(0.08),
-                                borderRadius: BorderRadius.circular(16),
-                                border: Border.all(color: theme.colorScheme.primary.withOpacity(0.15)),
+                                color: theme.colorScheme.surface.withOpacity(0.12),
+                                borderRadius: BorderRadius.circular(20),
+                                border: Border.all(color: theme.colorScheme.primary.withOpacity(0.40), width: 1.5),
                               ),
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,

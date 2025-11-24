@@ -76,7 +76,9 @@ Future<void> _fetchRegistersGoal() async {
                   Card(
                     elevation: 4,
                     shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16)),
+                        borderRadius: BorderRadius.circular(16), side: BorderSide(
+                          color: Theme.of(context).colorScheme.primary.withOpacity(0.20),
+                          width: 1,)),
                     child: Padding(
                       padding: const EdgeInsets.all(16.0),
                       child: Column(

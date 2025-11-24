@@ -114,7 +114,7 @@ class _CurrencyConverterScreenState extends State<CurrencyConverterScreen> {
                             color: theme.colorScheme.surface.withOpacity( 0.12),
                             borderRadius: BorderRadius.circular(20),
                             border: Border.all(
-                              color: theme.colorScheme.primary.withOpacity(0.30),
+                              color: theme.colorScheme.primary.withOpacity(0.40),
                               width: 1.5,
                             ),
                             boxShadow: [

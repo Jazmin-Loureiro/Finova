@@ -35,6 +35,10 @@ class RegisterItemWidget extends StatelessWidget {
         elevation: 3,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16),
+           side: BorderSide(
+            color: Theme.of(context).colorScheme.primary.withOpacity(0.20),
+            width: 1,
+          ),
         ),
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),

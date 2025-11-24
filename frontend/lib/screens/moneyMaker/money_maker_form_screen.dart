@@ -161,149 +161,162 @@ Widget build(BuildContext context) {
     title: widget.moneyMaker != null ? 'Editar Fuente' : 'Agregar Fuente',
     currentRoute: 'money_maker_form',
     showNavigation: false,
-    body: Stack(
+    body: SizedBox.expand(
+      child: Stack(
       children: [
-        Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Form(
-            key: _formKey,
-            child: ListView(
-              children: [
-                // Nombre
-                TextFormField(
-                  controller: nameController,
-                  decoration: const InputDecoration(
-                    labelText: 'Nombre de la fuente',
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.all(Radius.circular(12)),
-                    ),
-                    counterText: '',
-                    ),
-                      maxLength: 15,
-                  
-                  validator: (val) {
-                    if (val == null || val.trim().isEmpty) {
-                      return 'El nombre no puede estar vacío';
-                    }
-                    if (val.trim().length < 3) {
-                      return 'Debe tener al menos 3 caracteres';
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 16),
-
-               // Tipo de fuente
-                BottomSheetPickerField<MoneyMakerType>(
-                  label: 'Tipo de fuente',
-                  items: typeMoneyMaker,
-                  itemLabel: (t) => t.name,
-                  itemIcon: (t) => CircleAvatar(
-                    radius: 16,
-                    backgroundColor: Theme.of(context).colorScheme.primary.withOpacity(0.15),
-                    child: Text(
-                      t.name.isNotEmpty ? t.name[0].toUpperCase() : '?',
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        color: Theme.of(context).colorScheme.primary,
-                      ),
-                    ),
+         SingleChildScrollView(
+            padding: const EdgeInsets.all(10),
+            child: Container(
+             padding: const EdgeInsets.all(20),
+             decoration: BoxDecoration(
+                  color: Theme.of(context).colorScheme.surface.withOpacity(0.12),
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(
+                    color: Theme.of(context).colorScheme.primary.withOpacity(0.40),
+                    width: 1.5,
                   ),
-                  initialValue: selectedType,
-                  onChanged: (value) => setState(() => selectedType = value),
-                  validator: (value) =>
-                      value == null ? 'Seleccione un tipo de fuente' : null,
                 ),
+              child: Form(
+                key: _formKey,
+                child: Column(
+                  children: [
+                    // Nombre
+                    TextFormField(
+                      controller: nameController,
+                      decoration: const InputDecoration(
+                        labelText: 'Nombre de la fuente',
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.all(Radius.circular(12)),
+                        ),
+                        counterText: '',
+                        ),
+                          maxLength: 15,
+                      
+                      validator: (val) {
+                        if (val == null || val.trim().isEmpty) {
+                          return 'El nombre no puede estar vacío';
+                        }
+                        if (val.trim().length < 3) {
+                          return 'Debe tener al menos 3 caracteres';
+                        }
+                        return null;
+                      },
+                    ),
+                    const SizedBox(height: 16),
 
-                if (widget.moneyMaker == null) ...[
-                  const SizedBox(height: 16),
-
-                  // Tipo de moneda
-                BottomSheetPickerField<Currency>(
-                    label: 'Tipo de moneda',
-                    items: currencies,
-                    itemLabel: (c) => '${c.code} - ${c.name}',
-                    itemIcon: (c) => CircleAvatar(
-                      radius: 16,
-                      backgroundColor: Theme.of(context).colorScheme.primary.withOpacity(0.1),
-                      child: Text(
-                        c.symbol,
-                        style: TextStyle(
-                          color: Theme.of(context).colorScheme.primary,
-                          fontWeight: FontWeight.bold,
+                  // Tipo de fuente
+                    BottomSheetPickerField<MoneyMakerType>(
+                      label: 'Tipo de fuente',
+                      items: typeMoneyMaker,
+                      itemLabel: (t) => t.name,
+                      itemIcon: (t) => CircleAvatar(
+                        radius: 16,
+                        backgroundColor: Theme.of(context).colorScheme.primary.withOpacity(0.15),
+                        child: Text(
+                          t.name.isNotEmpty ? t.name[0].toUpperCase() : '?',
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            color: Theme.of(context).colorScheme.primary,
+                          ),
                         ),
                       ),
+                      initialValue: selectedType,
+                      onChanged: (value) => setState(() => selectedType = value),
+                      validator: (value) =>
+                          value == null ? 'Seleccione un tipo de fuente' : null,
                     ),
-                    initialValue: selectedCurrency,
-                    onChanged: (value) =>   setState(() { selectedCurrency = value; balanceController.clear(); }), 
-                    validator: (value) =>
-                        value == null ? 'Debes seleccionar una moneda' : null,
-                  ),
-                  const SizedBox(height: 16),
 
-                  // Saldo inicial
-                  CurrencyTextField(
-                    controller: balanceController,
-                    currencies: currencies,
-                    selectedCurrency: selectedCurrency,
-                    label: 'Saldo inicial (opcional)',
-                  ),
-                ],
+                    if (widget.moneyMaker == null) ...[
+                      const SizedBox(height: 16),
 
-                const SizedBox(height: 16),
+                      // Tipo de moneda
+                    BottomSheetPickerField<Currency>(
+                        label: 'Tipo de moneda',
+                        items: currencies,
+                        itemLabel: (c) => '${c.code} - ${c.name}',
+                        itemIcon: (c) => CircleAvatar(
+                          radius: 16,
+                          backgroundColor: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+                          child: Text(
+                            c.symbol,
+                            style: TextStyle(
+                              color: Theme.of(context).colorScheme.primary,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                        initialValue: selectedCurrency,
+                        onChanged: (value) =>   setState(() { selectedCurrency = value; balanceController.clear(); }), 
+                        validator: (value) =>
+                            value == null ? 'Debes seleccionar una moneda' : null,
+                      ),
+                      const SizedBox(height: 16),
 
-                // Selector de color
-                ColorPickerField(
-                  initialColor: selectedColor,
-                  onSaved: (color) => selectedColor = color,
-                  validator: (color) =>
-                      color == null ? 'Seleccione un color' : null,
-                  label: 'Color de la fuente',
+                      // Saldo inicial
+                      CurrencyTextField(
+                        controller: balanceController,
+                        currencies: currencies,
+                        selectedCurrency: selectedCurrency,
+                        label: 'Saldo inicial (opcional)',
+                      ),
+                    ],
+
+                    const SizedBox(height: 16),
+
+                    // Selector de color
+                    ColorPickerField(
+                      initialColor: selectedColor,
+                      onSaved: (color) => selectedColor = color,
+                      validator: (color) =>
+                          color == null ? 'Seleccione un color' : null,
+                      label: 'Color de la fuente',
+                    ),
+
+                    const SizedBox(height: 15),
+
+                    ButtonSave(
+                      title: "Guardar Fuente",
+                      message: "¿Seguro que quieres guardar esta fuente?",
+                      onConfirm: saveMoneyMaker,
+                      formKey: _formKey,
+                    ),
+
+                    const SizedBox(height: 12),
+
+                    if (widget.moneyMaker != null)
+                    widget.moneyMaker!.active ? 
+                      ButtonDelete(
+                        title: "Pausar Fuente",
+                        message: "¿Seguro que quieres pausar esta fuente?\nSu dinero quedara pausado y podrás reactivarla cuando quieras.",
+                        onConfirm: _deleteMoneyMaker,
+                        label: 'Pausar',
+                        icon: Icons.pause_circle_outline,
+                      )
+                    : ButtonSave(
+                      label: 'Reactivar',
+                      variant: true,
+                      title: 'Activar Fuente', 
+                      message: '¿Seguro que quieres reactivar esta fuente? Su saldo volverá a estar disponible.', 
+                      onConfirm: _activeMoneyMaker),
+                    ],
                 ),
-
-                 const SizedBox(height: 15),
-
-                ButtonSave(
-                  title: "Guardar Fuente",
-                  message: "¿Seguro que quieres guardar esta fuente?",
-                  onConfirm: saveMoneyMaker,
-                  formKey: _formKey,
-                ),
-
-                const SizedBox(height: 12),
-
-                if (widget.moneyMaker != null)
-                widget.moneyMaker!.active ? 
-                  ButtonDelete(
-                    title: "Pausar Fuente",
-                    message: "¿Seguro que quieres pausar esta fuente?\nSu dinero quedara pausado y podrás reactivarla cuando quieras.",
-                    onConfirm: _deleteMoneyMaker,
-                    label: 'Pausar',
-                    icon: Icons.pause_circle_outline,
-                  )
-                : ButtonSave(
-                  label: 'Reactivar',
-                  variant: true,
-                  title: 'Activar Fuente', 
-                  message: '¿Seguro que quieres reactivar esta fuente? Su saldo volverá a estar disponible.', 
-                  onConfirm: _activeMoneyMaker),
-                ],
-            ),
-          ),
-        ),
-
-        //Overlay de guardado
-        if (isSaving)
-          Positioned.fill(
-            child: Container(
-              color: Theme.of(context).scaffoldBackgroundColor,
-              child: const Center(
-                child: LoadingWidget(message: 'Guardando fuente de dinero...'),
               ),
             ),
           ),
-      ],
-    ),
-  );
-}
-}
+
+            //Overlay de guardado
+            if (isSaving)
+              Positioned.fill(
+                child: Container(
+                  color: Theme.of(context).scaffoldBackgroundColor,
+                  child: const Center(
+                    child: LoadingWidget(message: 'Guardando fuente de dinero...'),
+                  ),
+                ),
+              ),
+          ],
+        ),
+        )
+      );
+    }
+  }

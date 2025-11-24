@@ -15,10 +15,11 @@ class StatisticsController extends Controller
         $userCurrency = $user->currency;
 
         $range = (int) $request->query('range', 30); // 7, 30, 365
-        $fromDate = now()->startOfDay()->subDays($range);
+        $fromDate = now()->startOfDay()->subDays($range - 1 );
 
      $registers = Register::with(['category', 'currency'])
         ->whereHas('moneyMaker', fn($q) => $q->where('user_id', $user->id))
+        ->where('created_at', '>=', $fromDate)
         ->whereHas('category', fn($q) => $q->where('is_system', false))
         ->get();
 

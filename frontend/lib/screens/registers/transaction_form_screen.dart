@@ -505,7 +505,7 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
                               }
                               if (widget.type == 'expense' &&
                                   parsed > selectedMoneyMaker!.balance) {
-                                return 'El gasto supera el monto disponible (${selectedMoneyMaker!.balance.toStringAsFixed(2)})';
+                                return 'Monto disponible (${selectedMoneyMaker!.currency!.symbol}${selectedMoneyMaker!.balance.toStringAsFixed(2)})';
                               }
                               return null;
                             },

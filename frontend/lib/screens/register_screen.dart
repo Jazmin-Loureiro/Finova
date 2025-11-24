@@ -248,58 +248,123 @@ class _RegisterScreenState extends State<RegisterScreen> {
   }
 
   void registerUser() async {
-    if (!_formKey.currentState!.validate()) return;
+  if (!_formKey.currentState!.validate()) return;
 
-    final double balance = parseCurrency(balanceController.text, currencyBase!.code);
+  final double balance =
+      parseCurrency(balanceController.text, currencyBase!.code);
 
-    setState(() => isLoading = true);
+  setState(() => isLoading = true);
 
-    try {
-      await api.register(
-        name,
-        email,
-        password,
-        currencyBase: currencyBase!,
-        balance: balance,
-        icon: icon,
-        avatarSeed: selectedAvatarSeed,
-      );
+  final res = await api.register(
+    name,
+    email,
+    password,
+    currencyBase: currencyBase!,
+    balance: balance,
+    icon: icon,
+    avatarSeed: selectedAvatarSeed,
+  );
 
-      if (!mounted) return;
-      setState(() => isLoading = false);
+  if (!mounted) return;
 
+  setState(() => isLoading = false);
+
+  // 🟣 Sin respuesta
+  if (res == null) {
+    await showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => const SuccessDialogWidget(
+        isFailure: true,
+        title: 'Error',
+        message: 'No se pudo conectar con el servidor.',
+        buttonText: 'Aceptar',
+      ),
+    );
+    return;
+  }
+
+  // 🟣 Si vino una clave "error" desde ApiService
+  if (res['error'] != null) {
+    await showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => SuccessDialogWidget(
+        isFailure: true,
+        title: 'Error',
+        message: res['error'] ?? 'Ocurrió un error en el registro.',
+        buttonText: 'Aceptar',
+      ),
+    );
+    return;
+  }
+
+  // 🟣 Errores de validación de Laravel (incluye "email ya registrado")
+  if (res['errors'] != null) {
+    // caso específico: email ya existe
+    if (res['errors']['email'] != null) {
       await showDialog(
         context: context,
         barrierDismissible: false,
         builder: (_) => const SuccessDialogWidget(
-          title: '¡Registro exitoso!',
-          message:
-              'Te enviamos un email para confirmar tu cuenta antes de iniciar sesión.',
-          buttonText: 'Aceptar',
-        ),
-      );
-
-      if (mounted) {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (_) => const LoginScreen()),
-        );
-      }
-    } catch (e) {
-      if (!mounted) return;
-      setState(() => isLoading = false);
-      await showDialog(
-        context: context,
-        barrierDismissible: false,
-        builder: (_) => SuccessDialogWidget(
           isFailure: true,
-          title: 'Error',
-          message: 'Ocurrió un error en el registro: $e',
+          title: 'Email invalido',
+          message:
+              'Ya existe una cuenta con ese email. Intentá iniciar sesión o usá otro correo.',
           buttonText: 'Aceptar',
         ),
       );
+      return;
     }
+
+    // otros errores de validación genéricos
+    await showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => SuccessDialogWidget(
+        isFailure: true,
+        title: 'Datos inválidos',
+        message: res['message'] ??
+            'Revisá los datos ingresados e intentá nuevamente.',
+        buttonText: 'Aceptar',
+      ),
+    );
+    return;
   }
+
+  // 🔴 Seguridad extra: si no vino "user", no consideramos éxito
+  if (res['user'] == null) {
+    await showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => const SuccessDialogWidget(
+        isFailure: true,
+        title: 'Error',
+        message: 'No se pudo completar el registro. Intentá nuevamente.',
+        buttonText: 'Aceptar',
+      ),
+    );
+    return;
+  }
+
+  // 🟢 TODO BIEN → Registro exitoso
+  await showDialog(
+    context: context,
+    barrierDismissible: false,
+    builder: (_) => const SuccessDialogWidget(
+      title: '¡Registro exitoso!',
+      message:
+          'Te enviamos un email para confirmar tu cuenta antes de iniciar sesión.',
+      buttonText: 'Aceptar',
+    ),
+  );
+
+  Navigator.pushReplacement(
+    context,
+    MaterialPageRoute(builder: (_) => const LoginScreen()),
+  );
+}
+
 
   @override
   Widget build(BuildContext context) {

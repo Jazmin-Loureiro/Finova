@@ -70,15 +70,15 @@ class ApiService {
   String name,
   String email,
   String password, {
-  //required String currencyBase,
-    required Currency currencyBase, // CAMBIO: ahora es Currency
+  required Currency currencyBase,
   double? balance,
   File? icon,
-  String? avatarSeed, // 👈 nuevo
+  String? avatarSeed,
 }) async {
   try {
     final uri = Uri.parse('$apiUrl/register');
     var request = http.MultipartRequest('POST', uri)
+      ..headers['Accept'] = 'application/json'   // 👈 IMPORTANTE
       ..fields['name'] = name
       ..fields['email'] = email
       ..fields['password'] = password
@@ -93,7 +93,6 @@ class ApiService {
         filename: basename(icon.path),
       ));
     } else if (avatarSeed != null) {
-      // si no hay icon, mandamos el seed en el mismo campo
       request.fields['icon'] = avatarSeed;
     }
 
@@ -104,7 +103,7 @@ class ApiService {
       return jsonDecode(res.body);
     } else {
       try {
-        return jsonDecode(res.body);
+        return jsonDecode(res.body); // acá ya deberías recibir el JSON con errors
       } catch (_) {
         return {'error': 'Error en el registro, intente nuevamente'};
       }
@@ -113,6 +112,7 @@ class ApiService {
     return {'error': 'No se pudo conectar con el servidor'};
   }
 }
+
 
   ///////////////////////////////////////// Reenviar email de verificación
   Future<Map<String, dynamic>?> resendVerification() async {

@@ -95,6 +95,7 @@ class _TransferScreenState extends State<TransferScreen> {
     try {
       final response = await api.getMoneyMakersFull();
       _moneyMakers = List<MoneyMaker>.from(response['moneyMakers']);
+       _moneyMakers = _moneyMakers.where((mm) => mm.active).toList();
     } catch (e) {
       setState(() => isLoading = false);
       ScaffoldMessenger.of(context).showSnackBar(

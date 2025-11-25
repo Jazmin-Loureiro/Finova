@@ -116,7 +116,7 @@ Future<void> fetchRates() async {
                               const SizedBox(height: 4),
 
                               Text(
-                                "1 ${currency.code} → ${currencyUser.symbol}${formattedValue}",
+                                "1 ${currency.code} → ${currencyUser.symbol}${formattedValue} ${currencyUser.code}",
                                 style: TextStyle(
                                   color: Theme.of(context).colorScheme.primary,
                                   fontSize: 18,

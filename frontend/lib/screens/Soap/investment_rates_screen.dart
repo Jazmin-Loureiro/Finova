@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:frontend/helpers/format_utils.dart';
+import 'package:frontend/widgets/loading_widget.dart';
 import '../../models/investment_rate.dart';
 import '../../services/api_service.dart';
-import '../../widgets/custom_scaffold.dart';
 import 'package:intl/intl.dart';
 
 class InvestmentRatesScreen extends StatefulWidget {
@@ -50,6 +51,7 @@ class _InvestmentRatesScreenState extends State<InvestmentRatesScreen> {
   Future<void> fetchRates() async {
     try {
       final fetchedRates = await api.getInvestmentRates();
+      fetchedRates.removeWhere((r) => r.name.toLowerCase().contains('ppa'),);
       setState(() {
         rates = fetchedRates;
         isLoading = false;
@@ -121,7 +123,7 @@ class _InvestmentRatesScreenState extends State<InvestmentRatesScreen> {
 
     // En dólares
     if (type == 'bono' || type == 'accion' || type == 'cripto' || name.contains('reservas')) {
-      return '\$${value.toStringAsFixed(2)} USD';
+      return '\$${formatCurrency(value, 'USD')} USD';
     }
 
     // Por defecto: pesos
@@ -130,12 +132,8 @@ class _InvestmentRatesScreenState extends State<InvestmentRatesScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return CustomScaffold(
-      title: 'Tasas de Inversión',
-      currentRoute: '/investment-rates',
-      showNavigation: false,
-      body: isLoading
-          ? const Center(child: CircularProgressIndicator())
+    return  isLoading
+          ? const Center(child: LoadingWidget())
           : ListView.builder(
               itemCount: rates.length,
               itemBuilder: (context, i) {
@@ -148,68 +146,85 @@ class _InvestmentRatesScreenState extends State<InvestmentRatesScreen> {
                 // 🔹 Formatea la fecha de actualización
                 String formattedDate = '';
                 try {
-                  formattedDate = DateFormat('dd/MM/yyyy – HH:mm')
+                  formattedDate =DateFormat("dd MMM yyyy - HH:mm")
                       .format(DateTime.parse(rate.updatedAt).toLocal());
                 } catch (_) {
                   formattedDate = 'Fecha no disponible';
                 }
 
-                return Card(
-                  margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+             return Card(
+                  margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                   elevation: 2,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 6),
-                    child: ListTile(
-                      leading: CircleAvatar(
-                        backgroundColor: color.withOpacity(0.15),
-                        radius: 22,
-                        child: Icon(icon, color: color, size: 22),
-                      ),
-                      title: Text(
-                        name,
-                        style: const TextStyle(fontWeight: FontWeight.w600),
-                      ),
-                      subtitle: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Tipo: ${rate.type}  •  Fuente: ${rate.fuente}',
-                            style: TextStyle(
-                              fontSize: 12.5,
-                              color: Theme.of(context).brightness == Brightness.dark
-                                  ? Colors.white70       // 👈 más claro en modo oscuro
-                                  : Colors.grey[800],    // 👈 mantiene contraste en modo claro
-                              height: 1.3,
-                            ),
-                          ),
-                          const SizedBox(height: 2),
-                          Text(
-                            'Última actualización: $formattedDate',
-                            style: TextStyle(
-                              fontSize: 11.5,
-                              color: Theme.of(context).brightness == Brightness.dark
-                                  ? const Color.fromARGB(227, 255, 255, 255)       // 👈 aclarado también
-                                  : Colors.grey[700],
-                              fontStyle: FontStyle.italic,
-                            ),
-                          ),
-                        ],
-                      ),
-                      trailing: Text(
-                        formattedValue,
-                        style: TextStyle(
-                          color: color,
-                          fontWeight: FontWeight.w600,
+                    padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
+                    child: Row(
+                      children: [
+                        // ICONO A LA IZQUIERDA
+                        CircleAvatar(
+                          backgroundColor: color.withOpacity(0.15),
+                          radius: 22,
+                          child: Icon(icon, color: color, size: 20),
                         ),
-                      ),
+
+                        const SizedBox(width: 12),
+
+                        // INFORMACIÓN
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              // NOMBRE
+                              Text(
+                                name,
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.w800,
+                                  fontSize: 17,
+                                ),
+                              ),
+
+                              const SizedBox(height: 4),
+
+                              // TIPO + FUENTE
+                              Text(
+                                'Tipo: ${rate.type}  •  Fuente: ${rate.fuente}',
+                                style: TextStyle(
+                                  fontSize: 12.5,
+                                  color: Theme.of(context).colorScheme.primary,        
+                                ),
+                              ),
+
+                              const SizedBox(height: 4),
+
+                               Text(
+                                formattedValue,
+                                style: TextStyle(
+                                  color: color,
+                                  fontWeight: FontWeight.w800,
+                                  fontSize: 18,
+                                ),
+                              ),
+                              
+                              const SizedBox(height: 6),
+                              // FECHA
+                              Text(
+                                'Última actualización: $formattedDate',
+                                style: TextStyle(
+                                  fontSize: 11.5,
+                                  color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7), 
+                                  fontStyle: FontStyle.italic,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 );
               },
-            ),
-    );
-  }
-}
+            );
+          }
+        }

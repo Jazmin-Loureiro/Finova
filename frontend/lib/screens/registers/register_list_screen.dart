@@ -180,6 +180,7 @@ class _RegisterListScreenState extends State<RegisterListScreen> {
                       children: [
                         // Tipo
                         FilterChip(
+                          selectedColor: Theme.of(context).colorScheme.secondaryContainer.withOpacity(0.8),
                           label: Row(
                             children: [
                               Text(selectedType == "all" ? "Tipo: Todos"
@@ -208,6 +209,7 @@ class _RegisterListScreenState extends State<RegisterListScreen> {
 
                         // Categoría
                         FilterChip(
+                          selectedColor: Theme.of(context).colorScheme.secondaryContainer.withOpacity(0.8),
                           label: Row(
                             children: [
                               Text(selectedCategory ?? "Categoría: Todas"),
@@ -233,6 +235,7 @@ class _RegisterListScreenState extends State<RegisterListScreen> {
 
                         // Fecha
                         FilterChip(
+                          selectedColor: Theme.of(context).colorScheme.secondary.withOpacity(0.8),
                           label: Row(
                             children: [
                               Text(

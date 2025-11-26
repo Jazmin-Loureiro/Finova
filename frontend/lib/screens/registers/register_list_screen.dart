@@ -337,7 +337,7 @@ class _RegisterListScreenState extends State<RegisterListScreen> {
                                   symbolOverride: symbol,
                                 ),
                                 style: TextStyle(
-                                  fontSize: 14,
+                                  fontSize: 15,
                                   fontWeight: FontWeight.bold,
                                   color: Theme.of(context).colorScheme.onPrimary,
                                 ),
@@ -358,7 +358,7 @@ class _RegisterListScreenState extends State<RegisterListScreen> {
                               },
                             ),
                           ),
-                          const SizedBox(height: 10),
+                          const SizedBox(height: 5),
                         ],
                       );
                     }).toList(),

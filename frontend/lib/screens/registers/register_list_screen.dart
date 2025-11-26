@@ -180,6 +180,7 @@ class _RegisterListScreenState extends State<RegisterListScreen> {
                       children: [
                         // Tipo
                         FilterChip(
+                          labelStyle: TextStyle(fontSize: 16),
                           selectedColor: Theme.of(context).colorScheme.secondaryContainer.withOpacity(0.8),
                           label: Row(
                             children: [
@@ -209,6 +210,7 @@ class _RegisterListScreenState extends State<RegisterListScreen> {
 
                         // Categoría
                         FilterChip(
+                          labelStyle: TextStyle(fontSize: 16),
                           selectedColor: Theme.of(context).colorScheme.secondaryContainer.withOpacity(0.8),
                           label: Row(
                             children: [
@@ -235,6 +237,7 @@ class _RegisterListScreenState extends State<RegisterListScreen> {
 
                         // Fecha
                         FilterChip(
+                          labelStyle: TextStyle(fontSize: 16),
                           selectedColor: Theme.of(context).colorScheme.secondary.withOpacity(0.8),
                           label: Row(
                             children: [

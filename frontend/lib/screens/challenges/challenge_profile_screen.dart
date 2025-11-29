@@ -359,8 +359,12 @@ class _ChallengeProfileScreenState extends State<ChallengeProfileScreen>
     final failed =
         (challenges['failed'] as List?)?.length ?? 0;
 
-    final nextLevelPts = _requiredForLevel(level + 1).toInt();
+    // El backend usa: required = base * growth^(level - 1)
+    // Así que para saber cuántos puntos faltan para el SIGUIENTE nivel,
+    // el threshold correcto del nivel actual es _requiredForLevel(level)
+    final nextLevelPts = _requiredForLevel(level).toInt();
     final remaining = (nextLevelPts - points).clamp(0, nextLevelPts);
+
     final total = completed + failed + inProgress;
     final completionRate =
         total > 0 ? ((completed / total) * 100).round() : 0;
@@ -454,7 +458,7 @@ class _ChallengeProfileScreenState extends State<ChallengeProfileScreen>
                   Text(
                     name,
                     style: const TextStyle(
-                      fontSize: 20,
+                      fontSize: 25,
                       fontWeight: FontWeight.bold,
                       color: Colors.white,
                     ),
@@ -466,7 +470,7 @@ class _ChallengeProfileScreenState extends State<ChallengeProfileScreen>
                       Text(
                         'Nivel $level — $points pts',
                         style: const TextStyle(
-                          fontSize: 14,
+                          fontSize: 17,
                           fontWeight: FontWeight.bold,
                           color: Colors.white, // BLANCO SIEMPRE
                         ),
@@ -497,7 +501,7 @@ class _ChallengeProfileScreenState extends State<ChallengeProfileScreen>
                   Text(
                     'Faltan $remaining pts para el nivel ${level + 1}',
                     style: TextStyle(
-                      fontSize: 12,
+                      fontSize: 15,
                       color: Colors.white.withOpacity(0.9),
                     ),
                   ),

@@ -73,7 +73,12 @@ class _HomeInfoWidgetState extends State<HomeInfoWidget> {
     }
 
     final balance = double.tryParse(houseData['balance'].toString()) ?? 0;
-    final balanceColor = balance > 0 ? Colors.green[700] : Colors.red[700];
+    // Verde más profundo y sólido para mejor contraste
+    final balanceColor = balance > 0
+    ? const Color(0xFF0E7A47)   // verde más oscuro y elegante
+    : Colors.red[700];
+
+
     final currencySymbol = houseData['currency_symbol'] ?? '\$';
     final currencyCode = houseData['currency_code'] ?? 'ARS';
 
@@ -104,9 +109,10 @@ class _HomeInfoWidgetState extends State<HomeInfoWidget> {
                 const Text(
                   "Saldo disponible",
                   style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
+                    fontSize: 26,
+                    fontWeight: FontWeight.w700,
                     color: Colors.black87,
+                    letterSpacing: -0.3,       // más moderno
                   ),
                 ),
               ],
@@ -119,22 +125,35 @@ class _HomeInfoWidgetState extends State<HomeInfoWidget> {
                 key: ValueKey(balance),
                 text: TextSpan(
                   style: TextStyle(
-                    fontSize: 28,
-                    fontWeight: FontWeight.bold,
-                    color: balanceColor,
+                    color: balanceColor!.withValues(alpha: 1), // más sólido
+                    fontSize: 32,                              // un poquito más grande
+                    fontWeight: FontWeight.w800,               // más pesado
+                    shadows: [
+  Shadow(
+    color: Colors.black.withOpacity(0.35), // más fuerte
+    offset: Offset(0, 1),
+    blurRadius: 3,
+  ),
+  Shadow(
+    color: Colors.white.withOpacity(0.4),  // agrega contraste suave
+    offset: Offset(-1, -1),
+    blurRadius: 2,
+  ),
+],
+
                   ),
                   children: [
                     TextSpan(
-                        text:
-                            "$currencySymbol${formatCurrency(balance, currencyCode)}"),
+                      text: "$currencySymbol${formatCurrency(balance, currencyCode)} ",
+                    ),
                     TextSpan(
                       text: currencyCode,
                       style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w400,
-                        color: Colors.black54,
+                        fontSize: 15,
+                        fontWeight: FontWeight.w500,
+                        color: Colors.black45,
                       ),
-                    ),
+                    )
                   ],
                 ),
               ),
@@ -154,7 +173,10 @@ class _HomeInfoWidgetState extends State<HomeInfoWidget> {
                     Text(
                       getFormattedDate(),
                       style: const TextStyle(
-                          fontSize: 13, color: Colors.black54),
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.black87,
+                      ),
                     ),
                   ],
                 ),
@@ -179,7 +201,10 @@ class _HomeInfoWidgetState extends State<HomeInfoWidget> {
                         Text(
                           "1 USD = $userCurrencySymbol ${formatCurrency(dolarValue!, userCurrencyCode!)}",
                           style: const TextStyle(
-                              fontSize: 13, color: Colors.black54),
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.black87,
+                          ),
                         )
                       else
                         const Text(

@@ -145,7 +145,7 @@ class ChallengeController extends Controller
                     'payload'        => $decoded,
                     'target_amount'  => $ch->pivot->target_amount,
                     'duration_days'  => (int) $ch->duration_days,
-                    'reward_points'  => (int) $ch->reward_points,
+                    'reward_points'  => (int) ($ch->pivot->reward_points ?? $ch->reward_points),
                     'locked'         => $locked,
                     'locked_reason'  => $locked
                         ? 'Ya tenés un desafío de este tipo en progreso. Completalo para aceptar uno nuevo.'
@@ -260,7 +260,7 @@ class ChallengeController extends Controller
                     'payload'        => $decoded,
                     'target_amount'  => $ch->pivot->target_amount,
                     'duration_days'  => (int) $ch->duration_days,
-                    'reward_points'  => (int) $ch->reward_points,
+                    'reward_points'  => (int) ($ch->pivot->reward_points ?? $ch->reward_points),
                     'locked'         => $locked,
                     'locked_reason'  => $locked
                         ? 'Ya tenés un desafío de este tipo en progreso. Completalo para aceptar uno nuevo.'

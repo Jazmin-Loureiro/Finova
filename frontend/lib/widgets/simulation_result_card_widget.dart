@@ -521,7 +521,7 @@ class _SimulationResultCardState extends State<SimulationResultCard>
                   Text(
                     'Resultado de la simulación',
                     style: TextStyle(
-                      fontSize: 18,
+                      fontSize: 19,
                       fontWeight: FontWeight.bold,
                       color: primary,
                     ),
@@ -623,11 +623,11 @@ class _SimulationResultCardState extends State<SimulationResultCard>
               style: TextStyle(
                   color: textColor.withOpacity(0.8),
                   fontWeight: FontWeight.w600,
-                  fontSize: 14)),
+                  fontSize: 15)),
           const SizedBox(height: 3),
           Text(value,
               style: TextStyle(
-                  color: textColor, fontWeight: FontWeight.bold, fontSize: 15)),
+                  color: textColor, fontWeight: FontWeight.bold, fontSize: 17)),
         ],
       ),
     );

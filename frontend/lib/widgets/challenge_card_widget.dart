@@ -41,7 +41,7 @@ class ChallengeCardWidget extends StatelessWidget {
                     child: Text(
                       ch['name'] ?? '',
                       style: const TextStyle(
-                        fontSize: 18,
+                        fontSize: 20,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
@@ -64,6 +64,7 @@ class ChallengeCardWidget extends StatelessWidget {
                 Text(
                   ch['description'] ?? '',
                   style: TextStyle(
+                    fontSize: 15,
                     color: cs.onSurface.withOpacity(0.85),
                   ),
                 ),
@@ -86,6 +87,7 @@ class ChallengeCardWidget extends StatelessWidget {
                 return Text(
                   hint,
                   style: TextStyle(
+                    fontSize: 16,
                     fontWeight: FontWeight.w700,
                     color: cs.primary,
                   ),
@@ -152,7 +154,7 @@ class ChallengeCardWidget extends StatelessWidget {
           Text(
             'Llevás ahorrado $savedFmt de $goalFmt',
             style: TextStyle(
-              fontSize: 12,
+              fontSize: 14,
               color: cs.onSurface.withOpacity(0.85),
               fontWeight: FontWeight.w600,
             ),
@@ -205,7 +207,7 @@ class ChallengeCardWidget extends StatelessWidget {
                   ? 'Te queda $remainingFmt de $maxFmt'
                   : 'Te pasaste del límite',
               style: TextStyle(
-                fontSize: 12,
+                fontSize: 14,
                 color: color,
                 fontWeight: FontWeight.w600,
               ),
@@ -238,7 +240,10 @@ class ChallengeCardWidget extends StatelessWidget {
   String text;
   Color color;
   IconData icon;
-  final points = ch['reward_points'] ?? 0;
+  final points = ch['pivot']?['reward_points']
+    ?? ch['reward_points']
+    ?? 0;
+
 
   switch (state) {
     case 'completed':
@@ -289,7 +294,7 @@ class ChallengeCardWidget extends StatelessWidget {
             Text(
               text,
               style: TextStyle(
-                fontSize: 12,
+                fontSize: 14,
                 color: color,
                 fontWeight: FontWeight.w600,
               ),
@@ -314,7 +319,7 @@ class ChallengeCardWidget extends StatelessWidget {
             Text(
               text,
               style: TextStyle(
-                fontSize: 12,
+                fontSize: 14,
                 color: color,
                 fontWeight: FontWeight.w600,
               ),
@@ -402,7 +407,7 @@ class ChallengeCardWidget extends StatelessWidget {
           Text(
             text,
             style: TextStyle(
-              fontSize: 12,
+              fontSize: 14,
               color: color,
               fontWeight: FontWeight.w600,
             ),
@@ -414,7 +419,7 @@ class ChallengeCardWidget extends StatelessWidget {
         Text(
           remainingInfo,
           style: TextStyle(
-            fontSize: 12,
+            fontSize: 14,
             color: cs.onSurfaceVariant,
             fontWeight: FontWeight.w500,
           ),

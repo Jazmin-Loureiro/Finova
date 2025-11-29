@@ -48,7 +48,7 @@ class GamificationController extends Controller
         // Helper general
         $map = function ($q) {
     return $q->withPivot([
-            'state','progress','start_date','end_date','target_amount','balance','payload'
+            'state','progress','start_date','end_date','target_amount','balance','payload', 'reward_points'
         ])
         ->get([
             'challenges.id as challenge_id',
@@ -79,7 +79,7 @@ class GamificationController extends Controller
                 'description'    => $ch->description,
                 'type'           => $ch->type,
                 'duration_days'  => (int) $ch->duration_days,
-                'reward_points'  => (int) $ch->reward_points,
+                'reward_points'  => (int) ($ch->pivot->reward_points ?? $ch->reward_points),
                 'pivot' => [
                     'state'         => $ch->pivot->state,
                     'progress'      => $ch->pivot->progress,

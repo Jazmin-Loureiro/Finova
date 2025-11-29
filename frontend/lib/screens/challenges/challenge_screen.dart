@@ -417,9 +417,6 @@ class _ChallengeScreenState extends State<ChallengeScreen>
                   itemBuilder: (context, index) {
                     final ch = sorted[index];
 
-                    // … resto del código igual …
-
-
                     // 🟣 Mensajes informativos del backend (type: INFO) — se mantiene
                     if ((ch['type'] ?? '') == 'INFO') {
                       return Card(
@@ -575,7 +572,7 @@ class _ChallengeScreenState extends State<ChallengeScreen>
                                       child: Text(
                                         ch['name'] ?? '',
                                         style: const TextStyle(
-                                          fontSize: 18,
+                                          fontSize: 20,
                                           fontWeight: FontWeight.w600,
                                         ),
                                         overflow: TextOverflow.ellipsis,
@@ -599,7 +596,7 @@ class _ChallengeScreenState extends State<ChallengeScreen>
                                   Text(
                                     ch['description'],
                                     style: TextStyle(
-                                      fontSize: 14,
+                                      fontSize: 15,
                                       color: cs.onSurfaceVariant,
                                     ),
                                   ),
@@ -612,7 +609,7 @@ class _ChallengeScreenState extends State<ChallengeScreen>
                                     style: TextStyle(
                                       fontWeight: FontWeight.bold,
                                       color: cs.primary,
-                                      fontSize: 14,
+                                      fontSize: 15,
                                     ),
                                   ),
                                 ],
@@ -635,7 +632,7 @@ class _ChallengeScreenState extends State<ChallengeScreen>
                                         child: Text(
                                           lockedReason,
                                           style: TextStyle(
-                                            fontSize: 12,
+                                            fontSize: 13,
                                             color: cs.onSurface.withOpacity(0.80),
                                           ),
                                         ),

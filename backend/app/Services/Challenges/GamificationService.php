@@ -14,90 +14,93 @@ class GamificationService
      * Ahora también devuelve insignias automáticas desbloqueadas.
      */
     public function rewardUser(User $user, Challenge $challenge)
-    {
-        // 1️⃣ Sumar puntos al usuario
-        $pointsEarned = $challenge->reward_points ?? 0;
-        $user->points = ($user->points ?? 0) + $pointsEarned;
+{
+    // 1️⃣ Buscar SIEMPRE el último pivot de ese desafío (sea in_progress o completed)
+    $activePivot = UserChallenge::where('user_id', $user->id)
+        ->where('challenge_id', $challenge->id)
+        ->orderByDesc('id')
+        ->first();
 
-        // 2️⃣ Subida de nivel con curva progresiva
-        $baseThreshold = 150;
-        $growthFactor  = 1.5;
+    // 2️⃣ Usar SIEMPRE los puntos reales guardados en el pivot si existen
+    $pointsEarned = $activePivot?->reward_points ?? $challenge->reward_points;
 
-        $initialLevel  = $user->level ?? 1;
-        $currentLevel  = $initialLevel;
-        $totalPoints   = $user->points ?? 0;
+    // 3️⃣ Sumar puntos al usuario
+    $user->points = ($user->points ?? 0) + $pointsEarned;
 
-        while (true) {
-            $required = (int) round($baseThreshold * pow($growthFactor, $currentLevel - 1));
-            if ($totalPoints >= $required) {
-                $totalPoints -= $required;
-                $currentLevel++;
-            } else {
-                break;
-            }
+    // 4️⃣ Subida de nivel con curva progresiva (esto ya lo tenías bien)
+    $baseThreshold = 150;
+    $growthFactor  = 1.5;
+
+    $initialLevel  = $user->level ?? 1;
+    $currentLevel  = $initialLevel;
+    $totalPoints   = $user->points ?? 0;
+
+    while (true) {
+        $required = (int) round($baseThreshold * pow($growthFactor, $currentLevel - 1));
+        if ($totalPoints >= $required) {
+            $totalPoints -= $required;
+            $currentLevel++;
+        } else {
+            break;
         }
-
-        $user->points = $totalPoints;
-        $user->level  = $currentLevel;
-        $leveledUp    = $currentLevel > $initialLevel;
-        $user->save();
-
-        // 3️⃣ Marcar pivot como completado
-        $activePivot = UserChallenge::where('user_id', $user->id)
-            ->where('challenge_id', $challenge->id)
-            ->where('state', 'in_progress')
-            ->orderByDesc('id')
-            ->first();
-
-        if ($activePivot) {
-            $activePivot->update([
-                'state'    => 'completed',
-                'progress' => 100,
-                'end_date' => now(),
-            ]);
-        }
-
-        // ============================================================
-        // 4️⃣ INSIGNIAS POR EVENTO (las que vienen en el desafío)
-        // ============================================================
-
-        $eventBadge = null;
-
-        if ($challenge->reward_badge_id) {
-            $badge = Badge::find($challenge->reward_badge_id);
-
-            if ($badge && !$user->badges()->where('badge_id', $badge->id)->exists()) {
-                $user->badges()->attach($badge->id);
-                $eventBadge = $badge;
-            }
-        }
-
-        // ============================================================
-        // 5️⃣ INSIGNIAS AUTOMÁTICAS (acumulativas)
-        // ============================================================
-
-        $autoBadge = $this->evaluateProgressBadges($user);
-
-        // ============================================================
-        // 6️⃣ Devolver recompensa con la insignia que corresponda
-        // ============================================================
-
-        $badgeToReturn = null;
-
-        if ($autoBadge) {
-            $badgeToReturn = $autoBadge->only(['id', 'name', 'icon']);
-        } elseif ($eventBadge) {
-            $badgeToReturn = $eventBadge->only(['id', 'name', 'icon']);
-        }
-
-        return [
-            'points_earned'    => $pointsEarned,
-            'new_total_points' => $totalPoints,
-            'leveled_up'       => $leveledUp,
-            'new_level'        => $currentLevel,
-            'badge_earned'     => $badgeToReturn, // ESTA ES LA CLAVE PARA EL FRONT
-        ];
     }
+
+    $user->points = $totalPoints;
+    $user->level  = $currentLevel;
+    $leveledUp    = $currentLevel > $initialLevel;
+    $user->save();
+
+    // 5️⃣ Asegurarse de que el pivot quede en completed (por si llega todavía in_progress)
+    if ($activePivot) {
+        $activePivot->update([
+            'state'    => 'completed',
+            'progress' => 100,
+            'end_date' => now(),
+        ]);
+    }
+
+    // ============================================================
+    // 6️⃣ INSIGNIAS POR EVENTO (las que vienen en el desafío)
+    // ============================================================
+
+    $eventBadge = null;
+
+    if ($challenge->reward_badge_id) {
+        $badge = Badge::find($challenge->reward_badge_id);
+
+        if ($badge && !$user->badges()->where('badge_id', $badge->id)->exists()) {
+            $user->badges()->attach($badge->id);
+            $eventBadge = $badge;
+        }
+    }
+
+    // ============================================================
+    // 7️⃣ INSIGNIAS AUTOMÁTICAS (acumulativas)
+    // ============================================================
+
+    $autoBadge = $this->evaluateProgressBadges($user);
+
+    // ============================================================
+    // 8️⃣ Devolver recompensa
+    // ============================================================
+
+    $badgeToReturn = null;
+
+    if ($autoBadge) {
+        $badgeToReturn = $autoBadge->only(['id', 'name', 'icon']);
+    } elseif ($eventBadge) {
+        $badgeToReturn = $eventBadge->only(['id', 'name', 'icon']);
+    }
+
+    return [
+        'points_earned'    => $pointsEarned,
+        'new_total_points' => $totalPoints,
+        'leveled_up'       => $leveledUp,
+        'new_level'        => $currentLevel,
+        'badge_earned'     => $badgeToReturn,
+    ];
+}
+
 
     /**
      * Evalúa y asigna insignias por progreso global (acumulativo).

@@ -23,9 +23,9 @@ class UserChallenge extends Model
         'progress',
         'start_date',
         'end_date',
-        // 👇 NUEVO: datos personalizados por usuario
         'payload',
         'target_amount',
+        'reward_points',
     ];
 
     // ✅ convierte automáticamente a float o datetime
@@ -34,9 +34,9 @@ class UserChallenge extends Model
         'progress'     => 'float',
         'start_date'   => 'datetime',
         'end_date'     => 'datetime',
-        // 👇 NUEVO
         'payload'       => 'array',
         'target_amount' => 'float',
+        'reward_points' => 'integer',
     ];
 
     public function user()

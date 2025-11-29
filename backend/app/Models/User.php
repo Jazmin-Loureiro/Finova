@@ -83,6 +83,7 @@ class User extends Authenticatable implements MustVerifyEmail
                         // 👇 NUEVO
                         'payload',
                         'target_amount',
+                        'reward_points',
                     ])
                     ->withTimestamps();
     }

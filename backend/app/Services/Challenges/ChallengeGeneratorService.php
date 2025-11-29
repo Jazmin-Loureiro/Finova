@@ -42,6 +42,8 @@ class ChallengeGeneratorService
                     'currency_symbol' => $toSymbol,
                 ];
 
+                $tmp = $this->mapForResponse($base, $payload, $target, $user);
+
                 $this->upsertUserChallenge(
                     user:         $user,
                     base:         $base,
@@ -50,13 +52,14 @@ class ChallengeGeneratorService
                     start:        null,
                     end:          null,
                     targetAmount: $target,
-                    payload:      $payload
+                    payload:      $payload,
+                    rewardPoints: $tmp['_scaled_points']   // ◎ AHORA SÍ
                 );
 
-                $out[] = array_merge(
-                    $this->mapForResponse($base, $payload, $target, $user),
-                    ['duration_days' => $durationDays]
-                );
+                $out[] = array_merge($tmp, [
+                    'duration_days' => $durationDays
+                ]);
+
             }
 
             // 🧩 Si no tiene ingresos ni balance (usuario nuevo)
@@ -80,6 +83,8 @@ class ChallengeGeneratorService
                     'duration_days' => $durationDays,
                 ]);
 
+                $tmp = $this->mapForResponse($base, $payload, $target, $user);
+
                 $this->upsertUserChallenge(
                     user:         $user,
                     base:         $base,
@@ -88,13 +93,14 @@ class ChallengeGeneratorService
                     start:        null,
                     end:          null,
                     targetAmount: $target,
-                    payload:      $payload
+                    payload:      $payload,
+                    rewardPoints: $tmp['_scaled_points']   // ◎ OK
                 );
 
-                $out[] = array_merge(
-                    $this->mapForResponse($base, $payload, $target, $user),
-                    ['duration_days' => $durationDays]
-                );
+                $out[] = array_merge($tmp, [
+                    'duration_days' => $durationDays
+                ]);
+
             }
 
 
@@ -177,18 +183,22 @@ class ChallengeGeneratorService
                                 'currency_symbol' => $toSymbol,
                             ];
 
+                            $tmp = $this->mapForResponse($base, $payload, $baseline, $user);
+
                             $this->upsertUserChallenge(
-                                user: $user,
-                                base: $base,
-                                state: 'suggested',
-                                balance: $user->balance ?? 0,
-                                start: null,
-                                end: null,
+                                user:         $user,
+                                base:         $base,
+                                state:        'suggested',
+                                balance:      $user->balance ?? 0,
+                                start:        null,
+                                end:          null,
                                 targetAmount: round($baseline, 2),
-                                payload: $payload
+                                payload:      $payload,
+                                rewardPoints: $tmp['_scaled_points']
                             );
 
-                            $out[] = $this->mapForResponse($base, $payload, $baseline, $user);
+                            $out[] = $tmp;
+
                         } else {
                             $out[] = [
                                 'type' => 'INFO',
@@ -218,6 +228,8 @@ class ChallengeGeneratorService
                 'currency_symbol' => $toSymbol,
             ];
 
+            $tmp = $this->mapForResponse($base, $payload, $count, $user);
+
             $this->upsertUserChallenge(
                 user:         $user,
                 base:         $base,
@@ -226,14 +238,14 @@ class ChallengeGeneratorService
                 start:        null,
                 end:          null,
                 targetAmount: $count,
-                payload:      $payload
+                payload:      $payload,
+                rewardPoints: $tmp['_scaled_points']
             );
 
-            // ✅ Devolvemos al frontend con duración personalizada
-            $out[] = array_merge(
-                $this->mapForResponse($base, $payload, $count, $user),
-                ['duration_days' => $durationDays]
-            );
+            $out[] = array_merge($tmp, [
+                'duration_days' => $durationDays
+            ]);
+
 
         });
 
@@ -260,8 +272,10 @@ class ChallengeGeneratorService
     ?\DateTimeInterface $start,
     ?\DateTimeInterface $end,
     float|int|null $targetAmount,
-    array $payload
+    array $payload,
+    int $rewardPoints   // 👈 NUEVO
 ): void {
+
 
     // 🟡 1) Permitir siempre mostrar uno por tipo, incluso si hay uno en progreso
     // Solo bloquea la aceptación (el front ya lo hace con "locked": true)
@@ -287,6 +301,7 @@ class ChallengeGeneratorService
             'balance'       => $balance,
             'target_amount' => $targetAmount,
             'payload'       => $payload ?: null,
+            'reward_points'  => $rewardPoints,
             'updated_at'    => now(),
         ]);
     } else {
@@ -301,6 +316,7 @@ class ChallengeGeneratorService
             'end_date'      => $end,
             'target_amount' => $targetAmount,
             'payload'       => $payload ?: null,
+            'reward_points'  => $rewardPoints,
         ]);
     }
 
@@ -347,6 +363,8 @@ class ChallengeGeneratorService
             'target_amount'  => $target,
             'duration_days'  => (int) $base->duration_days,
             'reward_points'  => $scaledPoints,
+
+            '_scaled_points' => $scaledPoints,
         ];
     }
 

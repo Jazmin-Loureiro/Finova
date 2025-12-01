@@ -265,7 +265,7 @@ Future<void> _checkExpiredGoals() async {
                         child: Text(
                           goal.name,
                           style: const TextStyle(
-                              fontSize: 18, fontWeight: FontWeight.w600),
+                              fontSize: 20, fontWeight: FontWeight.w600),
                           overflow: TextOverflow.ellipsis,
                         ),
                       ),
@@ -287,7 +287,7 @@ Future<void> _checkExpiredGoals() async {
                                   ? 'Completada'
                                   : 'En progreso',
                           style: TextStyle(
-                            fontSize: 14,
+                            fontSize: 15,
                             color: !goal.active
                                 ? Colors.grey[800]
                                 : goal.state == 'completed'
@@ -339,14 +339,14 @@ Future<void> _checkExpiredGoals() async {
                   crossAxisAlignment: CrossAxisAlignment.start  ,
                     children: [
                       Text('Objetivo: ${goal.currency?.symbol ?? ''}${formatCurrency(goal.targetAmount, goal.currency?.code ?? '')} ${goal.currency?.code ?? ''}',
-                        style: const TextStyle(fontSize: 15),
+                        style: const TextStyle(fontSize: 16),
                       ),
                       Text('Saldo: ${goal.currency?.symbol ?? ''}${formatCurrency(goal.balance, goal.currency?.code ?? '')} ${goal.currency?.code ?? ''}',
-                        style: const TextStyle(fontSize: 15),
+                        style: const TextStyle(fontSize: 16),
                       ),
                     ],
                   ),
-                  const SizedBox(height: 6),
+                  const SizedBox(height: 7),
 
                   // Fechas
                  Row(

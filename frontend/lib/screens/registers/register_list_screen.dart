@@ -323,7 +323,7 @@ class _RegisterListScreenState extends State<RegisterListScreen> {
                               Text(
                                 prettyDate,
                                 style: TextStyle(
-                                  fontSize: 15,
+                                  fontSize: 16,
                                   fontWeight: FontWeight.w600,
                                   color: Theme.of(context).colorScheme.onPrimary,
                                 ),
@@ -337,7 +337,7 @@ class _RegisterListScreenState extends State<RegisterListScreen> {
                                   symbolOverride: symbol,
                                 ),
                                 style: TextStyle(
-                                  fontSize: 15,
+                                  fontSize: 16,
                                   fontWeight: FontWeight.bold,
                                   color: Theme.of(context).colorScheme.onPrimary,
                                 ),
@@ -346,7 +346,7 @@ class _RegisterListScreenState extends State<RegisterListScreen> {
                             ],
                           ),
                         ),
-
+                          const SizedBox(height: 5),
                           ...items.map(
                             (r) => RegisterItemWidget(
                               register: r,

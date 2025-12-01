@@ -91,7 +91,7 @@ Future<void> _fetchRegistersGoal() async {
                                 child: Text(
                                   currentGoal.name,
                                   style: const TextStyle(
-                                      fontSize: 20, fontWeight: FontWeight.bold),
+                                      fontSize: 20, fontWeight: FontWeight.w600),
                                 ),
                               ),
                               Container(
@@ -150,13 +150,13 @@ Future<void> _fetchRegistersGoal() async {
                          const SizedBox(height: 10),
                               Text(
                                 'Objetivo: $currencySymbol${formatCurrency(currentGoal.targetAmount, currentGoal.currency?.code ?? '')} ${currentGoal.currency?.code ?? ''}',
-                                style: const TextStyle(fontSize: 15),
+                                style: const TextStyle(fontSize: 16),
                               ),
-                              const SizedBox(height: 6),
+                              const SizedBox(height: 7),
 
                               Text(
                                 'Saldo actual: $currencySymbol${formatCurrency(currentGoal.balance, currentGoal.currency?.code ?? '')} ${currentGoal.currency?.code ?? ''}',
-                                style: const TextStyle(fontSize: 15),
+                                style: const TextStyle(fontSize: 16),
                               ),
                           const SizedBox(height: 10),
                           Row(

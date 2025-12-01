@@ -55,7 +55,7 @@ class RegisterItemWidget extends StatelessWidget {
                 child: Icon(
                   AppIcons.fromName(r.category.icon),
                   color: Colors.white,
-                  size: 22,
+                  size: 24,
                 ),
               ),
               const SizedBox(width: 12),
@@ -76,9 +76,10 @@ class RegisterItemWidget extends StatelessWidget {
                             children: [
                               Text(
                                 r.category.name,
-                                style: const TextStyle(
+                                style:  TextStyle(
                                   fontWeight: FontWeight.bold,
                                   fontSize: 16,
+                                  color: Theme.of(context).colorScheme.onSurface,
                                 ),
                                 overflow: TextOverflow.ellipsis,
                               ),
@@ -86,8 +87,7 @@ class RegisterItemWidget extends StatelessWidget {
                               Text(
                                 '$tipo • ${r.moneyMaker?.name}',
                                 style: TextStyle(
-                                  fontSize: 12,
-                                  color: Theme.of(context).colorScheme.onSurface,
+                                fontSize: 14,
                                 ),
                               ),
                             ],
@@ -97,8 +97,7 @@ class RegisterItemWidget extends StatelessWidget {
                         Text(
                           dateFormat.format(r.created_at.toLocal()),
                           style: TextStyle(
-                            fontSize: 12,
-                            color: Colors.grey[700],
+                            fontSize: 14,
                           ),
                         ),
                       ],
@@ -111,7 +110,7 @@ class RegisterItemWidget extends StatelessWidget {
                       Text(
                         'Reservado: ${r.currency.symbol}${formatCurrency(r.reserved_for_goal, r.currency.code)} ${r.currency.code}',
                         style: TextStyle(
-                          fontSize: 12,
+                          fontSize: 14,
                           color: Theme.of(context).colorScheme.primary,
                           fontWeight: FontWeight.w600,
                         ),
@@ -123,7 +122,7 @@ class RegisterItemWidget extends StatelessWidget {
                     Text(
                       '${r.type == "income" ? "+" : "-"}${r.currency.symbol}${formatCurrency(r.balance, r.currency.code)} ${r.currency.code}',
                       style: TextStyle(
-                        fontSize: 14,
+                        fontSize: 16,
                         color: r.type == "income" ? Colors.green : Colors.red,
                         fontWeight: FontWeight.bold,
                       ),

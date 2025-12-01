@@ -177,7 +177,7 @@ Future<bool> _cancelReserve() async {
                               Text(
                                 '${currencySymbol}${formatCurrency(register.balance, register.currency.code)} ${register.currency.code}',
                                 style: TextStyle(
-                                  fontSize: 24,
+                                  fontSize: 26,
                                   fontWeight: FontWeight.bold,
                                   color: isIncome ? Colors.green[800] : Colors.red[700],
                                 ),
@@ -186,18 +186,19 @@ Future<bool> _cancelReserve() async {
                               Text(
                                 'Creado: ${dateFormat.format(localDate)}',
                                 style: TextStyle(
-                                  fontSize: 12,
-                                  color: Theme.of(context).colorScheme.onSurface,
+                                  fontSize: 14,
                                 ),
                               ),
+                              if (register.name.isNotEmpty) ...[
                               const SizedBox(height: 10),
                               Text(
                                 '${register.name}',
                                 style: TextStyle(
-                                  fontSize: 14,
+                                  fontSize: 16,
                                   color: Theme.of(context).colorScheme.onSurface,
                                 ),
                               ),
+                              ]
                             ],
                           ),
                         ),
@@ -216,18 +217,19 @@ Future<bool> _cancelReserve() async {
                           Row(
                             children: [
                               Container(
-                                width: 32,
-                                height: 32,
+                                width: 40,
+                                height: 40,
                                 decoration: BoxDecoration(
                                   color: Theme.of(context).colorScheme.primary.withOpacity(0.15),
                                   shape: BoxShape.circle,
                                 ),
                                 child:  Icon(
                                    Icons.track_changes_rounded,
-                                  size: 18,
+                                  size: 20,
                                   color: Theme.of(context).colorScheme.primary,
                                 ),
                               ),
+                              if (register.goal != null) ...[
                               const SizedBox(width: 10),
                               Expanded(
                                 child: Column(
@@ -236,14 +238,13 @@ Future<bool> _cancelReserve() async {
                                      Text(
                                       'Meta',
                                       style: TextStyle(
-                                        fontSize: 12,
-                                        color: Theme.of(context).colorScheme.onSurface,
+                                        fontSize: 14,
                                       ),
                                     ),
                                     Text(
                                       '${register.goal?.name} - ${currencySymbol}${formatCurrency(register.reserved_for_goal, register.currency.code)} ${register.currency.code}',
                                       style: TextStyle(
-                                        fontSize: 15,
+                                        fontSize: 16,
                                         fontWeight: FontWeight.w600,
                                         color: Theme.of(context).colorScheme.onSurface,
                                       ),
@@ -252,6 +253,7 @@ Future<bool> _cancelReserve() async {
                                   ],
                                 ),
                               ),
+                              ]
                             ],
                           ),
                           const SizedBox(height: 10),
@@ -260,7 +262,7 @@ Future<bool> _cancelReserve() async {
                           Row(
                             children: [
                               CircleAvatar(
-                                radius: 16,
+                                radius: 20,
                                 backgroundColor: Color(
                                   int.parse(register.category.color.substring(1), radix: 16) + 0xFF000000,
                                 ).withOpacity(0.15),
@@ -269,7 +271,7 @@ Future<bool> _cancelReserve() async {
                                   color: Color(
                                     int.parse(register.category.color.substring(1), radix: 16) + 0xFF000000,
                                   ),
-                                  size: 18,
+                                  size: 20,
                                 ),
                               ),
                               const SizedBox(width: 10),
@@ -280,14 +282,13 @@ Future<bool> _cancelReserve() async {
                                      Text(
                                       'Categoría',
                                       style: TextStyle(
-                                        fontSize: 12,
-                                        color: Theme.of(context).colorScheme.onSurface,
+                                        fontSize: 14,
                                       ),
                                     ),
                                     Text(
                                       register.category.name,
                                       style: TextStyle(
-                                        fontSize: 15,
+                                        fontSize: 18,
                                         fontWeight: FontWeight.w600,
                                         color: Theme.of(context).colorScheme.onSurface,
                                       ),
@@ -305,15 +306,15 @@ Future<bool> _cancelReserve() async {
                           Row(
                             children: [
                               Container(
-                                width: 32,
-                                height: 32,
+                                width: 40,
+                                height: 40,
                                 decoration: BoxDecoration(
                                   color: _getMoneyMakerColor().withOpacity(0.15),
                                   shape: BoxShape.circle,
                                 ),
                                 child:  Icon(
                                   Icons.account_balance_wallet_rounded,
-                                  size: 18,
+                                  size: 20,
                                    color: _getMoneyMakerColor(),
                                 ),
                               ),
@@ -325,15 +326,14 @@ Future<bool> _cancelReserve() async {
                                      Text(
                                       'Fuente de dinero',
                                       style: TextStyle(
-                                        fontSize: 12,
-                                        color: Theme.of(context).colorScheme.onSurface,
+                                        fontSize: 14,
                                       ),
                                       ),
                                     
                                     Text(
                                       register.moneyMaker?.name ?? 'Sin fuente de dinero',
                                       style: TextStyle(
-                                        fontSize: 15,
+                                        fontSize: 18,
                                         fontWeight: FontWeight.w600,
                                         color: Theme.of(context).colorScheme.onSurface,
                                       ),
@@ -377,6 +377,7 @@ Future<bool> _cancelReserve() async {
                                   style: TextStyle(
                                     color: Theme.of(context).colorScheme.primary,
                                     fontWeight: FontWeight.w600,
+                                    fontSize: 16,
                                   ),
                                   overflow: TextOverflow.ellipsis,
                                 ),

@@ -253,7 +253,7 @@ class _CurrencyConverterScreenState extends State<CurrencyConverterScreen> {
                                           Text(
                                             'Resultado',
                                             style: TextStyle(
-                                                color: textColor.withOpacity(0.7), fontSize: 15),
+                                                color: textColor.withOpacity(0.7), fontSize: 18),
                                           ),
                                           const SizedBox(height: 10),
                                           Text(
@@ -274,7 +274,7 @@ class _CurrencyConverterScreenState extends State<CurrencyConverterScreen> {
                                             '${toCurrency?.code ?? ''}',
                                             style: TextStyle(
                                               color: textColor.withOpacity(0.8),
-                                              fontSize: 15,
+                                              fontSize: 18,
                                               fontWeight: FontWeight.w500,
                                             ),
                                           ),

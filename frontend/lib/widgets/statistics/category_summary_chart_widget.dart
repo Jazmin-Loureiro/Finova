@@ -82,7 +82,7 @@ class CategorySummaryChartWidget extends StatelessWidget {
               child: Text(
                 title,
                 style: TextStyle(
-                  fontSize: 16,
+                  fontSize: 18,
                   fontWeight: FontWeight.w800,
                   color: theme.colorScheme.onPrimary,
                 ),
@@ -95,7 +95,7 @@ class CategorySummaryChartWidget extends StatelessWidget {
               subtitle,
               style: TextStyle(
               color: Theme.of(  context).colorScheme.onSurface.withOpacity(0.75),
-              fontSize: 14,
+              fontSize: 16,
               fontWeight: FontWeight.w600,
               ),
             ),
@@ -210,7 +210,7 @@ class CategorySummaryChartWidget extends StatelessWidget {
                       ),
                       child: Icon(
                         AppIcons.fromName(iconsMap?[key]),
-                        size: 16,
+                        size: 18,
                         color: color.withOpacity(0.9),
                       ),
                     ),
@@ -220,7 +220,7 @@ class CategorySummaryChartWidget extends StatelessWidget {
                     Text(
                       key,
                       style:  TextStyle(
-                        fontSize: 14,
+                        fontSize: 16,
                         fontWeight: FontWeight.w600,
                         color: Theme.of(context).colorScheme.onSurface,
                       ),
@@ -231,7 +231,7 @@ class CategorySummaryChartWidget extends StatelessWidget {
                     Text(
                       "${shownPercent.toStringAsFixed(1)}%",
                       style: TextStyle(
-                        fontSize: 12,
+                        fontSize: 14,
                         fontWeight: FontWeight.w600,
                         color: color.withOpacity(0.9),
                       ),
@@ -247,7 +247,7 @@ class CategorySummaryChartWidget extends StatelessWidget {
                   symbolOverride: userCurrency!.symbol,
                 )}',
                 style: TextStyle(
-                  fontSize: 15,
+                  fontSize: 16,
                   fontWeight: FontWeight.w700,
                   color: theme.colorScheme.primary,
                 ),

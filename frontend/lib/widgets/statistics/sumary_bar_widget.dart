@@ -87,12 +87,12 @@ class SummaryBarCardWidget extends StatelessWidget {
             ),
             child: Row(
               children: [
-                Icon(Icons.attach_money, color: Colors.white, size: 20),
+                Icon(Icons.attach_money, color: Theme.of(context).colorScheme.onPrimary, size: 20),
                 const SizedBox(width: 6),
                 Text(
                   title,
                   style: TextStyle(
-                    fontSize: 16,
+                    fontSize: 18,
                     fontWeight: FontWeight.w800,
                     color: theme.colorScheme.onPrimary,
                   ),
@@ -106,7 +106,7 @@ class SummaryBarCardWidget extends StatelessWidget {
             subtitle,
             style: TextStyle(
               color: Theme.of(context).colorScheme.onSurface.withOpacity(0.75),
-              fontSize: 14,
+              fontSize: 15,
               fontWeight: FontWeight.w600,
             ),
           ),
@@ -157,7 +157,7 @@ class SummaryBarCardWidget extends StatelessWidget {
                     child: Text(
                       label,
                       style: TextStyle(
-                        fontSize: 16,
+                        fontSize: 18,
                         color: textColor.withOpacity(0.85),
                         fontWeight: FontWeight.w600,
                       ),
@@ -170,7 +170,7 @@ class SummaryBarCardWidget extends StatelessWidget {
                       symbolOverride: item.currency.symbol,
                     )} ${item.currency.code}',
                     style: TextStyle(
-                      fontSize: 16,
+                      fontSize: 18,
                       fontWeight: FontWeight.w700,
                       color: primary,
                     ),

@@ -69,7 +69,7 @@ class _MoneyMakerListScreenState extends State<MoneyMakerListScreen> {
     final currencySymbol = registerProvider.currencyBaseSymbol;
 
     return CustomScaffold(
-      title: 'Fuentes de Dinero',
+      title: 'Mi Billetera',
       currentRoute: 'money_makers',
       actions: [
         InfoIcon(
